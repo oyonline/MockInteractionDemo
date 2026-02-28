@@ -1,9 +1,9 @@
 // src/pages/SalesForecastPage.js
 import React, { useState, useMemo, useCallback } from 'react';
 import {
-  Search, ChevronRight, ChevronDown, Lock, Check, AlertCircle,
-  TrendingUp, TrendingDown, Minus, Package, Layers, BarChart3,
-  Calendar, Save, RefreshCw, Filter, Eye, EyeOff
+  Search, ChevronRight, ChevronDown, Lock, Check,
+  Package, Layers, BarChart3,
+  Calendar, Eye, EyeOff
 } from 'lucide-react';
 
 const SalesForecastPage = () => {

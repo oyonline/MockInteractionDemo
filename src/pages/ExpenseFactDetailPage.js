@@ -8,8 +8,6 @@ import {
   AlertCircle,
   X,
   ArrowLeft,
-  Building2,
-  DollarSign,
 } from 'lucide-react';
 
 const cn = (...args) => args.filter(Boolean).join(' ');

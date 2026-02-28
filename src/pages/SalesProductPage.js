@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import {
-  Search, Filter, ChevronDown, ChevronRight, Star, TrendingUp, TrendingDown,
+  Search, Filter, Star,
   Package, DollarSign, BarChart2, ShoppingCart, Globe, Edit2, Eye,
-  ArrowUpRight, ArrowDownRight, Minus, X, Check, AlertTriangle
+  ArrowUpRight, ArrowDownRight, Minus, X
 } from 'lucide-react';
 
 const SalesProductPage = () => {
@@ -16,7 +16,8 @@ const SalesProductPage = () => {
   });
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
-  const [viewMode, setViewMode] = useState('table'); // table or card
+  // eslint-disable-next-line no-unused-vars -- 预留 table/card 切换
+  const [viewMode, setViewMode] = useState('table');
 
   // 销售产品数据
   const salesProductData = [

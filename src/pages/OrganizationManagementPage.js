@@ -51,13 +51,13 @@ export default function OrganizationManagementPageSimple() {
 
     if (searchQuery) {
       const nodesToExpand = new Set(['ROOT']);
-      res.forEach((dept) => {
-        let parent = departments.find((x) => x.code === dept.parentCode);
-        while (parent) {
-          nodesToExpand.add(getNodeKey(parent));
-          parent = departments.find((x) => x.code === parent.parentCode);
-        }
-      });
+      function addAncestorKeys(dept) {
+        const p = departments.find((x) => x.code === dept.parentCode);
+        if (!p) return;
+        nodesToExpand.add(getNodeKey(p));
+        addAncestorKeys(p);
+      }
+      res.forEach((dept) => addAncestorKeys(dept));
       setExpandedNodes(nodesToExpand);
     }
     return res;

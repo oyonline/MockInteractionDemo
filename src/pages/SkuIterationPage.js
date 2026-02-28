@@ -2,7 +2,7 @@
 import React, { useState, useMemo } from 'react';
 import {
   Search, ChevronRight, ChevronDown, X, Edit2,
-  History, Package, DollarSign, Clock, Building2,
+  History, Package, Building2,
   GitBranch, CheckCircle2, XCircle, AlertCircle,
   AlertTriangle, Sparkles, RefreshCw
 } from 'lucide-react';
@@ -22,7 +22,7 @@ const SkuIterationPage = ({ data: externalData }) => {
 
   // Mock数据 - 模拟从产品中心同步的SPU/SKU数据
   // 采购侧需要维护的字段标记在每个版本中
-  const skuIterationData = externalData ?? [
+  const defaultSkuData = React.useMemo(() => [
     {
       spuId: 'SPU-001',
       productLine: '路亚竿系列',
@@ -422,7 +422,8 @@ const SkuIterationPage = ({ data: externalData }) => {
         }
       ]
     }
-  ];
+  ], []);
+  const skuIterationData = externalData ?? defaultSkuData;
 
   // 产品系列选项
   const productLineOptions = [...new Set(skuIterationData.map(s => s.productLine))];

@@ -4,8 +4,8 @@ import React, { useState } from 'react';
 import {
     Search, Plus, Edit2, Trash2, X, Save, Download, Upload,
     Tag, List, Hash, Type, Calendar, ToggleLeft, CheckSquare,
-    ChevronDown, ChevronRight, Copy, MoreHorizontal,
-    AlertCircle, Check, Layers, Settings, Database, GripVertical
+    ChevronDown, ChevronRight, Copy,
+    AlertCircle, Check, Database
 } from 'lucide-react';
 
 // 轻量工具：className 拼接
@@ -69,6 +69,18 @@ const initialAttributes = [
             { id: 'o3', value: '印度', code: 'IN', isActive: true, sort: 3 },
             { id: 'o4', value: '泰国', code: 'TH', isActive: true, sort: 4 },
             { id: 'o5', value: '马来西亚', code: 'MY', isActive: true, sort: 5 },
+        ],
+        createdAt: '2024-01-10', updatedAt: '2024-01-10'
+    },
+    {
+        id: '4', code: 'ORIGIN', name: '销售区域', shortCode: 'OG', groupId: 'basic', type: 'single_select',
+        required: false, isActive: true, unit: '', refCount: 756, description: '产品生产地',
+        options: [
+            { id: 'o1', value: '中国', code: 'CN', isActive: true, sort: 1 },
+            { id: 'o2', value: '美国', code: 'VN', isActive: true, sort: 2 },
+            { id: 'o3', value: '日韩', code: 'IN', isActive: true, sort: 3 },
+            { id: 'o4', value: '东南亚', code: 'TH', isActive: true, sort: 4 },
+            { id: 'o5', value: '欧洲', code: 'MY', isActive: true, sort: 5 },
         ],
         createdAt: '2024-01-10', updatedAt: '2024-01-10'
     },
@@ -334,7 +346,7 @@ const TypeBadge = ({ type }) => {
 
 // --------------- 选项值编辑组件 ---------------
 const OptionEditor = ({ options, onChange }) => {
-    const [editingId, setEditingId] = useState(null);
+    const [, setEditingId] = useState(null);
 
     const handleAddOption = () => {
         const newOption = {
@@ -675,7 +687,6 @@ const AttributeEditDrawer = ({ isOpen, onClose, attribute, onSave }) => {
 const AttributeDetail = ({ attribute, onEdit, onClose }) => {
     if (!attribute) return null;
 
-    const typeConfig = ATTRIBUTE_TYPES.find(t => t.id === attribute.type);
     const groupConfig = ATTRIBUTE_GROUPS.find(g => g.id === attribute.groupId);
 
     return (

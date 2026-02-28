@@ -2,9 +2,9 @@
 // 编码规则管理页面
 import React, { useState } from 'react';
 import {
-    Search, Plus, Copy, Edit2, Trash2, X, Save, Check,
+    Search, Plus, Copy, Edit2, Trash2, X, Save,
     Hash, Settings, FileText, Clock, ChevronDown, ChevronRight,
-    ToggleLeft, ToggleRight, History, AlertCircle, CheckCircle,
+    History, CheckCircle,
     Package, Layers, Box
 } from 'lucide-react';
 

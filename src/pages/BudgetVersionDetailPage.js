@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import {
     Save, Download, Upload, ChevronRight, ChevronDown,
-    Edit2, Check, X, ArrowLeft, FileText, Calendar,
+    Edit2, X, Calendar,
     Building2, DollarSign, TrendingUp
 } from 'lucide-react';
 
@@ -105,21 +105,6 @@ const flattenCategories = (categories, result = []) => {
     return result;
 };
 
-// --------------- 轻量级 UI 组件 ---------------
-const IconButton = ({ icon: Icon, onClick, className, title, disabled }) => (
-    <button
-        onClick={onClick}
-        disabled={disabled}
-        title={title}
-        className={cn(
-            'p-2 rounded-lg transition-colors',
-            disabled ? 'text-gray-300 cursor-not-allowed' : 'text-gray-500 hover:text-gray-700 hover:bg-gray-100',
-            className
-        )}
-    >
-        <Icon className="w-4 h-4" />
-    </button>
-);
 
 const PrimaryButton = ({ children, onClick, icon: Icon, className, disabled, size = 'md' }) => (
     <button

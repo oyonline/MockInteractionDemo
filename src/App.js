@@ -33,6 +33,8 @@ import ExpenseFactPage from './pages/ExpenseFactPage';
 import ExpenseFactDetailPage from './pages/ExpenseFactDetailPage';
 import ExpenseCategoryPage from './pages/ExpenseCategoryPage';
 import OrganizationManagementPage from './pages/OrganizationManagementPage';
+import UserManagementPage from './pages/UserManagementPage';
+import RolePermissionPage from './pages/RolePermissionPage';
 import PlaceholderPage from './pages/PlaceholderPage';
 import SkuDetailPage from './pages/SkuDetailPage.simple';
 import SalesTargetPage from './pages/SalesTargetPage';
@@ -46,6 +48,23 @@ import SkuIterationPage from './pages/SkuIterationPage';
 import SalesForecastPage from './pages/SalesForecastPage';
 import VirtualComboPage from './pages/VirtualComboPage';
 import SalesProductPage from './pages/SalesProductPage';
+import SettingsParamsPage from './pages/settings/SettingsParamsPage';
+import SettingsLogPage from './pages/settings/SettingsLogPage';
+import SettingsDictPage from './pages/settings/SettingsDictPage';
+import SettingsBasicPage from './pages/settings/SettingsBasicPage';
+import SettingsEnumRulePage from './pages/settings/SettingsEnumRulePage';
+import SettingsApiSyncPage from './pages/settings/SettingsApiSyncPage';
+import SettingsSchedulerPage from './pages/settings/SettingsSchedulerPage';
+import LogisticsVendorListPage from './pages/logistics/LogisticsVendorListPage';
+import LogisticsVendorDetailPage from './pages/logistics/LogisticsVendorDetailPage';
+import LogisticsChannelListPage from './pages/logistics/LogisticsChannelListPage';
+import LogisticsChannelDetailPage from './pages/logistics/LogisticsChannelDetailPage';
+import LogisticsAddressListPage from './pages/logistics/LogisticsAddressListPage';
+import LogisticsAddressDetailPage from './pages/logistics/LogisticsAddressDetailPage';
+import LogisticsHsCodeListPage from './pages/logistics/LogisticsHsCodeListPage';
+import LogisticsHsCodeDetailPage from './pages/logistics/LogisticsHsCodeDetailPage';
+import LogisticsDeclarationListPage from './pages/logistics/LogisticsDeclarationListPage';
+import LogisticsDeclarationDetailPage from './pages/logistics/LogisticsDeclarationDetailPage';
 
 // 导航配置
 const navigationConfig = [
@@ -116,7 +135,13 @@ const navigationConfig = [
             {id: 'logistics-customs-import', name: '清关管理', path: '/logistics/customs-import'},
             {id: 'logistics-shelf-claim', name: '上架索赔', path: '/logistics/shelf-claim'},
             {id: 'logistics-reconciliation', name: '物流对账', path: '/logistics/reconciliation'},
-            {id: 'logistics-provider-info', name: '物流商基础信息', path: '/logistics/provider-info'}
+            {id: 'logistics-provider-info', name: '物流商基础信息', path: '/logistics/provider-info'},
+            // ---------- 物流与报关 > 基础资料（列表 + 详情新 Tab） ----------
+            {id: 'logistics-vendors', name: '物流商档案', path: '/logistics/vendors'},
+            {id: 'logistics-channels', name: '物流商渠道', path: '/logistics/channels'},
+            {id: 'logistics-addresses', name: '仓库地址', path: '/logistics/addresses'},
+            {id: 'logistics-hs-codes', name: 'HSCode', path: '/logistics/hs-codes'},
+            {id: 'logistics-declarations', name: '申报资料', path: '/logistics/declarations'}
         ]
     },
     {
@@ -159,8 +184,8 @@ const navigationConfig = [
         icon: Users,
         children: [
             {id: 'org-structure', name: '组织架构管理', path: '/organization/structure'},
-            {id: 'org-user', name: '用户管理', path: '/organization/user'},
-            {id: 'org-role', name: '角色&权限', path: '/organization/role'}
+            {id: 'org-user', name: '用户管理', path: '/system/users'},
+            {id: 'org-role', name: '角色与权限', path: '/system/roles'}
         ]
     },
     {id: 'approval', name: '审批与任务', icon: CheckSquare, path: '/approval'},
@@ -387,7 +412,7 @@ function App() {
         if (tabs.length > 0 && !tabs.some(t => t.id === activeTabId)) {
             setActiveTabId(tabs[tabs.length - 1].id);
         }
-    }, [tabs]);
+    }, [tabs, activeTabId]);
 
     const switchTab = useCallback((tabId) => {
         setActiveTabId(tabId);
@@ -402,6 +427,42 @@ function App() {
     // 根据当前激活的标签渲染内容（所有页面统一走标签）
     const renderTabContent = (tab) => {
         if (!tab) return <HomePage />;
+        // ---------- 物流基础资料详情 Tab（path 前缀判断，包一层 div 与物流商一致） ----------
+        if (tab.path && tab.path.startsWith('/logistics/vendors/')) {
+            return (
+                <div className="flex-1 min-h-0 overflow-auto">
+                    <LogisticsVendorDetailPage tab={tab} />
+                </div>
+            );
+        }
+        if (tab.path && tab.path.startsWith('/logistics/channels/')) {
+            return (
+                <div className="flex-1 min-h-0 overflow-auto">
+                    <LogisticsChannelDetailPage tab={tab} />
+                </div>
+            );
+        }
+        if (tab.path && tab.path.startsWith('/logistics/addresses/')) {
+            return (
+                <div className="flex-1 min-h-0 overflow-auto">
+                    <LogisticsAddressDetailPage tab={tab} />
+                </div>
+            );
+        }
+        if (tab.path && tab.path.startsWith('/logistics/hs-codes/')) {
+            return (
+                <div className="flex-1 min-h-0 overflow-auto">
+                    <LogisticsHsCodeDetailPage tab={tab} />
+                </div>
+            );
+        }
+        if (tab.path && tab.path.startsWith('/logistics/declarations/')) {
+            return (
+                <div className="flex-1 min-h-0 overflow-auto">
+                    <LogisticsDeclarationDetailPage tab={tab} />
+                </div>
+            );
+        }
         switch (tab.path) {
             case '/home':
                 return <HomePage />;
@@ -497,8 +558,37 @@ function App() {
                 return <SalesForecastPage />;
             case '/procurement/supplier':
                 return <SupplierListPage onOpenDetail={openTab} />;
+            case '/logistics/vendors':
+                return <LogisticsVendorListPage onOpenDetail={openTab} />;
+            case '/logistics/channels':
+                return <LogisticsChannelListPage onOpenDetail={openTab} />;
+            case '/logistics/addresses':
+                return <LogisticsAddressListPage onOpenDetail={openTab} />;
+            case '/logistics/hs-codes':
+                return <LogisticsHsCodeListPage onOpenDetail={openTab} />;
+            case '/logistics/declarations':
+                return <LogisticsDeclarationListPage onOpenDetail={openTab} />;
             case '/procurement/sku-iteration':
                 return <SkuIterationPage />;
+            // ---------- 系统设置（逐步上线：未做的继续走 default 占位） ----------
+            case '/settings/params':
+                return <SettingsParamsPage />;
+            case '/settings/log':
+                return <SettingsLogPage />;
+            case '/settings/sync':
+                return <SettingsApiSyncPage onOpenTab={openTab} />;
+            case '/settings/scheduler':
+                return <SettingsSchedulerPage onOpenTab={openTab} />;
+            case '/settings/dict':
+                return <SettingsDictPage />;
+            case '/settings/basic':
+                return <SettingsBasicPage />;
+            case '/settings/enum':
+                return <SettingsEnumRulePage />;
+            case '/system/users':
+                return <UserManagementPage />;
+            case '/system/roles':
+                return <RolePermissionPage />;
             default:
                 return <PlaceholderPage pageName={tab.name} path={tab.path} />;
         }

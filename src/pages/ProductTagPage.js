@@ -3,8 +3,7 @@
 import React, { useState } from 'react';
 import {
     Search, Plus, Download, Upload, Edit2, Trash2, X, Save,
-    Tag, Folder, FolderOpen, ChevronRight, ChevronDown,
-    Package, TrendingUp, AlertCircle, Star, Zap, Clock, Check
+    Tag, Folder, Package, TrendingUp, AlertCircle, Star, Zap, Clock, Check
 } from 'lucide-react';
 
 // 轻量工具：className 拼接
@@ -175,8 +174,10 @@ const Card = ({ children, className }) => (
 
 // --------------- 左侧分类树 ---------------
 const CategoryTree = ({ categories, selectedCategoryId, onSelectCategory, tagCounts }) => {
+    // eslint-disable-next-line no-unused-vars -- 预留展开状态
     const [expandedIds, setExpandedIds] = useState(['all']);
 
+    // eslint-disable-next-line no-unused-vars -- 预留展开/收起
     const toggleExpand = (id) => {
         setExpandedIds(prev =>
             prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]

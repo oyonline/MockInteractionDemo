@@ -533,6 +533,8 @@ function SpecialInstructions() {
             window.removeEventListener('mousemove', onMouseMove);
             window.removeEventListener('mouseup', onMouseUp);
         };
+    // onMouseMove/onMouseUp 稳定引用，仅依赖 dragging 控制挂载
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [dragging]);
 
     // 删除（双击标签）

@@ -14,9 +14,6 @@ import {
     XCircle,
     AlertCircle,
     Calendar as CalendarIcon,
-    ArrowRight,
-    ArrowDown,
-    Calculator,
     Target,
 } from 'lucide-react';
 

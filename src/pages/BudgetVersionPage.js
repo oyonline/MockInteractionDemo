@@ -3,8 +3,8 @@
 import React, { useState } from 'react';
 import {
     Search, Plus, Edit2, Trash2, X, Save, Download, Upload,
-    FileText, Calendar, DollarSign, Check, AlertCircle,
-    Building2, Copy, Eye, Lock, Unlock, Paperclip
+    FileText, DollarSign, Check,
+    Building2, Copy, Eye, Lock, Paperclip
 } from 'lucide-react';
 
 // 轻量工具：className 拼接
@@ -372,7 +372,8 @@ const BudgetVersionEditDrawer = ({ isOpen, onClose, version, onSave }) => {
     );
 };
 
-// --------------- 预算详情抽屉 ---------------
+// --------------- 预算详情抽屉（预留，暂未挂载） ---------------
+// eslint-disable-next-line no-unused-vars
 const BudgetDetailDrawer = ({ isOpen, onClose, version }) => {
     if (!isOpen || !version) return null;
 

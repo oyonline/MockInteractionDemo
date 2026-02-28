@@ -16,7 +16,7 @@ const SupplierListPage = ({ data: externalData, onOpenDetail }) => {
   const pageSize = 10;
 
   // Mock数据
-  const supplierData = externalData ?? [
+  const defaultSupplierData = useMemo(() => [
     {
       id: 'supplier-1',
       code: 'SUP-001',
@@ -209,7 +209,8 @@ const SupplierListPage = ({ data: externalData, onOpenDetail }) => {
       updateTime: '2024-03-08 10:00',
       createTime: '2024-03-08 10:00'
     }
-  ];
+  ], []);
+  const supplierData = externalData ?? defaultSupplierData;
 
   // 类型和评级选项
   const typeOptions = ['生产商', '贸易商', 'OEM'];
