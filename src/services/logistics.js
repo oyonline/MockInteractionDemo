@@ -8,6 +8,8 @@ import {
   LOGISTICS_HS_CODES,
   LOGISTICS_DECLARATIONS,
   LOGISTICS_APPROVAL_RECORDS,
+  LOGISTICS_ROUTING_RULES,
+  LOGISTICS_CONSOLIDATION_RULES,
 } from '../utils/storageKeys';
 import {
   getMockVendorList,
@@ -15,6 +17,8 @@ import {
   getMockAddressList,
   getMockHsCodeList,
   getMockDeclarationList,
+  getMockRoutingRuleList,
+  getMockConsolidationRuleList,
 } from '../mock/logistics';
 
 const DEMO_OPERATOR = 'DemoUser';
@@ -129,6 +133,35 @@ function getDeclarationData() {
 
 function setDeclarationData(list) {
   storage.set(LOGISTICS_DECLARATIONS, list);
+}
+
+// ---------- Routing rules ----------
+function getRoutingRuleData() {
+  let list = storage.get(LOGISTICS_ROUTING_RULES);
+  if (list == null || !Array.isArray(list)) {
+    const channels = getChannelData();
+    list = getMockRoutingRuleList(channels);
+    storage.set(LOGISTICS_ROUTING_RULES, list);
+  }
+  return list;
+}
+
+function setRoutingRuleData(list) {
+  storage.set(LOGISTICS_ROUTING_RULES, list);
+}
+
+// ---------- Consolidation rules ----------
+function getConsolidationRuleData() {
+  let list = storage.get(LOGISTICS_CONSOLIDATION_RULES);
+  if (list == null || !Array.isArray(list)) {
+    list = getMockConsolidationRuleList(getVendorData(), getChannelData());
+    storage.set(LOGISTICS_CONSOLIDATION_RULES, list);
+  }
+  return list;
+}
+
+function setConsolidationRuleData(list) {
+  storage.set(LOGISTICS_CONSOLIDATION_RULES, list);
 }
 
 // ---------- Approval records ----------
@@ -312,6 +345,238 @@ export const logisticsService = {
         .sort((a, b) => (b.createdAt || '').localeCompare(a.createdAt || ''));
     },
   },
+
+  // ---------- 物流类型规则（选渠规则） ----------
+  routingRules: (() => {
+    const entityType = 'routingRule';
+    const idField = 'id';
+    const getData = getRoutingRuleData;
+    const setData = setRoutingRuleData;
+    const searchFields = ['name'];
+
+    function findIdx(id) {
+      return getData().findIndex((item) => item[idField] === id);
+    }
+
+    return {
+      list(query = {}) {
+        return applyListQuery(getData(), query, searchFields);
+      },
+      get(id) {
+        const idx = findIdx(id);
+        return idx === -1 ? null : { ...getData()[idx] };
+      },
+      create(payload) {
+        const countries = payload.conditions?.countries || payload.countries;
+        if (!Array.isArray(countries) || countries.length === 0) {
+          return { ok: false, message: '国家(conditions.countries)至少填 1 个' };
+        }
+        const channels = payload.channels || [];
+        const channelIds = getChannelData().map((c) => c.id);
+        for (let i = 0; i < channels.length; i++) {
+          const cid = typeof channels[i] === 'object' ? channels[i].channelId : channels[i];
+          if (!channelIds.includes(cid)) {
+            return { ok: false, message: `渠道 ${cid} 不存在` };
+          }
+        }
+        const data = getData().slice();
+        const id = payload.id || 'rule_' + Date.now();
+        const updatedAt = now();
+        const item = {
+          ...payload,
+          [idField]: id,
+          updatedAt,
+          approvalStatus: payload.approvalStatus == null ? 'draft' : payload.approvalStatus,
+          status: payload.status == null ? 'enabled' : payload.status,
+        };
+        if (!item.createdAt) item.createdAt = updatedAt;
+        if (!item.conditions) item.conditions = { countries: [] };
+        if (!Array.isArray(item.conditions.countries)) item.conditions.countries = countries;
+        data.push(item);
+        setData(data);
+        return item;
+      },
+      update(id, patch) {
+        const idx = findIdx(id);
+        if (idx === -1) return null;
+        const next = { ...getData()[idx], ...patch, updatedAt: now() };
+        const countries = next.conditions?.countries || next.countries;
+        if (Array.isArray(countries) && countries.length === 0) {
+          return { ok: false, message: '国家(conditions.countries)至少填 1 个' };
+        }
+        const channels = next.channels || [];
+        const channelIds = getChannelData().map((c) => c.id);
+        for (let i = 0; i < channels.length; i++) {
+          const cid = typeof channels[i] === 'object' ? channels[i].channelId : channels[i];
+          if (!channelIds.includes(cid)) {
+            return { ok: false, message: `渠道 ${cid} 不存在` };
+          }
+        }
+        const data = getData().slice();
+        data[idx] = next;
+        setData(data);
+        return next;
+      },
+      remove(id) {
+        const data = getData().filter((item) => item[idField] !== id);
+        setData(data);
+      },
+      submit(id) {
+        const data = getData().slice();
+        const idx = findIdx(id);
+        if (idx === -1) return { ok: false, message: '未找到' };
+        const item = data[idx];
+        if (item.approvalStatus !== 'draft' && item.approvalStatus !== 'rejected') {
+          return { ok: false, message: '当前状态不可提交' };
+        }
+        data[idx] = { ...item, approvalStatus: 'pending', updatedAt: now() };
+        setData(data);
+        addApprovalRecord(entityType, id, 'submit', '');
+        return { ok: true };
+      },
+      withdraw(id) {
+        const data = getData().slice();
+        const idx = findIdx(id);
+        if (idx === -1) return { ok: false, message: '未找到' };
+        const item = data[idx];
+        if (item.approvalStatus !== 'pending') return { ok: false, message: '当前状态不可撤回' };
+        data[idx] = { ...item, approvalStatus: 'draft', updatedAt: now() };
+        setData(data);
+        addApprovalRecord(entityType, id, 'withdraw', '');
+        return { ok: true };
+      },
+      approve(id, remark) {
+        const data = getData().slice();
+        const idx = findIdx(id);
+        if (idx === -1) return { ok: false, message: '未找到' };
+        const item = data[idx];
+        if (item.approvalStatus !== 'pending') return { ok: false, message: '当前状态不可审批' };
+        data[idx] = { ...item, approvalStatus: 'approved', updatedAt: now() };
+        setData(data);
+        addApprovalRecord(entityType, id, 'approve', remark || '');
+        return { ok: true };
+      },
+      reject(id, remark) {
+        const data = getData().slice();
+        const idx = findIdx(id);
+        if (idx === -1) return { ok: false, message: '未找到' };
+        const item = data[idx];
+        if (item.approvalStatus !== 'pending') return { ok: false, message: '当前状态不可驳回' };
+        data[idx] = { ...item, approvalStatus: 'rejected', updatedAt: now() };
+        setData(data);
+        addApprovalRecord(entityType, id, 'reject', remark || '');
+        return { ok: true };
+      },
+    };
+  })(),
+
+  // ---------- 集货规则 ----------
+  consolidationRules: (() => {
+    const entityType = 'consolidationRule';
+    const idField = 'id';
+    const getData = getConsolidationRuleData;
+    const setData = setConsolidationRuleData;
+    const searchFields = ['name'];
+
+    function findIdx(id) {
+      return getData().findIndex((item) => item[idField] === id);
+    }
+
+    return {
+      list(query = {}) {
+        return applyListQuery(getData(), query, searchFields);
+      },
+      get(id) {
+        const idx = findIdx(id);
+        return idx === -1 ? null : { ...getData()[idx] };
+      },
+      create(payload) {
+        const country = payload.boundaries?.country ?? payload.country;
+        if (country == null || String(country).trim() === '') {
+          return { ok: false, message: '国家(boundaries.country)必填' };
+        }
+        const data = getData().slice();
+        const id = payload.id || 'consol_' + Date.now();
+        const updatedAt = now();
+        const item = {
+          ...payload,
+          [idField]: id,
+          updatedAt,
+          approvalStatus: payload.approvalStatus == null ? 'draft' : payload.approvalStatus,
+          status: payload.status == null ? 'enabled' : payload.status,
+        };
+        if (!item.createdAt) item.createdAt = updatedAt;
+        if (!item.boundaries) item.boundaries = { country: String(country).trim() };
+        if (!item.strategy) item.strategy = {};
+        data.push(item);
+        setData(data);
+        return item;
+      },
+      update(id, patch) {
+        const idx = findIdx(id);
+        if (idx === -1) return null;
+        const next = { ...getData()[idx], ...patch, updatedAt: now() };
+        const country = next.boundaries?.country ?? next.country;
+        if (country == null || String(country).trim() === '') {
+          return { ok: false, message: '国家(boundaries.country)必填' };
+        }
+        const data = getData().slice();
+        data[idx] = next;
+        setData(data);
+        return next;
+      },
+      remove(id) {
+        const data = getData().filter((item) => item[idField] !== id);
+        setData(data);
+      },
+      submit(id) {
+        const data = getData().slice();
+        const idx = findIdx(id);
+        if (idx === -1) return { ok: false, message: '未找到' };
+        const item = data[idx];
+        if (item.approvalStatus !== 'draft' && item.approvalStatus !== 'rejected') {
+          return { ok: false, message: '当前状态不可提交' };
+        }
+        data[idx] = { ...item, approvalStatus: 'pending', updatedAt: now() };
+        setData(data);
+        addApprovalRecord(entityType, id, 'submit', '');
+        return { ok: true };
+      },
+      withdraw(id) {
+        const data = getData().slice();
+        const idx = findIdx(id);
+        if (idx === -1) return { ok: false, message: '未找到' };
+        const item = data[idx];
+        if (item.approvalStatus !== 'pending') return { ok: false, message: '当前状态不可撤回' };
+        data[idx] = { ...item, approvalStatus: 'draft', updatedAt: now() };
+        setData(data);
+        addApprovalRecord(entityType, id, 'withdraw', '');
+        return { ok: true };
+      },
+      approve(id, remark) {
+        const data = getData().slice();
+        const idx = findIdx(id);
+        if (idx === -1) return { ok: false, message: '未找到' };
+        const item = data[idx];
+        if (item.approvalStatus !== 'pending') return { ok: false, message: '当前状态不可审批' };
+        data[idx] = { ...item, approvalStatus: 'approved', updatedAt: now() };
+        setData(data);
+        addApprovalRecord(entityType, id, 'approve', remark || '');
+        return { ok: true };
+      },
+      reject(id, remark) {
+        const data = getData().slice();
+        const idx = findIdx(id);
+        if (idx === -1) return { ok: false, message: '未找到' };
+        const item = data[idx];
+        if (item.approvalStatus !== 'pending') return { ok: false, message: '当前状态不可驳回' };
+        data[idx] = { ...item, approvalStatus: 'rejected', updatedAt: now() };
+        setData(data);
+        addApprovalRecord(entityType, id, 'reject', remark || '');
+        return { ok: true };
+      },
+    };
+  })(),
 };
 
 /*

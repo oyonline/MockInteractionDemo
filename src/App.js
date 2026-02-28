@@ -65,6 +65,10 @@ import LogisticsHsCodeListPage from './pages/logistics/LogisticsHsCodeListPage';
 import LogisticsHsCodeDetailPage from './pages/logistics/LogisticsHsCodeDetailPage';
 import LogisticsDeclarationListPage from './pages/logistics/LogisticsDeclarationListPage';
 import LogisticsDeclarationDetailPage from './pages/logistics/LogisticsDeclarationDetailPage';
+import LogisticsRoutingRuleListPage from './pages/logistics/LogisticsRoutingRuleListPage';
+import LogisticsRoutingRuleDetailPage from './pages/logistics/LogisticsRoutingRuleDetailPage';
+import LogisticsConsolidationRuleListPage from './pages/logistics/LogisticsConsolidationRuleListPage';
+import LogisticsConsolidationRuleDetailPage from './pages/logistics/LogisticsConsolidationRuleDetailPage';
 
 // 导航配置
 const navigationConfig = [
@@ -141,7 +145,10 @@ const navigationConfig = [
             {id: 'logistics-channels', name: '物流商渠道', path: '/logistics/channels'},
             {id: 'logistics-addresses', name: '仓库地址', path: '/logistics/addresses'},
             {id: 'logistics-hs-codes', name: 'HSCode', path: '/logistics/hs-codes'},
-            {id: 'logistics-declarations', name: '申报资料', path: '/logistics/declarations'}
+            {id: 'logistics-declarations', name: '申报资料', path: '/logistics/declarations'},
+            // ---------- 物流与报关 > 核心功能（规则配置） ----------
+            {id: 'logistics-rules-routing', name: '物流类型规则', path: '/logistics/rules/routing'},
+            {id: 'logistics-rules-consolidation', name: '集货规则', path: '/logistics/rules/consolidation'}
         ]
     },
     {
@@ -463,6 +470,21 @@ function App() {
                 </div>
             );
         }
+        // ---------- 物流规则详情 Tab（routing / consolidation） ----------
+        if (tab.path && tab.path.startsWith('/logistics/rules/routing/')) {
+            return (
+                <div className="flex-1 min-h-0 overflow-auto">
+                    <LogisticsRoutingRuleDetailPage tab={tab} />
+                </div>
+            );
+        }
+        if (tab.path && tab.path.startsWith('/logistics/rules/consolidation/')) {
+            return (
+                <div className="flex-1 min-h-0 overflow-auto">
+                    <LogisticsConsolidationRuleDetailPage tab={tab} />
+                </div>
+            );
+        }
         switch (tab.path) {
             case '/home':
                 return <HomePage />;
@@ -568,6 +590,10 @@ function App() {
                 return <LogisticsHsCodeListPage onOpenDetail={openTab} />;
             case '/logistics/declarations':
                 return <LogisticsDeclarationListPage onOpenDetail={openTab} />;
+            case '/logistics/rules/routing':
+                return <LogisticsRoutingRuleListPage onOpenDetail={openTab} />;
+            case '/logistics/rules/consolidation':
+                return <LogisticsConsolidationRuleListPage onOpenDetail={openTab} />;
             case '/procurement/sku-iteration':
                 return <SkuIterationPage />;
             // ---------- 系统设置（逐步上线：未做的继续走 default 占位） ----------

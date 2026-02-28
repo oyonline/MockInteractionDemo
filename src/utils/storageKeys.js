@@ -20,3 +20,6 @@ export const LOGISTICS_ADDRESSES = PREFIX + 'logistics:addresses';
 export const LOGISTICS_HS_CODES = PREFIX + 'logistics:hsCodes';
 export const LOGISTICS_DECLARATIONS = PREFIX + 'logistics:declarations';
 export const LOGISTICS_APPROVAL_RECORDS = PREFIX + 'logistics:approvalRecords';
+// 物流规则配置（核心功能）
+export const LOGISTICS_ROUTING_RULES = PREFIX + 'logistics:routingRules';
+export const LOGISTICS_CONSOLIDATION_RULES = PREFIX + 'logistics:consolidationRules';

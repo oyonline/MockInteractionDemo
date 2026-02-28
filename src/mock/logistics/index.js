@@ -1,12 +1,14 @@
-/** 物流与报关 mock 聚合：vendors / channels / addresses / hsCodes / declarations，关联一致。 */
+/** 物流与报关 mock 聚合：vendors / channels / addresses / hsCodes / declarations / routingRules / consolidationRules。 */
 
 import getMockVendorList from './vendors';
 import getMockChannelList from './channels';
 import getMockAddressList from './addresses';
 import getMockHsCodeList from './hsCodes';
 import getMockDeclarationList from './declarations';
+import getMockRoutingRuleList from './routingRules';
+import getMockConsolidationRuleList from './consolidationRules';
 
-export { getMockVendorList, getMockChannelList, getMockAddressList, getMockHsCodeList, getMockDeclarationList };
+export { getMockVendorList, getMockChannelList, getMockAddressList, getMockHsCodeList, getMockDeclarationList, getMockRoutingRuleList, getMockConsolidationRuleList };
 
 /**
  * 生成完整物流 mock 数据集，保证 channels.vendorId ∈ vendors.id、declarations.hsCode ∈ hsCodes.hsCode。
@@ -20,12 +22,16 @@ export function generateLogisticsMock(opts = {}) {
   const addresses = getMockAddressList(addressCount);
   const hsCodes = getMockHsCodeList();
   const declarations = getMockDeclarationList(hsCodes);
+  const routingRules = getMockRoutingRuleList(channels);
+  const consolidationRules = getMockConsolidationRuleList(vendors, channels);
   return {
     vendors,
     channels,
     addresses,
     hsCodes,
     declarations,
+    routingRules,
+    consolidationRules,
   };
 }
 
@@ -36,5 +42,7 @@ export const logisticsMock = {
   getAddresses: getMockAddressList,
   getHsCodes: getMockHsCodeList,
   getDeclarations: getMockDeclarationList,
+  getRoutingRules: getMockRoutingRuleList,
+  getConsolidationRules: getMockConsolidationRuleList,
   generate: generateLogisticsMock,
 };
