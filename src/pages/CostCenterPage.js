@@ -905,10 +905,9 @@ export default function CostCenterPage() {
                             {filteredData.map(item => (
                                 <tr key={item.id} className="hover:bg-gray-50">
                                     <td className="px-4 py-3">
-                                        <Toggle
-                                            checked={item.status === 'active'}
-                                            onChange={() => handleToggleStatus(item.id)}
-                                        />
+                                        <Badge variant={item.status === 'active' ? 'success' : 'default'}>
+                                            {item.status === 'active' ? '启用' : '停用'}
+                                        </Badge>
                                     </td>
                                     <td className="px-4 py-3">
                                         <span className="font-medium text-gray-900">{item.name}</span>

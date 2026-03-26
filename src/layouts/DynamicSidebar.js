@@ -1,0 +1,336 @@
+// src/layouts/DynamicSidebar.js
+// 动态左侧导航 - 根据当前模块显示不同导航
+import React from 'react';
+import { ChevronLeft, Package, TrendingUp, ShoppingCart, Truck, DollarSign, TestTube, Users, Settings } from 'lucide-react';
+
+const cn = (...args) => args.filter(Boolean).join(' ');
+
+// --------------- 导航配置 ---------------
+const navConfig = {
+    // 首页导航 - 一级入口
+    home: {
+        title: '工作台',
+        items: [
+            { id: 'product', name: '产品中心', icon: Package, path: '/product' },
+            { id: 'sales', name: '销售与计划', icon: TrendingUp, path: '/sales' },
+            { id: 'procurement', name: '供应链采购', icon: ShoppingCart, path: '/procurement' },
+            { id: 'logistics', name: '物流与报关', icon: Truck, path: '/logistics' },
+            { id: 'finance', name: '财务中心', icon: DollarSign, path: '/finance' },
+            { id: 'quality', name: '质量管理', icon: TestTube, path: '/quality' },
+            { id: 'organization', name: '组织权限', icon: Users, path: '/organization' },
+            { id: 'settings', name: '系统设置', icon: Settings, path: '/settings', badge: 'IT专用' },
+        ]
+    },
+    
+    // 产品中心子导航
+    product: {
+        title: '产品中心',
+        parent: '/home',
+        items: [
+            { name: '产品主数据', path: '/product/master' },
+            { name: 'BOM管理', path: '/product/bom' },
+            { name: '虚拟组合', path: '/product/virtual-combo' },
+            { name: '品牌管理', path: '/product/brand' },
+            { name: '产品结构', path: '/product/structure' },
+            { name: '类目模板', path: '/product/template' },
+            { name: '产品标签', path: '/product/tag' },
+            { name: '编码规则', path: '/product/coding-rule' },
+            { name: '属性管理', path: '/product/attribute' },
+        ]
+    },
+    
+    // 美国事业部子导航
+    'sales-us': {
+        title: '美国事业部',
+        parent: '/home',
+        items: [
+            { name: '销售主数据', path: '/sales/us/product' },
+            { name: '销售目标', path: '/sales/us/target' },
+            { name: '销量预测', path: '/sales/us/forecast' },
+            { name: '数据聚合', path: '/sales/us/data-aggregation' },
+            { name: '滞销分析', path: '/sales/us/slow-moving' },
+            { name: '计划看板', path: '/sales/us/plan-dashboard' },
+        ]
+    },
+    
+    // 中国事业部子导航（占位）
+    'sales-cn': {
+        title: '中国事业部',
+        parent: '/home',
+        items: [
+            { name: '销售主数据', path: '/sales/cn' },
+            { name: '销售目标', path: '/sales/cn' },
+            { name: '销量预测', path: '/sales/cn' },
+        ]
+    },
+    
+    // 东南亚事业部子导航（占位）
+    'sales-sea': {
+        title: '东南亚事业部',
+        parent: '/home',
+        items: [
+            { name: '销售主数据', path: '/sales/sea' },
+            { name: '销售目标', path: '/sales/sea' },
+            { name: '销量预测', path: '/sales/sea' },
+        ]
+    },
+    
+    // 欧洲事业部子导航（占位）
+    'sales-eu': {
+        title: '欧洲事业部',
+        parent: '/home',
+        items: [
+            { name: '销售主数据', path: '/sales/eu' },
+            { name: '销售目标', path: '/sales/eu' },
+            { name: '销量预测', path: '/sales/eu' },
+        ]
+    },
+    
+    // 项目管理子导航
+    'project': {
+        title: '项目管理',
+        parent: '/home',
+        items: [
+            { name: '项目列表', path: '/project' },
+            { name: '任务管理', path: '/project' },
+            { name: '里程碑', path: '/project' },
+        ]
+    },
+    
+    // 经营分析子导航
+    'business-analysis': {
+        title: '经营分析',
+        parent: '/home',
+        items: [
+            { name: '经营指标', path: '/business-analysis' },
+            { name: '数据分析', path: '/business-analysis' },
+            { name: '决策支持', path: '/business-analysis' },
+        ]
+    },
+    
+    // 人力资源子导航
+    'hr': {
+        title: '人力资源',
+        parent: '/home',
+        items: [
+            { name: '员工信息管理', path: '/hr/employees' },
+            { name: '招聘管理', path: '/hr' },
+            { name: '绩效管理', path: '/hr' },
+            { name: '薪酬管理', path: '/hr' },
+        ]
+    },
+    
+    // 供应链采购子导航
+    procurement: {
+        title: '供应链采购',
+        parent: '/home',
+        items: [
+            { name: '供应商管理', path: '/procurement/supplier' },
+            { name: 'SKU迭代', path: '/procurement/sku-iteration' },
+            { name: '采购计划', path: '/procurement/plan-tracking' },
+        ]
+    },
+    
+    // 供应链计划子导航
+    'supply-chain-plan': {
+        title: '供应链计划',
+        parent: '/home',
+        items: [
+            { name: 'Forecast Tracking', path: '/supply-chain/forecast-tracking' },
+            { name: '供应计划管理', path: '/supply-chain/supply-plan' },
+        ]
+    },
+    
+    // 物流与报关子导航
+    logistics: {
+        title: '物流与报关',
+        parent: '/home',
+        items: [
+            { name: '物流商档案', path: '/logistics/vendors' },
+            { name: '物流商渠道', path: '/logistics/channels' },
+            { name: '仓库地址', path: '/logistics/addresses' },
+            { name: 'HSCode', path: '/logistics/hs-codes' },
+            { name: '申报资料', path: '/logistics/declarations' },
+            { name: '物流类型规则', path: '/logistics/rules/routing' },
+            { name: '集货规则', path: '/logistics/rules/consolidation' },
+            { name: '备货试算', path: '/logistics/trial-calc' },
+        ]
+    },
+    
+    // 财务中心子导航
+    finance: {
+        title: '财务中心',
+        parent: '/home',
+        items: [
+            { name: '成本中心', path: '/finance/cost-center' },
+            { name: '预算版本', path: '/finance/budget-version' },
+            { name: '费用类别', path: '/finance/expense-category' },
+            { name: '费用事实', path: '/finance/expense-fact' },
+            { name: '分摊规则', path: '/finance/allocation-rule' },
+            { name: '店铺映射', path: '/finance/mapping' },
+            { name: '收入分析', path: '/finance/revenue-analysis' },
+            { name: '成本分析', path: '/finance/cost-analysis' },
+            { name: '利润分析', path: '/finance/profit-analysis' },
+        ]
+    },
+    
+    // 质量管理中心子导航
+    quality: {
+        title: '质量管理',
+        parent: '/home',
+        items: [
+            { name: '入库质检', path: '/quality/inbound' },
+            { name: '客诉质量', path: '/quality/complaint' },
+        ]
+    },
+    
+    // 组织权限子导航
+    organization: {
+        title: '组织权限',
+        parent: '/home',
+        items: [
+            { name: '组织架构', path: '/organization/structure' },
+            { name: '用户管理', path: '/organization/users' },
+            { name: '角色权限', path: '/organization/roles' },
+        ]
+    },
+    
+    // 系统设置子导航
+    settings: {
+        title: '系统设置',
+        parent: '/home',
+        badge: 'IT专用',
+        items: [
+            { name: '基础配置', path: '/settings/basic' },
+            { name: '数据字典', path: '/settings/dict' },
+            { name: '枚举与规则', path: '/settings/enum' },
+            { name: '接口同步', path: '/settings/sync' },
+            { name: '参数设置', path: '/settings/params' },
+            { name: '定时任务', path: '/settings/scheduler' },
+            { name: '系统日志', path: '/settings/log' },
+        ]
+    }
+};
+
+// --------------- 判断当前模块 ---------------
+const getCurrentModule = (path) => {
+    if (path === '/home' || path === '/') return 'home';
+    if (path.startsWith('/product')) return 'product';
+    if (path.startsWith('/sales/us')) return 'sales-us';
+    if (path.startsWith('/sales/cn')) return 'sales-cn';
+    if (path.startsWith('/sales/sea')) return 'sales-sea';
+    if (path.startsWith('/sales/eu')) return 'sales-eu';
+    if (path.startsWith('/sales')) return 'sales-us'; // 旧销售路由默认到美国事业部
+    if (path.startsWith('/procurement')) return 'procurement';
+    if (path.startsWith('/logistics')) return 'logistics';
+    if (path.startsWith('/finance')) return 'finance';
+    if (path.startsWith('/quality')) return 'quality';
+    if (path.startsWith('/organization')) return 'organization';
+    if (path.startsWith('/settings')) return 'settings';
+    if (path.startsWith('/project')) return 'project';
+    if (path.startsWith('/business-analysis')) return 'business-analysis';
+    if (path.startsWith('/hr')) return 'hr';
+    if (path.startsWith('/supply-chain')) return 'supply-chain-plan';
+    return 'home';
+};
+
+// --------------- 主组件 ---------------
+export default function DynamicSidebar({ currentPath, onNavigate }) {
+    const currentModule = getCurrentModule(currentPath);
+    const config = navConfig[currentModule];
+    
+    // 首页不显示左侧导航
+    if (currentModule === 'home') {
+        return null;
+    }
+    
+    const handleNavClick = (path, name) => {
+        if (onNavigate) {
+            onNavigate(path, name);
+        }
+    };
+    
+    return (
+        <aside className="w-64 bg-white border-r border-gray-200 h-screen flex flex-col">
+            {/* Logo区 */}
+            <div className="h-16 flex items-center px-4 border-b border-gray-200">
+                <div className="flex items-center gap-2">
+                    <div className="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center">
+                        <span className="text-white font-bold text-sm">E</span>
+                    </div>
+                    <div>
+                        <h1 className="text-sm font-bold text-gray-800">EPoseidon2.0</h1>
+                        <p className="text-[10px] text-gray-500">企业自研管理系统</p>
+                    </div>
+                </div>
+            </div>
+            
+            {/* 导航内容 */}
+            <div className="flex-1 overflow-y-auto py-4">
+                {/* 返回按钮 */}
+                <div className="px-4 mb-4">
+                    <button
+                        onClick={() => handleNavClick(config.parent || '/home', '工作台')}
+                        className="flex items-center gap-2 px-3 py-2 text-sm text-gray-600 hover:bg-gray-100 rounded-lg transition-colors w-full"
+                    >
+                        <ChevronLeft className="w-4 h-4" />
+                        <span>返回工作台</span>
+                    </button>
+                </div>
+                
+                {/* 导航标题 */}
+                <div className="px-4 mb-3">
+                    <h2 className="text-xs font-semibold text-gray-400 uppercase tracking-wider">
+                            {config.title}
+                            {config.badge && (
+                                <span className="ml-2 px-1.5 py-0.5 bg-orange-100 text-orange-600 rounded text-[10px]">
+                                    {config.badge}
+                                </span>
+                            )}
+                        </h2>
+                    </div>
+                
+                {/* 导航项 - 统一使用朴素列表样式 */}
+                <nav className="px-2 space-y-1">
+                    {config.items.map((item) => {
+                        const isActive = currentPath === item.path || currentPath.startsWith(item.path + '/');
+                        const Icon = item.icon;
+                        return (
+                            <button
+                                key={item.path || item.id}
+                                onClick={() => handleNavClick(item.path, item.name)}
+                                className={cn(
+                                    "w-full flex items-center px-3 py-2.5 rounded-lg text-sm transition-colors",
+                                    isActive
+                                        ? "bg-gray-100 text-gray-900 font-medium"
+                                        : "text-gray-600 hover:bg-gray-50"
+                                )}
+                            >
+                                {Icon && (
+                                    <Icon className={cn(
+                                        "w-4 h-4 mr-3",
+                                        isActive ? "text-gray-900" : "text-gray-400"
+                                    )} />
+                                )}
+                                <span className="flex-1 text-left">{item.name}</span>
+                                {item.badge && (
+                                    <span className="px-1.5 py-0.5 bg-orange-100 text-orange-600 rounded text-[10px]">
+                                        {item.badge}
+                                    </span>
+                                )}
+                            </button>
+                        );
+                    })}
+                </nav>
+            </div>
+            
+            {/* 底部用户信息 */}
+            <div className="p-4 border-t border-gray-200">
+                <div className="text-xs text-gray-500">
+                    <p>当前用户: 张三</p>
+                    <p>角色: 系统管理员</p>
+                </div>
+            </div>
+        </aside>
+    );
+}

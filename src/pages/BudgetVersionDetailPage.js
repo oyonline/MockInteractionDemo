@@ -368,15 +368,6 @@ export default function BudgetVersionDetailPage({ versionId, versionData, onClos
                 </div>
                 <div className="flex items-center gap-3">
                     <SecondaryButton icon={Download}>导出Excel</SecondaryButton>
-                    <SecondaryButton icon={Upload}>导入数据</SecondaryButton>
-                    {isEditing ? (
-                        <>
-                            <SecondaryButton icon={X} onClick={() => setIsEditing(false)}>取消</SecondaryButton>
-                            <PrimaryButton icon={Save} onClick={() => setIsEditing(false)}>保存</PrimaryButton>
-                        </>
-                    ) : (
-                        <PrimaryButton icon={Edit2} onClick={() => setIsEditing(true)}>编辑预算</PrimaryButton>
-                    )}
                 </div>
             </div>
 

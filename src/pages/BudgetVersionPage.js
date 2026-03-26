@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import {
     Search, Plus, Edit2, Trash2, X, Save, Download, Upload,
     FileText, DollarSign, Check,
-    Building2, Copy, Eye, Lock, Paperclip
+    Building2, Eye, Lock, Paperclip
 } from 'lucide-react';
 
 // 轻量工具：className 拼接
@@ -50,6 +50,11 @@ const initialBudgetVersions = [
     { id: '12', code: 'BV-2024-CEO', name: '2024 总裁办预算', budgetYear: '2024', effectiveDate: '2024-01-01', totalBudget: 1200000, status: 'active', costCenterCode: 'CEOOffice001', createdBy: 'Admin', createdAt: '2023-11-20', description: '总裁办' },
     { id: '13', code: 'BV-2024-PD', name: '2024 产品开发部预算', budgetYear: '2024', effectiveDate: '2024-01-01', totalBudget: 2200000, status: 'active', costCenterCode: 'ProductDev001', createdBy: 'Admin', createdAt: '2023-11-20', description: '产品开发部' },
     { id: '14', code: 'BV-2024-RD', name: '2024 产品研发部预算', budgetYear: '2024', effectiveDate: '2024-01-01', totalBudget: 3800000, status: 'active', costCenterCode: 'ProductRD001', createdBy: 'Admin', createdAt: '2023-11-20', description: '产品研发部' },
+    // 草稿状态数据
+    { id: '15', code: 'BV-2025-001', name: '2025 Amazon预算V1', budgetYear: '2025', effectiveDate: '2025-01-01', totalBudget: 6000000, status: 'draft', costCenterCode: 'Amazon001', createdBy: 'Jason', createdAt: '2024-10-15', description: '2025年度Amazon预算草稿' },
+    { id: '16', code: 'BV-2025-002', name: '2025 沃尔玛预算V1', budgetYear: '2025', effectiveDate: '2025-01-01', totalBudget: 5500000, status: 'draft', costCenterCode: 'Walmart001', createdBy: 'Jason', createdAt: '2024-10-15', description: '2025年度沃尔玛预算草稿' },
+    { id: '17', code: 'BV-2025-003', name: '2025 中国预算V1', budgetYear: '2025', effectiveDate: '2025-01-01', totalBudget: 5000000, status: 'draft', costCenterCode: 'China001', createdBy: 'Effie', createdAt: '2024-10-20', description: '2025年度中国区域预算草稿' },
+    { id: '18', code: 'BV-2025-IT', name: '2025 IT部预算V1', budgetYear: '2025', effectiveDate: '2025-01-01', totalBudget: 4000000, status: 'draft', costCenterCode: 'IT001', createdBy: 'Admin', createdAt: '2024-10-25', description: '2025年度IT部门预算草稿' },
 ];
 
 // --------------- 轻量级 UI 组件 ---------------
@@ -520,20 +525,6 @@ export default function BudgetVersionPage({ onOpenDetail }) {
         });
     };
 
-    const handleCopy = (item) => {
-        const newItem = {
-            ...item,
-            id: `${Date.now()}`,
-            code: `${item.code}-COPY`,
-            name: `${item.name} (副本)`,
-            status: 'draft',
-            costCenterCode: item.costCenterCode ?? item.costCenterCodes?.[0],
-            createdAt: new Date().toISOString().split('T')[0],
-            createdBy: 'Admin',
-        };
-        setVersions(prev => [...prev, newItem]);
-    };
-
     const years = [...new Set(versions.map(v => v.budgetYear))].sort().reverse();
 
     return (
@@ -545,8 +536,6 @@ export default function BudgetVersionPage({ onOpenDetail }) {
                     <p className="text-sm text-gray-500 mt-1">管理年度预算版本，关联成本中心</p>
                 </div>
                 <div className="flex items-center gap-3">
-                    <SecondaryButton icon={Upload}>导入</SecondaryButton>
-                    <SecondaryButton icon={Download}>导出</SecondaryButton>
                     <PrimaryButton icon={Plus} onClick={handleAdd}>新建预算版本</PrimaryButton>
                 </div>
             </div>
@@ -688,8 +677,12 @@ export default function BudgetVersionPage({ onOpenDetail }) {
                                         <td className="px-4 py-3">
                                             <div className="flex items-center gap-1">
                                                 <IconButton icon={Eye} onClick={() => handleView(item)} title="查看" />
-                                                <IconButton icon={Edit2} onClick={() => handleEdit(item)} title="编辑" />
-                                                <IconButton icon={Copy} onClick={() => handleCopy(item)} title="复制" />
+                                                <IconButton
+                                                    icon={Edit2}
+                                                    onClick={() => handleEdit(item)}
+                                                    title="编辑"
+                                                    disabled={item.status === 'active'}
+                                                />
                                                 <IconButton
                                                     icon={Trash2}
                                                     onClick={() => handleDelete(item.id)}

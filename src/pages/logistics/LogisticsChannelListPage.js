@@ -31,6 +31,19 @@ function getVendorName(vendorId) {
   return v ? v.name : '-';
 }
 
+function formatBoolAny(val) {
+  if (val === true) return '是';
+  if (val === false) return '否';
+  return '不限';
+}
+
+function formatArrayPreview(arr, max = 2) {
+  if (!Array.isArray(arr) || arr.length === 0) return '-';
+  const head = arr.slice(0, max).join('、');
+  if (arr.length <= max) return head;
+  return `${head} +${arr.length - max}`;
+}
+
 function LogisticsChannelListPage({ onOpenDetail }) {
   const [filters, setFilters] = useState({ keyword: '', status: '', approvalStatus: '' });
   const [page, setPage] = useState(1);
@@ -59,7 +72,7 @@ function LogisticsChannelListPage({ onOpenDetail }) {
   const totalPages = Math.max(1, Math.ceil(listData.total / PAGE_SIZE));
 
   const openDetail = (row) => {
-    onOpenDetail && onOpenDetail({ id: `channel-${row.id}`, name: `渠道-${row.name}`, path: `/logistics/channels/${row.id}`, data: { id: row.id } });
+    onOpenDetail && onOpenDetail({ id: `channel-${row.id}`, name: `渠道-${row.name || row.code || row.id}`, path: `/logistics/channels/${row.id}`, data: { id: row.id } });
   };
 
   const openCreate = () => { setEditingRow(null); setForm({ vendorId: '', code: '', name: '', status: 'enabled' }); setShowFormModal(true); };
@@ -158,12 +171,18 @@ function LogisticsChannelListPage({ onOpenDetail }) {
       </div>
       <div className="flex-1 bg-white rounded-lg shadow-sm flex flex-col overflow-hidden border border-gray-200">
         <div className="flex-1 overflow-auto min-h-0">
-          <table className="w-full text-sm min-w-[900px]">
+          <table className="w-full text-sm min-w-[1200px]">
             <thead className="bg-gray-50 sticky top-0 z-[1]">
               <tr className="border-b">
                 <th className="px-4 py-3 text-left font-medium text-gray-600 whitespace-nowrap">编码</th>
                 <th className="px-4 py-3 text-left font-medium text-gray-600 whitespace-nowrap">名称</th>
                 <th className="px-4 py-3 text-left font-medium text-gray-600 whitespace-nowrap">物流商</th>
+                <th className="px-4 py-3 text-left font-medium text-gray-600 whitespace-nowrap">物流方式</th>
+                <th className="px-4 py-3 text-left font-medium text-gray-600 whitespace-nowrap">是否包税</th>
+                <th className="px-4 py-3 text-left font-medium text-gray-600 whitespace-nowrap">订单类型</th>
+                <th className="px-4 py-3 text-left font-medium text-gray-600 whitespace-nowrap">支持国家</th>
+                <th className="px-4 py-3 text-left font-medium text-gray-600 whitespace-nowrap">物流类型</th>
+                <th className="px-4 py-3 text-left font-medium text-gray-600 whitespace-nowrap">计费类型</th>
                 <th className="px-4 py-3 text-left font-medium text-gray-600 whitespace-nowrap">状态</th>
                 <th className="px-4 py-3 text-left font-medium text-gray-600 whitespace-nowrap">审批状态</th>
                 <th className="px-4 py-3 text-left font-medium text-gray-600 whitespace-nowrap">更新时间</th>
@@ -175,17 +194,23 @@ function LogisticsChannelListPage({ onOpenDetail }) {
                 <tr key={row.id} className="border-b hover:bg-gray-50">
                   <td className="px-4 py-3 font-mono text-gray-800">{row.code}</td>
                   <td className="px-4 py-3">
-                    <button type="button" onClick={() => openDetail(row)} className="text-blue-600 hover:underline text-left font-medium">{row.name}</button>
+                    <button type="button" onClick={() => openDetail(row)} className="text-blue-600 hover:underline text-left font-medium">{row.name || row.code || '-'}</button>
                   </td>
                   <td className="px-4 py-3 text-gray-700">{getVendorName(row.vendorId)}</td>
+                  <td className="px-4 py-3 text-gray-600">{row.logisticsMethod ? String(row.logisticsMethod) : '-'}</td>
+                  <td className="px-4 py-3 text-gray-600">{formatBoolAny(row.isTaxIncluded)}</td>
+                  <td className="px-4 py-3 text-gray-600">{formatArrayPreview(Array.isArray(row.orderTypes) ? row.orderTypes : (typeof row.orderTypes === 'string' ? row.orderTypes.split(/[,，\s]+/).map((s) => s.trim()).filter(Boolean) : []), 2)}</td>
+                  <td className="px-4 py-3 text-gray-600">{formatArrayPreview(Array.isArray(row.countries) ? row.countries : (typeof row.countries === 'string' ? row.countries.split(/[,，\s]+/).map((s) => s.trim()).filter(Boolean) : []), 2)}</td>
+                  <td className="px-4 py-3 text-gray-600">{row.logisticsType ? String(row.logisticsType) : '-'}</td>
+                  <td className="px-4 py-3 text-gray-600">{row.billingType ? String(row.billingType) : '-'}</td>
                   <td className="px-4 py-3">{statusBadge(row.status)}</td>
                   <td className="px-4 py-3">{approvalBadge(row.approvalStatus)}</td>
                   <td className="px-4 py-3 text-gray-500">{formatDateTime(row.updatedAt)}</td>
                   <td className="px-4 py-3 text-right">
                     <ActionBar
-                      primary={{ label: '详情', onClick: () => openDetail(row) }}
+                      primary={{ label: '编辑', onClick: () => openDetail(row) }}
                       more={[
-                        { label: '编辑', onClick: () => openEdit(row) },
+                        { label: '快速编辑', onClick: () => openEdit(row) },
                         { label: '提交审批', onClick: () => handleSubmit(row), disabled: row.approvalStatus !== 'draft' && row.approvalStatus !== 'rejected' },
                         { label: '删除', danger: true, onClick: () => handleRemove(row) },
                       ]}

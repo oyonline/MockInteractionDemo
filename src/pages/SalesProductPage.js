@@ -1,8 +1,7 @@
 import React, { useState } from 'react';
 import {
   Search, Filter, Star,
-  Package, DollarSign, BarChart2, ShoppingCart, Globe, Edit2, Eye,
-  ArrowUpRight, ArrowDownRight, Minus, X
+  Globe, Edit2, Eye, X
 } from 'lucide-react';
 
 const SalesProductPage = () => {
@@ -11,374 +10,280 @@ const SalesProductPage = () => {
     salesGrade: '',
     salesStatus: '',
     channel: '',
-    category: '',
-    inventoryStatus: ''
+    salesTeam: '',
+    amazonCategory: '',
+    salesCategoryL1: '',
+    site: '',
+    planType: '',
+    isNew: ''
   });
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
   // eslint-disable-next-line no-unused-vars -- 预留 table/card 切换
   const [viewMode, setViewMode] = useState('table');
 
-  // 销售产品数据
+  // 销售产品基础数据
   const salesProductData = [
     {
       id: 'SP-001',
       sku: 'KK-RL-2024-7FT-M',
-      spu: 'KK-RL-2024',
       productName: 'Royale Legend 7尺路亚竿 中调',
       productNameEN: 'Royale Legend 7ft Casting Rod Medium',
+      image: 'https://images.unsplash.com/photo-1544551763-46a013bb70d5?w=100&h=100&fit=crop',
       brand: 'KastKing',
-      category: '钓鱼竿 / 路亚竿',
+      amazonCategory: 'Sports & Outdoors > Fishing > Rods',
+      salesCategoryL1: '渔具',
+      salesCategoryL2: '钓鱼竿',
       series: 'Royale Legend系列',
       salesGrade: 'A',
       salesStatus: '主推款',
       channels: ['Amazon US', 'Amazon EU', 'eBay', '独立站'],
-      msrp: 189.99,
-      costPrice: 45.00,
-      grossMargin: 76.3,
-      currentPrice: 169.99,
-      priceStatus: '促销中',
-      sales30d: 1256,
-      salesAmount30d: 213294.44,
-      sales7d: 312,
-      salesTrend: 'up', // up, down, stable
-      trendPercent: 15.2,
-      inventoryTotal: 5680,
-      inventoryFBA: 3200,
-      inventoryDays: 45,
-      inventoryStatus: '充足',
-      salesRank: 1,
-      categoryRank: 1,
-      reviewScore: 4.7,
-      reviewCount: 2845,
-      listingStatus: '已上架',
-      listingQuality: 'A',
-      lastPriceUpdate: '2025-01-15',
       salesManager: '王芳',
+      salesTeam: '渔具组',
+      isNew: false,
+      launchDate: '2024-03-15',
+      planType: '精铺',
+      sites: ['US', 'CA', 'UK'],
+      asins: [
+        { site: 'US', asin: 'B08N5WRWNW' },
+        { site: 'CA', asin: 'B08N5WRWNW' },
+        { site: 'UK', asin: 'B08N5WRWNX' }
+      ],
       updateTime: '2025-02-08 10:30'
     },
     {
       id: 'SP-002',
       sku: 'KK-MG-2024-3000',
-      spu: 'KK-MG-2024',
       productName: 'Megatron 3000纺车轮',
       productNameEN: 'Megatron 3000 Spinning Reel',
+      image: 'https://images.unsplash.com/photo-1516967124798-10656f7dca28?w=100&h=100&fit=crop',
       brand: 'KastKing',
-      category: '渔线轮 / 纺车轮',
+      amazonCategory: 'Sports & Outdoors > Fishing > Reels',
+      salesCategoryL1: '渔具',
+      salesCategoryL2: '渔线轮',
       series: 'Megatron系列',
       salesGrade: 'A',
       salesStatus: '主推款',
       channels: ['Amazon US', 'Amazon EU', '独立站'],
-      msrp: 109.99,
-      costPrice: 28.50,
-      grossMargin: 74.1,
-      currentPrice: 99.99,
-      priceStatus: '正常',
-      sales30d: 892,
-      salesAmount30d: 89191.08,
-      sales7d: 198,
-      salesTrend: 'up',
-      trendPercent: 8.5,
-      inventoryTotal: 4200,
-      inventoryFBA: 2800,
-      inventoryDays: 47,
-      inventoryStatus: '充足',
-      salesRank: 2,
-      categoryRank: 1,
-      reviewScore: 4.6,
-      reviewCount: 1892,
-      listingStatus: '已上架',
-      listingQuality: 'A',
-      lastPriceUpdate: '2025-01-20',
       salesManager: '王芳',
+      salesTeam: '渔具组',
+      isNew: false,
+      launchDate: '2024-01-20',
+      planType: '精做',
+      sites: ['US', 'EU'],
+      asins: [
+        { site: 'US', asin: 'B08Q4KMBGK' },
+        { site: 'EU', asin: 'B08Q4KMBGL' }
+      ],
       updateTime: '2025-02-08 09:15'
     },
     {
       id: 'SP-003',
       sku: 'KK-SD-2024-7FT-XF',
-      spu: 'KK-SD-2024',
       productName: 'Speed Demon 7尺竞技竿 超快调',
       productNameEN: 'Speed Demon 7ft Competition Rod Extra Fast',
+      image: 'https://images.unsplash.com/photo-1544551763-46a013bb70d5?w=100&h=100&fit=crop',
       brand: 'KastKing',
-      category: '钓鱼竿 / 路亚竿',
+      amazonCategory: 'Sports & Outdoors > Fishing > Rods',
+      salesCategoryL1: '渔具',
+      salesCategoryL2: '钓鱼竿',
       series: 'Speed Demon系列',
       salesGrade: 'B',
       salesStatus: '常规款',
       channels: ['Amazon US', '独立站'],
-      msrp: 259.99,
-      costPrice: 72.00,
-      grossMargin: 72.3,
-      currentPrice: 259.99,
-      priceStatus: '正常',
-      sales30d: 456,
-      salesAmount30d: 118555.44,
-      sales7d: 102,
-      salesTrend: 'stable',
-      trendPercent: 0.5,
-      inventoryTotal: 1850,
-      inventoryFBA: 1200,
-      inventoryDays: 40,
-      inventoryStatus: '充足',
-      salesRank: 3,
-      categoryRank: 2,
-      reviewScore: 4.8,
-      reviewCount: 567,
-      listingStatus: '已上架',
-      listingQuality: 'A',
-      lastPriceUpdate: '2025-01-10',
       salesManager: '李明',
+      salesTeam: '渔具组',
+      isNew: false,
+      launchDate: '2023-11-10',
+      planType: '精铺',
+      sites: ['US', 'JP'],
+      asins: [
+        { site: 'US', asin: 'B08Q4KMBGM' },
+        { site: 'JP', asin: 'B08Q4KMBGN' }
+      ],
       updateTime: '2025-02-07 16:45'
     },
     {
       id: 'SP-004',
       sku: 'KK-SK3-2024-12FT-H',
-      spu: 'KK-SK3-2024',
       productName: 'Sharky III 12尺海竿 硬调',
       productNameEN: 'Sharky III 12ft Surf Rod Heavy',
+      image: 'https://images.unsplash.com/photo-1544551763-46a013bb70d5?w=100&h=100&fit=crop',
       brand: 'KastKing',
-      category: '钓鱼竿 / 海竿',
+      amazonCategory: 'Sports & Outdoors > Fishing > Rods',
+      salesCategoryL1: '渔具',
+      salesCategoryL2: '钓鱼竿',
       series: 'Sharky III系列',
       salesGrade: 'B',
       salesStatus: '常规款',
       channels: ['Amazon US', 'eBay'],
-      msrp: 249.99,
-      costPrice: 68.00,
-      grossMargin: 72.8,
-      currentPrice: 229.99,
-      priceStatus: '促销中',
-      sales30d: 234,
-      salesAmount30d: 53817.66,
-      sales7d: 48,
-      salesTrend: 'down',
-      trendPercent: -5.2,
-      inventoryTotal: 980,
-      inventoryFBA: 650,
-      inventoryDays: 42,
-      inventoryStatus: '充足',
-      salesRank: 5,
-      categoryRank: 1,
-      reviewScore: 4.5,
-      reviewCount: 423,
-      listingStatus: '已上架',
-      listingQuality: 'B',
-      lastPriceUpdate: '2025-02-01',
       salesManager: '李明',
+      salesTeam: '渔具组',
+      isNew: true,
+      launchDate: '2025-01-05',
+      planType: '精做',
+      sites: ['US'],
+      asins: [
+        { site: 'US', asin: 'B0DXXXXXXX' }
+      ],
       updateTime: '2025-02-08 11:20'
     },
     {
       id: 'SP-005',
       sku: 'PF-TAC-2024-L-BK',
-      spu: 'PF-TAC-2024',
       productName: '战术路亚包 L号 黑色',
       productNameEN: 'Tactical Tackle Bag Large Black',
+      image: 'https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=100&h=100&fit=crop',
       brand: 'Piscifun',
-      category: '钓鱼包 / 路亚包',
+      amazonCategory: 'Sports & Outdoors > Fishing > Tackle Bags',
+      salesCategoryL1: '服饰箱包',
+      salesCategoryL2: '路亚包',
       series: '战术系列',
       salesGrade: 'B',
       salesStatus: '常规款',
       channels: ['Amazon US', '独立站'],
-      msrp: 89.99,
-      costPrice: 22.00,
-      grossMargin: 75.5,
-      currentPrice: 79.99,
-      priceStatus: '促销中',
-      sales30d: 567,
-      salesAmount30d: 45354.33,
-      sales7d: 145,
-      salesTrend: 'up',
-      trendPercent: 12.3,
-      inventoryTotal: 2100,
-      inventoryFBA: 1500,
-      inventoryDays: 37,
-      inventoryStatus: '充足',
-      salesRank: 4,
-      categoryRank: 1,
-      reviewScore: 4.4,
-      reviewCount: 892,
-      listingStatus: '已上架',
-      listingQuality: 'A',
-      lastPriceUpdate: '2025-01-25',
       salesManager: '赵敏',
+      salesTeam: '服饰箱包组',
+      isNew: true,
+      launchDate: '2024-12-20',
+      planType: '铺货',
+      sites: ['US', 'CA', 'MX'],
+      asins: [
+        { site: 'US', asin: 'B08ABC1234' },
+        { site: 'CA', asin: 'B08ABC1235' },
+        { site: 'MX', asin: 'B08ABC1236' }
+      ],
       updateTime: '2025-02-08 08:45'
     },
     {
       id: 'SP-006',
       sku: 'PF-CARB-2024-20LB-150M',
-      spu: 'PF-CARB-2024',
       productName: '碳素编织线 20磅 150米',
       productNameEN: 'Carbon Braided Line 20LB 150M',
+      image: 'https://images.unsplash.com/photo-1516967124798-10656f7dca28?w=100&h=100&fit=crop',
       brand: 'Piscifun',
-      category: '钓鱼配件 / 钓鱼线',
+      amazonCategory: 'Sports & Outdoors > Fishing > Line',
+      salesCategoryL1: '渔具',
+      salesCategoryL2: '钓鱼线',
       series: '碳素系列',
       salesGrade: 'C',
       salesStatus: '长尾款',
       channels: ['Amazon US'],
-      msrp: 29.99,
-      costPrice: 6.50,
-      grossMargin: 78.3,
-      currentPrice: 24.99,
-      priceStatus: '促销中',
-      sales30d: 1890,
-      salesAmount30d: 47231.10,
-      sales7d: 423,
-      salesTrend: 'up',
-      trendPercent: 5.8,
-      inventoryTotal: 12500,
-      inventoryFBA: 8000,
-      inventoryDays: 66,
-      inventoryStatus: '充足',
-      salesRank: 6,
-      categoryRank: 2,
-      reviewScore: 4.3,
-      reviewCount: 3456,
-      listingStatus: '已上架',
-      listingQuality: 'B',
-      lastPriceUpdate: '2025-02-05',
       salesManager: '赵敏',
+      salesTeam: '渔线组',
+      isNew: false,
+      launchDate: '2024-06-15',
+      planType: '精铺',
+      sites: ['US'],
+      asins: [
+        { site: 'US', asin: 'B08DEF5678' }
+      ],
       updateTime: '2025-02-08 14:10'
     },
     {
       id: 'SP-007',
       sku: 'KK-IC-2024-25L-WH',
-      spu: 'KK-IC-2024',
       productName: 'iCool 智能钓箱 25L 白色',
       productNameEN: 'iCool Smart Cooler 25L White',
+      image: 'https://images.unsplash.com/photo-1583394838336-acd977736f90?w=100&h=100&fit=crop',
       brand: 'KastKing',
-      category: '钓鱼配件 / 钓鱼箱',
+      amazonCategory: 'Sports & Outdoors > Fishing > Coolers',
+      salesCategoryL1: '工具',
+      salesCategoryL2: '钓箱',
       series: 'iCool系列',
       salesGrade: 'C',
       salesStatus: '新品',
       channels: ['独立站'],
-      msrp: 299.99,
-      costPrice: 95.00,
-      grossMargin: 68.3,
-      currentPrice: 279.99,
-      priceStatus: '新品价',
-      sales30d: 89,
-      salesAmount30d: 24919.11,
-      sales7d: 28,
-      salesTrend: 'up',
-      trendPercent: 45.0,
-      inventoryTotal: 500,
-      inventoryFBA: 0,
-      inventoryDays: 56,
-      inventoryStatus: '充足',
-      salesRank: 8,
-      categoryRank: 1,
-      reviewScore: 4.9,
-      reviewCount: 23,
-      listingStatus: '已上架',
-      listingQuality: 'A',
-      lastPriceUpdate: '2025-01-28',
       salesManager: '李明',
+      salesTeam: '工具组',
+      isNew: true,
+      launchDate: '2025-01-25',
+      planType: '精做',
+      sites: ['US', 'EU', 'JP'],
+      asins: [
+        { site: 'US', asin: 'B0DYYYYYYY' },
+        { site: 'EU', asin: 'B0DYYYYYYZ' },
+        { site: 'JP', asin: 'B0DYYYYYYW' }
+      ],
       updateTime: '2025-02-08 09:00'
     },
     {
       id: 'SP-008',
       sku: 'KK-RL-2023-6FT-ML',
-      spu: 'KK-RL-2023',
       productName: 'Royale Legend 6尺路亚竿 中轻调 (旧款)',
       productNameEN: 'Royale Legend 6ft Casting Rod Medium Light (Legacy)',
+      image: 'https://images.unsplash.com/photo-1544551763-46a013bb70d5?w=100&h=100&fit=crop',
       brand: 'KastKing',
-      category: '钓鱼竿 / 路亚竿',
+      amazonCategory: 'Sports & Outdoors > Fishing > Rods',
+      salesCategoryL1: '渔具',
+      salesCategoryL2: '钓鱼竿',
       series: 'Royale Legend系列',
       salesGrade: 'D',
       salesStatus: '淘汰款',
       channels: ['Amazon US'],
-      msrp: 149.99,
-      costPrice: 38.00,
-      grossMargin: 74.7,
-      currentPrice: 99.99,
-      priceStatus: '清仓',
-      sales30d: 45,
-      salesAmount30d: 4499.55,
-      sales7d: 8,
-      salesTrend: 'down',
-      trendPercent: -25.0,
-      inventoryTotal: 320,
-      inventoryFBA: 280,
-      inventoryDays: 71,
-      inventoryStatus: '需清理',
-      salesRank: 12,
-      categoryRank: 8,
-      reviewScore: 4.2,
-      reviewCount: 1245,
-      listingStatus: '已上架',
-      listingQuality: 'C',
-      lastPriceUpdate: '2025-02-01',
       salesManager: '王芳',
+      salesTeam: '渔具组',
+      isNew: false,
+      launchDate: '2023-08-10',
+      planType: '精铺',
+      sites: ['US', 'CA'],
+      asins: [
+        { site: 'US', asin: 'B08GHI9999' },
+        { site: 'CA', asin: 'B08GHI9998' }
+      ],
       updateTime: '2025-02-07 15:30'
     },
     {
       id: 'SP-009',
       sku: 'KK-SK3R-2024-5000',
-      spu: 'KK-SK3R-2024',
       productName: 'Sharky III 5000海钓轮',
       productNameEN: 'Sharky III 5000 Saltwater Reel',
+      image: 'https://images.unsplash.com/photo-1516967124798-10656f7dca28?w=100&h=100&fit=crop',
       brand: 'KastKing',
-      category: '渔线轮 / 纺车轮',
+      amazonCategory: 'Sports & Outdoors > Fishing > Reels',
+      salesCategoryL1: '渔具',
+      salesCategoryL2: '渔线轮',
       series: 'Sharky III系列',
       salesGrade: 'B',
       salesStatus: '常规款',
       channels: ['Amazon US', 'eBay', '独立站'],
-      msrp: 199.99,
-      costPrice: 52.00,
-      grossMargin: 74.0,
-      currentPrice: 179.99,
-      priceStatus: '促销中',
-      sales30d: 312,
-      salesAmount30d: 56156.88,
-      sales7d: 78,
-      salesTrend: 'stable',
-      trendPercent: 1.2,
-      inventoryTotal: 1450,
-      inventoryFBA: 980,
-      inventoryDays: 46,
-      inventoryStatus: '充足',
-      salesRank: 7,
-      categoryRank: 2,
-      reviewScore: 4.6,
-      reviewCount: 678,
-      listingStatus: '已上架',
-      listingQuality: 'A',
-      lastPriceUpdate: '2025-01-18',
       salesManager: '李明',
+      salesTeam: '渔具组',
+      isNew: false,
+      launchDate: '2024-04-20',
+      planType: '精做',
+      sites: ['US', 'UK', 'DE', 'FR'],
+      asins: [
+        { site: 'US', asin: 'B08JKL0000' },
+        { site: 'UK', asin: 'B08JKL0001' },
+        { site: 'DE', asin: 'B08JKL0002' },
+        { site: 'FR', asin: 'B08JKL0003' }
+      ],
       updateTime: '2025-02-08 13:25'
     },
     {
       id: 'SP-010',
       sku: 'PF-TAC-2024-M-GN',
-      spu: 'PF-TAC-2024',
       productName: '战术路亚包 M号 军绿',
       productNameEN: 'Tactical Tackle Bag Medium Army Green',
+      image: 'https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=100&h=100&fit=crop',
       brand: 'Piscifun',
-      category: '钓鱼包 / 路亚包',
+      amazonCategory: 'Sports & Outdoors > Fishing > Tackle Bags',
+      salesCategoryL1: '服饰箱包',
+      salesCategoryL2: '路亚包',
       series: '战术系列',
       salesGrade: 'C',
       salesStatus: '长尾款',
       channels: ['Amazon US'],
-      msrp: 69.99,
-      costPrice: 18.00,
-      grossMargin: 74.3,
-      currentPrice: 59.99,
-      priceStatus: '正常',
-      sales30d: 234,
-      salesAmount30d: 14037.66,
-      sales7d: 52,
-      salesTrend: 'down',
-      trendPercent: -8.5,
-      inventoryTotal: 1800,
-      inventoryFBA: 1200,
-      inventoryDays: 77,
-      inventoryStatus: '偏高',
-      salesRank: 9,
-      categoryRank: 3,
-      reviewScore: 4.3,
-      reviewCount: 456,
-      listingStatus: '已上架',
-      listingQuality: 'B',
-      lastPriceUpdate: '2025-01-12',
       salesManager: '赵敏',
+      salesTeam: '服饰箱包组',
+      isNew: false,
+      launchDate: '2024-09-01',
+      planType: '铺货',
+      sites: ['US'],
+      asins: [
+        { site: 'US', asin: 'B08MNO1111' }
+      ],
       updateTime: '2025-02-08 10:50'
     }
   ];
@@ -406,27 +311,56 @@ const SalesProductPage = () => {
     return styles[status] || 'bg-gray-100 text-gray-700';
   };
 
-  // 获取库存状态样式
-  const getInventoryStatusStyle = (status) => {
+  // 获取销售小组样式
+  const getSalesTeamStyle = (team) => {
     const styles = {
-      '充足': 'text-green-600',
-      '偏高': 'text-yellow-600',
-      '偏低': 'text-orange-600',
-      '缺货': 'text-red-600',
-      '需清理': 'text-red-600'
+      '渔具组': 'bg-blue-100 text-blue-700',
+      '渔线组': 'bg-cyan-100 text-cyan-700',
+      '工具组': 'bg-orange-100 text-orange-700',
+      '服饰箱包组': 'bg-pink-100 text-pink-700'
     };
-    return styles[status] || 'text-gray-600';
+    return styles[team] || 'bg-gray-100 text-gray-700';
   };
 
-  // 获取趋势图标
-  const getTrendIcon = (trend, percent) => {
-    if (trend === 'up') {
-      return <span className="inline-flex items-center text-green-600 text-xs"><ArrowUpRight className="w-3 h-3" />+{percent}%</span>;
-    } else if (trend === 'down') {
-      return <span className="inline-flex items-center text-red-600 text-xs"><ArrowDownRight className="w-3 h-3" />{percent}%</span>;
-    }
-    return <span className="inline-flex items-center text-gray-500 text-xs"><Minus className="w-3 h-3" />{percent}%</span>;
+  // 获取销售一级类目样式
+  const getSalesCategoryL1Style = (category) => {
+    const styles = {
+      '渔具': 'bg-emerald-100 text-emerald-700',
+      '服饰箱包': 'bg-purple-100 text-purple-700',
+      '工具': 'bg-amber-100 text-amber-700'
+    };
+    return styles[category] || 'bg-gray-100 text-gray-700';
   };
+
+  // 获取方案类型样式
+  const getPlanTypeStyle = (type) => {
+    const styles = {
+      '精做': 'bg-red-100 text-red-700 border-red-200',
+      '精铺': 'bg-blue-100 text-blue-700 border-blue-200',
+      '铺货': 'bg-gray-100 text-gray-700 border-gray-200'
+    };
+    return styles[type] || 'bg-gray-100 text-gray-700';
+  };
+
+  // 获取站点flag
+  const getSiteFlag = (site) => {
+    const flags = {
+      'US': '🇺🇸',
+      'CA': '🇨🇦',
+      'MX': '🇲🇽',
+      'UK': '🇬🇧',
+      'DE': '🇩🇪',
+      'FR': '🇫🇷',
+      'IT': '🇮🇹',
+      'ES': '🇪🇸',
+      'JP': '🇯🇵',
+      'AU': '🇦🇺',
+      'EU': '🇪🇺'
+    };
+    return flags[site] || '🌐';
+  };
+
+
 
   // 筛选数据
   const filteredData = salesProductData.filter(product => {
@@ -435,19 +369,36 @@ const SalesProductPage = () => {
     if (filters.salesGrade && product.salesGrade !== filters.salesGrade) return false;
     if (filters.salesStatus && product.salesStatus !== filters.salesStatus) return false;
     if (filters.channel && !product.channels.includes(filters.channel)) return false;
-    if (filters.inventoryStatus && product.inventoryStatus !== filters.inventoryStatus) return false;
+    if (filters.salesTeam && product.salesTeam !== filters.salesTeam) return false;
+    if (filters.amazonCategory && !product.amazonCategory.includes(filters.amazonCategory)) return false;
+    if (filters.salesCategoryL1 && product.salesCategoryL1 !== filters.salesCategoryL1) return false;
+    if (filters.site && !product.sites.includes(filters.site)) return false;
+    if (filters.planType && product.planType !== filters.planType) return false;
+    if (filters.isNew !== '' && product.isNew !== (filters.isNew === 'true')) return false;
     return true;
   });
 
-  // 统计数据
+  // 统计数据 - 按产品和状态分布
   const stats = {
     totalProducts: salesProductData.length,
-    gradeA: salesProductData.filter(p => p.salesGrade === 'A').length,
-    gradeB: salesProductData.filter(p => p.salesGrade === 'B').length,
-    gradeC: salesProductData.filter(p => p.salesGrade === 'C').length,
-    gradeD: salesProductData.filter(p => p.salesGrade === 'D').length,
-    totalSales30d: salesProductData.reduce((sum, p) => sum + p.salesAmount30d, 0),
-    avgMargin: (salesProductData.reduce((sum, p) => sum + p.grossMargin, 0) / salesProductData.length).toFixed(1)
+    // 各销售小组产品数
+    teamYuju: salesProductData.filter(p => p.salesTeam === '渔具组').length,
+    teamYuxian: salesProductData.filter(p => p.salesTeam === '渔线组').length,
+    teamGongju: salesProductData.filter(p => p.salesTeam === '工具组').length,
+    teamFushi: salesProductData.filter(p => p.salesTeam === '服饰箱包组').length,
+    // 各销售状态产品数
+    statusMain: salesProductData.filter(p => p.salesStatus === '主推款').length,
+    statusNormal: salesProductData.filter(p => p.salesStatus === '常规款').length,
+    statusLong: salesProductData.filter(p => p.salesStatus === '长尾款').length,
+    statusNew: salesProductData.filter(p => p.salesStatus === '新品').length,
+    statusDel: salesProductData.filter(p => p.salesStatus === '淘汰款').length,
+    // 新旧产品数
+    isNewCount: salesProductData.filter(p => p.isNew).length,
+    isOldCount: salesProductData.filter(p => !p.isNew).length,
+    // 方案类型
+    planJingzuo: salesProductData.filter(p => p.planType === '精做').length,
+    planJingpu: salesProductData.filter(p => p.planType === '精铺').length,
+    planPuhuo: salesProductData.filter(p => p.planType === '铺货').length
   };
 
   const handleViewProduct = (product) => {
@@ -472,43 +423,55 @@ const SalesProductPage = () => {
           </div>
         </div>
 
-        {/* 统计卡片 */}
-        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-3 mb-4">
+        {/* 统计卡片 - 产品分布 */}
+        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-12 gap-3 mb-4">
           <div className="bg-gray-50 rounded-lg p-3 border">
             <div className="text-2xl font-bold text-gray-800">{stats.totalProducts}</div>
             <div className="text-xs text-gray-500">全部产品</div>
           </div>
+          {/* 新旧分布 */}
           <div className="bg-green-50 rounded-lg p-3 border border-green-200">
-            <div className="flex items-center gap-1">
-              <Star className="w-4 h-4 text-green-600 fill-green-600" />
-              <span className="text-2xl font-bold text-green-600">{stats.gradeA}</span>
-            </div>
-            <div className="text-xs text-green-600">A级产品</div>
+            <div className="text-2xl font-bold text-green-600">{stats.isNewCount}</div>
+            <div className="text-xs text-green-600">新品</div>
+          </div>
+          <div className="bg-gray-100 rounded-lg p-3 border border-gray-200">
+            <div className="text-2xl font-bold text-gray-600">{stats.isOldCount}</div>
+            <div className="text-xs text-gray-600">老品</div>
+          </div>
+          {/* 方案类型分布 */}
+          <div className="bg-red-50 rounded-lg p-3 border border-red-200">
+            <div className="text-2xl font-bold text-red-600">{stats.planJingzuo}</div>
+            <div className="text-xs text-red-600">精做</div>
           </div>
           <div className="bg-blue-50 rounded-lg p-3 border border-blue-200">
-            <div className="text-2xl font-bold text-blue-600">{stats.gradeB}</div>
-            <div className="text-xs text-blue-600">B级产品</div>
+            <div className="text-2xl font-bold text-blue-600">{stats.planJingpu}</div>
+            <div className="text-xs text-blue-600">精铺</div>
           </div>
-          <div className="bg-yellow-50 rounded-lg p-3 border border-yellow-200">
-            <div className="text-2xl font-bold text-yellow-600">{stats.gradeC}</div>
-            <div className="text-xs text-yellow-600">C级产品</div>
+          <div className="bg-gray-50 rounded-lg p-3 border border-gray-200">
+            <div className="text-2xl font-bold text-gray-600">{stats.planPuhuo}</div>
+            <div className="text-xs text-gray-600">铺货</div>
           </div>
-          <div className="bg-red-50 rounded-lg p-3 border border-red-200">
-            <div className="text-2xl font-bold text-red-600">{stats.gradeD}</div>
-            <div className="text-xs text-red-600">D级产品</div>
+          {/* 销售小组分布 */}
+          <div className="bg-blue-50 rounded-lg p-3 border border-blue-200">
+            <div className="text-2xl font-bold text-blue-600">{stats.teamYuju}</div>
+            <div className="text-xs text-blue-600">渔具组</div>
           </div>
-          <div className="bg-purple-50 rounded-lg p-3 border border-purple-200">
-            <div className="text-lg font-bold text-purple-600">${(stats.totalSales30d / 1000).toFixed(1)}K</div>
-            <div className="text-xs text-purple-600">30天销售额</div>
+          <div className="bg-cyan-50 rounded-lg p-3 border border-cyan-200">
+            <div className="text-2xl font-bold text-cyan-600">{stats.teamYuxian}</div>
+            <div className="text-xs text-cyan-600">渔线组</div>
           </div>
-          <div className="bg-indigo-50 rounded-lg p-3 border border-indigo-200">
-            <div className="text-2xl font-bold text-indigo-600">{stats.avgMargin}%</div>
-            <div className="text-xs text-indigo-600">平均毛利率</div>
+          <div className="bg-orange-50 rounded-lg p-3 border border-orange-200">
+            <div className="text-2xl font-bold text-orange-600">{stats.teamGongju}</div>
+            <div className="text-xs text-orange-600">工具组</div>
+          </div>
+          <div className="bg-pink-50 rounded-lg p-3 border border-pink-200">
+            <div className="text-2xl font-bold text-pink-600">{stats.teamFushi}</div>
+            <div className="text-xs text-pink-600">服饰箱包组</div>
           </div>
         </div>
 
         {/* 筛选条件 */}
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-7 gap-3">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
             <input
@@ -519,6 +482,27 @@ const SalesProductPage = () => {
               className="w-full pl-9 pr-3 py-2 border rounded-lg text-sm"
             />
           </div>
+          <select
+            value={filters.salesCategoryL1}
+            onChange={(e) => setFilters({...filters, salesCategoryL1: e.target.value})}
+            className="px-3 py-2 border rounded-lg text-sm"
+          >
+            <option value="">销售一级类目</option>
+            <option value="渔具">渔具</option>
+            <option value="服饰箱包">服饰箱包</option>
+            <option value="工具">工具</option>
+          </select>
+          <select
+            value={filters.salesTeam}
+            onChange={(e) => setFilters({...filters, salesTeam: e.target.value})}
+            className="px-3 py-2 border rounded-lg text-sm"
+          >
+            <option value="">销售小组</option>
+            <option value="渔具组">渔具组</option>
+            <option value="渔线组">渔线组</option>
+            <option value="工具组">工具组</option>
+            <option value="服饰箱包组">服饰箱包组</option>
+          </select>
           <select
             value={filters.salesGrade}
             onChange={(e) => setFilters({...filters, salesGrade: e.target.value})}
@@ -554,19 +538,41 @@ const SalesProductPage = () => {
             <option value="独立站">独立站</option>
           </select>
           <select
-            value={filters.inventoryStatus}
-            onChange={(e) => setFilters({...filters, inventoryStatus: e.target.value})}
+            value={filters.site}
+            onChange={(e) => setFilters({...filters, site: e.target.value})}
             className="px-3 py-2 border rounded-lg text-sm"
           >
-            <option value="">库存状态</option>
-            <option value="充足">充足</option>
-            <option value="偏高">偏高</option>
-            <option value="偏低">偏低</option>
-            <option value="缺货">缺货</option>
-            <option value="需清理">需清理</option>
+            <option value="">站点</option>
+            <option value="US">🇺🇸 美国</option>
+            <option value="CA">🇨🇦 加拿大</option>
+            <option value="MX">🇲🇽 墨西哥</option>
+            <option value="UK">🇬🇧 英国</option>
+            <option value="DE">🇩🇪 德国</option>
+            <option value="FR">🇫🇷 法国</option>
+            <option value="JP">🇯🇵 日本</option>
+            <option value="AU">🇦🇺 澳洲</option>
+          </select>
+          <select
+            value={filters.planType}
+            onChange={(e) => setFilters({...filters, planType: e.target.value})}
+            className="px-3 py-2 border rounded-lg text-sm"
+          >
+            <option value="">方案类型</option>
+            <option value="精做">精做</option>
+            <option value="精铺">精铺</option>
+            <option value="铺货">铺货</option>
+          </select>
+          <select
+            value={filters.isNew}
+            onChange={(e) => setFilters({...filters, isNew: e.target.value})}
+            className="px-3 py-2 border rounded-lg text-sm"
+          >
+            <option value="">新旧标签</option>
+            <option value="true">新品</option>
+            <option value="false">老品</option>
           </select>
           <button
-            onClick={() => setFilters({ keyword: '', salesGrade: '', salesStatus: '', channel: '', category: '', inventoryStatus: '' })}
+            onClick={() => setFilters({ keyword: '', salesGrade: '', salesStatus: '', channel: '', salesTeam: '', amazonCategory: '', salesCategoryL1: '', site: '', planType: '', isNew: '' })}
             className="px-3 py-2 border rounded-lg text-sm hover:bg-gray-50"
           >
             重置筛选
@@ -581,19 +587,22 @@ const SalesProductPage = () => {
             <table className="w-full text-sm min-w-[1600px]">
               <thead className="bg-gray-50 sticky top-0">
                 <tr className="border-b">
-                  <th className="px-3 py-3 text-left font-medium text-gray-600 whitespace-nowrap">排名</th>
-                  <th className="px-3 py-3 text-left font-medium text-gray-600 whitespace-nowrap">SKU / 产品信息</th>
+                  <th className="px-3 py-3 text-left font-medium text-gray-600 whitespace-nowrap">产品图片</th>
+                  <th className="px-3 py-3 text-left font-medium text-gray-600 whitespace-nowrap">SKU / 产品名称</th>
+                  <th className="px-3 py-3 text-left font-medium text-gray-600 whitespace-nowrap">品牌</th>
+                  <th className="px-3 py-3 text-left font-medium text-gray-600 whitespace-nowrap">亚马逊类目</th>
+                  <th className="px-3 py-3 text-center font-medium text-gray-600 whitespace-nowrap">销售一级类目</th>
+                  <th className="px-3 py-3 text-center font-medium text-gray-600 whitespace-nowrap">销售二级类目</th>
+                  <th className="px-3 py-3 text-left font-medium text-gray-600 whitespace-nowrap">销售系列</th>
+                  <th className="px-3 py-3 text-center font-medium text-gray-600 whitespace-nowrap">销售小组</th>
+                  <th className="px-3 py-3 text-left font-medium text-gray-600 whitespace-nowrap">销售负责人</th>
                   <th className="px-3 py-3 text-center font-medium text-gray-600 whitespace-nowrap">销售等级</th>
                   <th className="px-3 py-3 text-center font-medium text-gray-600 whitespace-nowrap">销售状态</th>
+                  <th className="px-3 py-3 text-center font-medium text-gray-600 whitespace-nowrap">站点</th>
+                  <th className="px-3 py-3 text-left font-medium text-gray-600 whitespace-nowrap">ASIN</th>
+                  <th className="px-3 py-3 text-center font-medium text-gray-600 whitespace-nowrap">新旧</th>
+                  <th className="px-3 py-3 text-center font-medium text-gray-600 whitespace-nowrap">方案</th>
                   <th className="px-3 py-3 text-left font-medium text-gray-600 whitespace-nowrap">销售渠道</th>
-                  <th className="px-3 py-3 text-right font-medium text-gray-600 whitespace-nowrap">售价/成本</th>
-                  <th className="px-3 py-3 text-right font-medium text-gray-600 whitespace-nowrap">毛利率</th>
-                  <th className="px-3 py-3 text-right font-medium text-gray-600 whitespace-nowrap">30天销量</th>
-                  <th className="px-3 py-3 text-right font-medium text-gray-600 whitespace-nowrap">30天销售额</th>
-                  <th className="px-3 py-3 text-center font-medium text-gray-600 whitespace-nowrap">趋势</th>
-                  <th className="px-3 py-3 text-right font-medium text-gray-600 whitespace-nowrap">库存/天数</th>
-                  <th className="px-3 py-3 text-center font-medium text-gray-600 whitespace-nowrap">评分</th>
-                  <th className="px-3 py-3 text-left font-medium text-gray-600 whitespace-nowrap">销售负责人</th>
                   <th className="px-3 py-3 text-left font-medium text-gray-600 whitespace-nowrap">操作</th>
                 </tr>
               </thead>
@@ -601,19 +610,33 @@ const SalesProductPage = () => {
                 {filteredData.map((product) => (
                   <tr key={product.id} className="border-b hover:bg-gray-50">
                     <td className="px-3 py-3">
-                      <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${
-                        product.salesRank <= 3 ? 'bg-yellow-100 text-yellow-700' : 'bg-gray-100 text-gray-600'
-                      }`}>
-                        {product.salesRank}
-                      </div>
+                      <img 
+                        src={product.image} 
+                        alt={product.productName}
+                        className="w-12 h-12 rounded-lg object-cover border"
+                      />
                     </td>
                     <td className="px-3 py-3">
-                      <div className="max-w-[280px]">
+                      <div className="max-w-[200px]">
                         <div className="font-mono text-xs text-blue-600 mb-1">{product.sku}</div>
                         <div className="font-medium text-gray-900 truncate">{product.productName}</div>
-                        <div className="text-xs text-gray-500">{product.brand} · {product.category}</div>
                       </div>
                     </td>
+                    <td className="px-3 py-3 text-sm font-medium">{product.brand}</td>
+                    <td className="px-3 py-3 text-xs text-gray-600 max-w-[180px] truncate">{product.amazonCategory}</td>
+                    <td className="px-3 py-3 text-center">
+                      <span className={`px-2 py-1 rounded text-xs ${getSalesCategoryL1Style(product.salesCategoryL1)}`}>
+                        {product.salesCategoryL1}
+                      </span>
+                    </td>
+                    <td className="px-3 py-3 text-center text-xs">{product.salesCategoryL2}</td>
+                    <td className="px-3 py-3 text-xs text-gray-600">{product.series}</td>
+                    <td className="px-3 py-3 text-center">
+                      <span className={`px-2 py-1 rounded text-xs ${getSalesTeamStyle(product.salesTeam)}`}>
+                        {product.salesTeam}
+                      </span>
+                    </td>
+                    <td className="px-3 py-3 text-xs whitespace-nowrap">{product.salesManager}</td>
                     <td className="px-3 py-3 text-center">
                       <span className={`inline-flex items-center justify-center w-8 h-8 rounded-full text-sm font-bold border ${getSalesGradeStyle(product.salesGrade)}`}>
                         {product.salesGrade}
@@ -622,6 +645,45 @@ const SalesProductPage = () => {
                     <td className="px-3 py-3 text-center">
                       <span className={`px-2 py-1 rounded text-xs ${getSalesStatusStyle(product.salesStatus)}`}>
                         {product.salesStatus}
+                      </span>
+                    </td>
+                    {/* 站点 */}
+                    <td className="px-3 py-3 text-center">
+                      <div className="flex items-center justify-center gap-1">
+                        {product.sites.slice(0, 3).map((site, idx) => (
+                          <span key={idx} className="text-base" title={site}>{getSiteFlag(site)}</span>
+                        ))}
+                        {product.sites.length > 3 && (
+                          <span className="text-xs text-gray-400">+{product.sites.length - 3}</span>
+                        )}
+                      </div>
+                    </td>
+                    {/* ASIN */}
+                    <td className="px-3 py-3">
+                      <div className="flex flex-col gap-0.5">
+                        {product.asins.slice(0, 2).map((item, idx) => (
+                          <div key={idx} className="flex items-center gap-1 text-xs">
+                            <span className="text-gray-400">{getSiteFlag(item.site)}</span>
+                            <span className="font-mono text-gray-600 truncate max-w-[80px]">{item.asin}</span>
+                          </div>
+                        ))}
+                        {product.asins.length > 2 && (
+                          <span className="text-xs text-gray-400">+{product.asins.length - 2} 个</span>
+                        )}
+                      </div>
+                    </td>
+                    {/* 新旧标签 */}
+                    <td className="px-3 py-3 text-center">
+                      {product.isNew ? (
+                        <span className="px-2 py-1 bg-green-100 text-green-700 rounded text-xs font-medium">新品</span>
+                      ) : (
+                        <span className="px-2 py-1 bg-gray-100 text-gray-600 rounded text-xs">老品</span>
+                      )}
+                    </td>
+                    {/* 方案类型 */}
+                    <td className="px-3 py-3 text-center">
+                      <span className={`px-2 py-1 rounded text-xs border ${getPlanTypeStyle(product.planType)}`}>
+                        {product.planType}
                       </span>
                     </td>
                     <td className="px-3 py-3">
@@ -638,36 +700,6 @@ const SalesProductPage = () => {
                         )}
                       </div>
                     </td>
-                    <td className="px-3 py-3 text-right">
-                      <div className="font-semibold text-gray-900">${product.currentPrice}</div>
-                      <div className="text-xs text-gray-500">${product.costPrice}</div>
-                    </td>
-                    <td className="px-3 py-3 text-right">
-                      <span className={`font-semibold ${product.grossMargin >= 75 ? 'text-green-600' : product.grossMargin >= 70 ? 'text-blue-600' : 'text-orange-600'}`}>
-                        {product.grossMargin}%
-                      </span>
-                    </td>
-                    <td className="px-3 py-3 text-right font-medium">{product.sales30d.toLocaleString()}</td>
-                    <td className="px-3 py-3 text-right">
-                      <span className="font-semibold">${(product.salesAmount30d / 1000).toFixed(1)}K</span>
-                    </td>
-                    <td className="px-3 py-3 text-center">
-                      {getTrendIcon(product.salesTrend, product.trendPercent)}
-                    </td>
-                    <td className="px-3 py-3 text-right">
-                      <div className="font-medium">{product.inventoryTotal.toLocaleString()}</div>
-                      <div className={`text-xs ${getInventoryStatusStyle(product.inventoryStatus)}`}>
-                        {product.inventoryDays}天 · {product.inventoryStatus}
-                      </div>
-                    </td>
-                    <td className="px-3 py-3 text-center">
-                      <div className="flex items-center justify-center gap-1">
-                        <Star className="w-3 h-3 text-yellow-500 fill-yellow-500" />
-                        <span className="font-medium">{product.reviewScore}</span>
-                      </div>
-                      <div className="text-xs text-gray-500">{product.reviewCount}</div>
-                    </td>
-                    <td className="px-3 py-3 text-xs whitespace-nowrap">{product.salesManager}</td>
                     <td className="px-3 py-3">
                       <div className="flex items-center gap-1">
                         <button
@@ -726,7 +758,13 @@ const SalesProductPage = () => {
                   <span className={`px-2 py-1 rounded text-xs ${getSalesStatusStyle(selectedProduct.salesStatus)}`}>
                     {selectedProduct.salesStatus}
                   </span>
-                  <span className="text-xs text-gray-500">{selectedProduct.brand} · {selectedProduct.category}</span>
+                  <span className="text-xs text-gray-500">{selectedProduct.brand}</span>
+                  {selectedProduct.isNew && (
+                    <span className="px-2 py-0.5 bg-green-100 text-green-700 rounded text-xs">新品</span>
+                  )}
+                  <span className={`px-2 py-0.5 rounded text-xs border ${getPlanTypeStyle(selectedProduct.planType)}`}>
+                    {selectedProduct.planType}
+                  </span>
                 </div>
               </div>
               <button
@@ -739,49 +777,166 @@ const SalesProductPage = () => {
 
             {/* 抽屉内容 */}
             <div className="flex-1 overflow-y-auto p-6">
-              {/* 核心指标卡片 */}
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-                <div className="bg-gradient-to-br from-green-50 to-green-100 rounded-lg p-4 border border-green-200">
-                  <div className="flex items-center gap-2 text-green-600 mb-2">
-                    <DollarSign className="w-5 h-5" />
-                    <span className="text-sm font-medium">30天销售额</span>
-                  </div>
-                  <div className="text-2xl font-bold text-green-700">${selectedProduct.salesAmount30d.toLocaleString()}</div>
-                  <div className="flex items-center gap-1 mt-1">
-                    {getTrendIcon(selectedProduct.salesTrend, selectedProduct.trendPercent)}
-                    <span className="text-xs text-gray-500">vs 上月</span>
+              {/* 产品基本信息 */}
+              <div className="bg-white border rounded-lg p-4 mb-6">
+                <h3 className="font-semibold mb-4">产品基本信息</h3>
+                <div className="flex gap-4 mb-4">
+                  <img 
+                    src={selectedProduct.image} 
+                    alt={selectedProduct.productName}
+                    className="w-24 h-24 rounded-lg object-cover border"
+                  />
+                  <div className="flex-1">
+                    <div className="font-medium text-gray-900 mb-1">{selectedProduct.productName}</div>
+                    <div className="text-sm text-gray-500 mb-1">{selectedProduct.productNameEN}</div>
+                    <div className="font-mono text-xs text-blue-600">{selectedProduct.sku}</div>
                   </div>
                 </div>
-                <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-lg p-4 border border-blue-200">
-                  <div className="flex items-center gap-2 text-blue-600 mb-2">
-                    <ShoppingCart className="w-5 h-5" />
-                    <span className="text-sm font-medium">30天销量</span>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                  <div>
+                    <div className="text-gray-500 mb-1">品牌</div>
+                    <div className="font-semibold">{selectedProduct.brand}</div>
                   </div>
-                  <div className="text-2xl font-bold text-blue-700">{selectedProduct.sales30d.toLocaleString()}</div>
-                  <div className="text-xs text-gray-500 mt-1">7天销量: {selectedProduct.sales7d}</div>
-                </div>
-                <div className="bg-gradient-to-br from-purple-50 to-purple-100 rounded-lg p-4 border border-purple-200">
-                  <div className="flex items-center gap-2 text-purple-600 mb-2">
-                    <BarChart2 className="w-5 h-5" />
-                    <span className="text-sm font-medium">毛利率</span>
+                  <div>
+                    <div className="text-gray-500 mb-1">销售系列</div>
+                    <div className="font-semibold">{selectedProduct.series}</div>
                   </div>
-                  <div className="text-2xl font-bold text-purple-700">{selectedProduct.grossMargin}%</div>
-                  <div className="text-xs text-gray-500 mt-1">成本 ${selectedProduct.costPrice}</div>
-                </div>
-                <div className="bg-gradient-to-br from-orange-50 to-orange-100 rounded-lg p-4 border border-orange-200">
-                  <div className="flex items-center gap-2 text-orange-600 mb-2">
-                    <Package className="w-5 h-5" />
-                    <span className="text-sm font-medium">库存天数</span>
+                  <div>
+                    <div className="text-gray-500 mb-1">销售小组</div>
+                    <span className={`px-2 py-0.5 rounded text-xs ${getSalesTeamStyle(selectedProduct.salesTeam)}`}>
+                      {selectedProduct.salesTeam}
+                    </span>
                   </div>
-                  <div className="text-2xl font-bold text-orange-700">{selectedProduct.inventoryDays}天</div>
-                  <div className={`text-xs mt-1 ${getInventoryStatusStyle(selectedProduct.inventoryStatus)}`}>
-                    {selectedProduct.inventoryStatus}
+                  <div>
+                    <div className="text-gray-500 mb-1">销售负责人</div>
+                    <div className="font-semibold">{selectedProduct.salesManager}</div>
                   </div>
                 </div>
               </div>
 
+              {/* 类目信息 */}
+              <div className="bg-white border rounded-lg p-4 mb-6">
+                <h3 className="font-semibold mb-4">类目信息</h3>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+                  <div>
+                    <div className="text-gray-500 mb-1">亚马逊类目</div>
+                    <div className="font-semibold text-xs">{selectedProduct.amazonCategory}</div>
+                  </div>
+                  <div>
+                    <div className="text-gray-500 mb-1">销售一级类目</div>
+                    <span className={`px-2 py-0.5 rounded text-xs ${getSalesCategoryL1Style(selectedProduct.salesCategoryL1)}`}>
+                      {selectedProduct.salesCategoryL1}
+                    </span>
+                  </div>
+                  <div>
+                    <div className="text-gray-500 mb-1">销售二级类目</div>
+                    <div className="font-semibold">{selectedProduct.salesCategoryL2}</div>
+                  </div>
+                </div>
+              </div>
+
+              {/* 销售属性 */}
+              <div className="bg-white border rounded-lg p-4 mb-6">
+                <h3 className="font-semibold mb-4">销售属性</h3>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                  <div>
+                    <div className="text-gray-500 mb-1">销售等级</div>
+                    <span className={`inline-flex items-center justify-center w-8 h-8 rounded-full text-sm font-bold border ${getSalesGradeStyle(selectedProduct.salesGrade)}`}>
+                      {selectedProduct.salesGrade}
+                    </span>
+                  </div>
+                  <div>
+                    <div className="text-gray-500 mb-1">销售状态</div>
+                    <span className={`px-2 py-1 rounded text-xs ${getSalesStatusStyle(selectedProduct.salesStatus)}`}>
+                      {selectedProduct.salesStatus}
+                    </span>
+                  </div>
+                  <div>
+                    <div className="text-gray-500 mb-1">新旧标签</div>
+                    {selectedProduct.isNew ? (
+                      <span className="px-2 py-0.5 bg-green-100 text-green-700 rounded text-xs">新品</span>
+                    ) : (
+                      <span className="px-2 py-0.5 bg-gray-100 text-gray-600 rounded text-xs">老品</span>
+                    )}
+                  </div>
+                  <div>
+                    <div className="text-gray-500 mb-1">方案类型</div>
+                    <span className={`px-2 py-0.5 rounded text-xs border ${getPlanTypeStyle(selectedProduct.planType)}`}>
+                      {selectedProduct.planType}
+                    </span>
+                  </div>
+                  <div>
+                    <div className="text-gray-500 mb-1">上架日期</div>
+                    <div className="font-semibold text-xs">{selectedProduct.launchDate}</div>
+                  </div>
+                  <div>
+                    <div className="text-gray-500 mb-1">销售渠道数</div>
+                    <div className="font-semibold">{selectedProduct.channels.length} 个</div>
+                  </div>
+                </div>
+              </div>
+
+              {/* ASIN列表 */}
+              <div className="bg-white border rounded-lg p-4 mb-6">
+                <h3 className="font-semibold mb-4">ASIN 站点映射</h3>
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                  {selectedProduct.asins.map((item, idx) => (
+                    <div key={idx} className="flex items-center gap-2 p-3 bg-gray-50 rounded-lg">
+                      <span className="text-2xl">{getSiteFlag(item.site)}</span>
+                      <div>
+                        <div className="text-xs text-gray-500">{item.site}</div>
+                        <div className="font-mono text-sm font-medium text-gray-800">{item.asin}</div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* 人员映射 */}
+              <div className="bg-white border rounded-lg p-4 mb-6">
+                <h3 className="font-semibold mb-4">人员映射</h3>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  <div className="p-3 bg-blue-50 rounded-lg">
+                    <div className="text-xs text-blue-600 mb-1">销售负责人</div>
+                    <div className="font-semibold text-gray-800">{selectedProduct.salesManager}</div>
+                    <div className="text-xs text-gray-500">{selectedProduct.salesTeam}</div>
+                  </div>
+                  <div className="p-3 bg-purple-50 rounded-lg">
+                    <div className="text-xs text-purple-600 mb-1">产品经理</div>
+                    <div className="font-semibold text-gray-800">-</div>
+                    <div className="text-xs text-gray-500">待分配</div>
+                  </div>
+                  <div className="p-3 bg-orange-50 rounded-lg">
+                    <div className="text-xs text-orange-600 mb-1">运营负责人</div>
+                    <div className="font-semibold text-gray-800">-</div>
+                    <div className="text-xs text-gray-500">待分配</div>
+                  </div>
+                  <div className="p-3 bg-green-50 rounded-lg">
+                    <div className="text-xs text-green-600 mb-1">采购负责人</div>
+                    <div className="font-semibold text-gray-800">-</div>
+                    <div className="text-xs text-gray-500">待分配</div>
+                  </div>
+                </div>
+              </div>
+
+              {/* 销售渠道 */}
+              <div className="bg-white border rounded-lg p-4 mb-6">
+                <h3 className="font-semibold mb-4 flex items-center gap-2">
+                  <Globe className="w-5 h-5 text-blue-600" />
+                  销售渠道
+                </h3>
+                <div className="space-y-2">
+                  {selectedProduct.channels.map((channel, idx) => (
+                    <div key={idx} className="flex items-center justify-between p-2 bg-gray-50 rounded">
+                      <span className="text-sm">{channel}</span>
+                      <span className="px-2 py-0.5 bg-green-100 text-green-700 rounded text-xs">已上架</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
               {/* 销售等级说明 */}
-              <div className="bg-gray-50 rounded-lg p-4 mb-6">
+              <div className="bg-gray-50 rounded-lg p-4">
                 <h3 className="font-semibold mb-3 flex items-center gap-2">
                   <Star className="w-5 h-5 text-yellow-500" />
                   销售等级定义
@@ -817,130 +972,22 @@ const SalesProductPage = () => {
                   </div>
                 </div>
               </div>
-
-              {/* 价格信息 */}
-              <div className="bg-white border rounded-lg p-4 mb-6">
-                <h3 className="font-semibold mb-4">价格信息</h3>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-                  <div>
-                    <div className="text-gray-500 mb-1">建议零售价 (MSRP)</div>
-                    <div className="text-lg font-semibold">${selectedProduct.msrp}</div>
-                  </div>
-                  <div>
-                    <div className="text-gray-500 mb-1">当前售价</div>
-                    <div className="text-lg font-semibold text-blue-600">${selectedProduct.currentPrice}</div>
-                    <span className={`text-xs px-2 py-0.5 rounded ${
-                      selectedProduct.priceStatus === '促销中' ? 'bg-red-100 text-red-700' :
-                      selectedProduct.priceStatus === '清仓' ? 'bg-orange-100 text-orange-700' :
-                      selectedProduct.priceStatus === '新品价' ? 'bg-green-100 text-green-700' :
-                      'bg-gray-100 text-gray-700'
-                    }`}>
-                      {selectedProduct.priceStatus}
-                    </span>
-                  </div>
-                  <div>
-                    <div className="text-gray-500 mb-1">成本价</div>
-                    <div className="text-lg font-semibold">${selectedProduct.costPrice}</div>
-                  </div>
-                  <div>
-                    <div className="text-gray-500 mb-1">毛利率</div>
-                    <div className={`text-lg font-semibold ${selectedProduct.grossMargin >= 75 ? 'text-green-600' : 'text-blue-600'}`}>
-                      {selectedProduct.grossMargin}%
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* 渠道与库存 */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-                <div className="bg-white border rounded-lg p-4">
-                  <h3 className="font-semibold mb-4 flex items-center gap-2">
-                    <Globe className="w-5 h-5 text-blue-600" />
-                    销售渠道
-                  </h3>
-                  <div className="space-y-2">
-                    {selectedProduct.channels.map((channel, idx) => (
-                      <div key={idx} className="flex items-center justify-between p-2 bg-gray-50 rounded">
-                        <span className="text-sm">{channel}</span>
-                        <span className="px-2 py-0.5 bg-green-100 text-green-700 rounded text-xs">已上架</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-                <div className="bg-white border rounded-lg p-4">
-                  <h3 className="font-semibold mb-4 flex items-center gap-2">
-                    <Package className="w-5 h-5 text-orange-600" />
-                    库存信息
-                  </h3>
-                  <div className="space-y-3 text-sm">
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">总库存</span>
-                      <span className="font-semibold">{selectedProduct.inventoryTotal.toLocaleString()}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">FBA库存</span>
-                      <span className="font-semibold">{selectedProduct.inventoryFBA.toLocaleString()}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">库存天数</span>
-                      <span className={`font-semibold ${getInventoryStatusStyle(selectedProduct.inventoryStatus)}`}>
-                        {selectedProduct.inventoryDays}天
-                      </span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">库存状态</span>
-                      <span className={`font-semibold ${getInventoryStatusStyle(selectedProduct.inventoryStatus)}`}>
-                        {selectedProduct.inventoryStatus}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* 评价与排名 */}
-              <div className="bg-white border rounded-lg p-4">
-                <h3 className="font-semibold mb-4">评价与排名</h3>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-                  <div className="text-center p-3 bg-yellow-50 rounded-lg">
-                    <div className="flex items-center justify-center gap-1 mb-1">
-                      <Star className="w-5 h-5 text-yellow-500 fill-yellow-500" />
-                      <span className="text-2xl font-bold text-yellow-700">{selectedProduct.reviewScore}</span>
-                    </div>
-                    <div className="text-xs text-gray-600">{selectedProduct.reviewCount} 评价</div>
-                  </div>
-                  <div className="text-center p-3 bg-blue-50 rounded-lg">
-                    <div className="text-2xl font-bold text-blue-700">#{selectedProduct.salesRank}</div>
-                    <div className="text-xs text-gray-600">总销售排名</div>
-                  </div>
-                  <div className="text-center p-3 bg-purple-50 rounded-lg">
-                    <div className="text-2xl font-bold text-purple-700">#{selectedProduct.categoryRank}</div>
-                    <div className="text-xs text-gray-600">类目排名</div>
-                  </div>
-                  <div className="text-center p-3 bg-green-50 rounded-lg">
-                    <div className="text-2xl font-bold text-green-700">{selectedProduct.listingQuality}</div>
-                    <div className="text-xs text-gray-600">Listing质量</div>
-                  </div>
-                </div>
-              </div>
             </div>
 
             {/* 抽屉底部操作 */}
             <div className="p-6 border-t bg-gray-50 flex gap-3 flex-wrap flex-shrink-0">
               <button className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm hover:bg-blue-700 flex items-center gap-2">
                 <Edit2 className="w-4 h-4" />
-                编辑销售属性
+                编辑产品信息
               </button>
               <button className="px-4 py-2 bg-purple-600 text-white rounded-lg text-sm hover:bg-purple-700">
                 调整销售等级
               </button>
-              <button className="px-4 py-2 bg-green-600 text-white rounded-lg text-sm hover:bg-green-700">
-                调整价格
+              <button className="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm hover:bg-indigo-700">
+                调整类目归属
               </button>
               <button className="px-4 py-2 border rounded-lg text-sm hover:bg-gray-100">
-                查看销售趋势
-              </button>
-              <button className="px-4 py-2 border rounded-lg text-sm hover:bg-gray-100">
-                导出报表
+                复制产品信息
               </button>
             </div>
           </div>
