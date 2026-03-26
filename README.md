@@ -31,30 +31,36 @@
 - **销售达成分析**: 销售达成分析
 - **数据聚合分析**: 销售数据聚合
 - **滞销分析**: 滞销品分析
-- **销量预测**: 销量预测
+- **销量预测**: 销量预测（支持版本管理：草稿 → 已推送计划 → 最终版）
+  - 版本历史管理（快照链模式）
+  - 事业部 + 月份维度管理
+  - 历史版本新开标签页查看
 - **计划测算看板**: 计划测算看板
 
 ### 3. 供应链采购管理
-- **供应商管理**: 供应商信息维护
+- **供应商管理**: 供应商信息维护、绩效评估
 - **SKU迭代管理**: SKU 迭代与版本管理
 - **采购计划执行跟进**: 采购计划执行与跟进
-- **供应商绩效**: 供应商绩效评估
 
-### 4. 物流与报关
-- **物流计划执行**: 物流计划与执行
-- **备货试算**: 备货试算
-- **物流单-跨境 / 国内**: 跨境与国内物流单管理
-- **报关管理 / 清关管理**: 报关与清关流程
-- **上架索赔**: 上架索赔
-- **物流对账**: 物流对账
-- **物流商基础信息**: 物流商基础信息维护
+### 4. 供应链计划
+- **Forecast Tracking**: 预测跟踪与执行监控，对比预测值与实际销售数据
+- **供应计划管理**: 采购计划、生产计划与库存规划
 
-### 5. 质量管理
+### 5. 物流与报关
+- **物流商档案**: 物流商基础信息维护
+- **物流商渠道**: 渠道管理
+- **仓库地址**: 仓库地址管理
+- **HSCode**: 海关编码管理
+- **申报资料**: 报关申报资料管理
+- **物流类型规则**: 物流路由规则配置
+- **集货规则**: 集货规则配置
+- **备货试算**: 备货试算工具
+
+### 6. 质量管理
 - **入库质检**: 入库质检流程
 - **客诉质量**: 客诉质量处理
-- **质量分析**: 质量数据分析
 
-### 6. 财务治理
+### 7. 财务治理
 - **店铺与部门归属映射**: 电商店铺与组织部门、成本中心的对应关系维护
 - **成本中心**: 成本中心配置与管理
 - **分摊规则**: 费用分摊规则设置
@@ -63,20 +69,15 @@
 - **预算版本管理**: 预算版本管理
 - **费用审批**: 费用审批列表与审批单详情
 
-### 7. 财务与经营分析（只读）
+### 8. 财务与经营分析（只读）
 - **收入分析**: 收入分析
 - **成本分析**: 成本分析
 - **利润分析**: 利润分析
-- **经营达成情况**: 经营达成情况
 
-### 8. 组织与权限
+### 9. 组织与权限
 - **组织架构管理**: 组织架构维护、部门管理
 - **用户管理**: 用户管理
 - **角色&权限**: 角色与权限配置
-
-### 9. 审批与任务
-- 审批流程管理
-- 任务跟踪
 
 ### 10. 系统设置（IT专用）
 - **基础配置**: 基础配置
@@ -92,32 +93,48 @@
 ```
 ecommerce-system/
 ├── src/
-│   ├── pages/              # 页面组件
-│   │   ├── HomePage.js                         # 首页
-│   │   ├── ProductMasterPage.js                # 产品主数据
-│   │   ├── SkuDetailPage.simple.js             # SKU 详情
-│   │   ├── BOMManagementPage.js                # BOM 管理
-│   │   ├── BrandManagementPage.js              # 品牌管理
-│   │   ├── ProductStructurePage.js             # 产品结构分类
-│   │   ├── CategoryTemplatePage.js             # 类目属性模板
-│   │   ├── ProductTagPage.js                    # 产品标签
-│   │   ├── CodingRulePage.js                   # 编码规则
-│   │   ├── ProductAttributePage.js             # 属性管理
-│   │   ├── SalesTargetPage.js                  # 销售目标
-│   │   ├── StoreDeptMappingPage.js             # 店铺与部门归属映射
-│   │   ├── StoreDeptEditStoreDrawer.js         # 店铺编辑抽屉
-│   │   ├── CostCenterPage.js                   # 成本中心
-│   │   ├── AllocationRulePage.js               # 分摊规则
-│   │   ├── ExpenseCategoryPage.js              # 费用类别
-│   │   ├── ExpenseFactPage.js                  # 费用事实
-│   │   ├── ExpenseApprovalListPage.simple.js   # 费用审批列表
-│   │   ├── ExpenseApprovalDetailPage.simple.js # 费用审批详情
-│   │   ├── OrganizationManagementPage.js       # 组织架构管理
-│   │   └── PlaceholderPage.js                  # 占位页面（未实现功能入口）
-│   ├── App.js               # 主应用与导航
+│   ├── components/          # 公共组件
+│   │   ├── ActionBar.js
+│   │   └── TablePagination.js
+│   ├── hooks/               # 自定义 Hooks
+│   │   └── useLocalStorage.js
+│   ├── layouts/             # 布局组件
+│   │   ├── DynamicSidebar.js    # 动态左侧导航
+│   │   └── ModuleLayout.js      # 模块布局
+│   ├── mock/                # Mock 数据
+│   ├── pages/               # 页面组件
+│   │   ├── logistics/       # 物流与报关
+│   │   │   ├── LogisticsVendorListPage.js
+│   │   │   ├── LogisticsVendorDetailPage.js
+│   │   │   ├── LogisticsChannelListPage.js
+│   │   │   ├── LogisticsAddressListPage.js
+│   │   │   ├── LogisticsHsCodeListPage.js
+│   │   │   ├── LogisticsDeclarationListPage.js
+│   │   │   ├── LogisticsRoutingRuleListPage.js
+│   │   │   ├── LogisticsConsolidationRuleListPage.js
+│   │   │   └── LogisticsTrialCalcPage.js
+│   │   ├── settings/        # 系统设置
+│   │   │   ├── SettingsParamsPage.js
+│   │   │   ├── SettingsLogPage.js
+│   │   │   ├── SettingsDictPage.js
+│   │   │   ├── SettingsBasicPage.js
+│   │   │   ├── SettingsEnumRulePage.js
+│   │   │   ├── SettingsApiSyncPage.js
+│   │   │   └── SettingsSchedulerPage.js
+│   │   ├── supply-chain/    # 供应链计划
+│   │   │   ├── ForecastTrackingPage.js
+│   │   │   └── SupplyPlanPage.js
+│   │   ├── HomePage.js
+│   │   ├── ProductMasterPage.js
+│   │   ├── SalesForecastPage.js         # 销量预测（含版本管理）
+│   │   ├── SupplierListPage.js
+│   │   ├── CostCenterPage.js
+│   │   └── ...
+│   ├── App.js               # 主应用与路由
 │   ├── index.js             # 入口文件
 │   └── index.css            # 全局样式（含 Tailwind）
 ├── public/                  # 静态资源
+├── docs/                    # 项目文档
 ├── tailwind.config.js       # Tailwind 配置
 ├── postcss.config.js        # PostCSS 配置
 └── package.json             # 项目依赖
@@ -152,12 +169,6 @@ npm run build
 
 构建产物将输出到 `build` 目录。
 
-### 运行测试
-
-```bash
-npm test
-```
-
 ## 🔧 开发说明
 
 ### 样式开发
@@ -166,10 +177,17 @@ npm test
 
 ### 添加新页面
 
-1. 在 `src/pages/` 目录下创建新的页面组件
+1. 在 `src/pages/` 目录下创建新的页面组件（按模块放入子目录）
 2. 在 `src/App.js` 中导入新组件
-3. 在 `navigationConfig` 中添加导航项
-4. 在 `renderPage()` 函数中添加路由处理
+3. 在 `src/layouts/DynamicSidebar.js` 的 `navConfig` 中添加导航项
+4. 在 `App.js` 的 `renderTabContent()` 函数中添加路由处理
+
+### 标签页系统
+
+系统采用标签页导航模式：
+- 从侧边栏点击导航项会打开新标签
+- 同一页面支持打开多个版本（如销量预测的不同历史版本）
+- 标签支持关闭和切换
 
 ### 代码规范
 
@@ -183,8 +201,8 @@ npm test
 - ✅ 响应式设计，支持多设备访问
 - ✅ 模块化架构，易于扩展和维护
 - ✅ 统一的 UI 设计语言
-- ✅ 完整的路由导航系统
-- ✅ 数据状态管理
+- ✅ 标签页导航系统
+- ✅ 销量预测版本管理（草稿 → 已推送计划 → 最终版）
 - ✅ 表单验证和错误处理
 
 ## 🔐 用户权限
@@ -208,4 +226,4 @@ npm test
 
 ---
 
-**最后更新**: 2026年2月
+**最后更新**: 2026年3月
