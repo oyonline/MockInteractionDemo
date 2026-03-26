@@ -1,5 +1,5 @@
 // src/pages/EmployeeManagementPage.js
-// 员工信息管理页面
+// 企业人才库页面
 import React, { useState, useMemo } from 'react';
 import {
     Search,
@@ -32,18 +32,19 @@ const mockEmployees = [
     {
         id: 1,
         name: '张伟',
-        employeeNo: 'EP2021001',
+        employeeNo: '-',
         birthDate: '1990-05-15',
         phone: '13800138001',
         email: 'zhangwei@company.com',
         education: '本科',
         school: '北京大学',
         graduateDate: '2012-06-30',
-        department: '技术部',
+        department: '-',
         position: '高级工程师',
         tags: ['数据分析', '项目管理'],
         highlights: '主导过3个核心系统重构项目',
         entryDate: '2021-03-01',
+        source: 'BOSS直聘',
         address: '北京市海淀区中关村大街1号',
         maritalStatus: '已婚',
         photo: 'https://api.dicebear.com/7.x/avataaars/svg?seed=zhangwei',
@@ -67,6 +68,7 @@ const mockEmployees = [
         tags: ['海外背景', '客户管理', '营销策划'],
         highlights: '10年产品经验，前BAT产品负责人',
         entryDate: '2020-06-15',
+        source: '内推',
         address: '北京市朝阳区建国路88号',
         maritalStatus: '已婚',
         photo: 'https://api.dicebear.com/7.x/avataaars/svg?seed=lina',
@@ -78,8 +80,8 @@ const mockEmployees = [
     {
         id: 3,
         name: '王强',
-        employeeNo: 'EP2022008',
-        birthDate: '1995-03-10',
+        employeeNo: '-',
+        birthDate: '-',
         phone: '13800138003',
         email: 'wangqiang@company.com',
         education: '本科',
@@ -90,6 +92,7 @@ const mockEmployees = [
         tags: ['营销策划', '沟通能力', '新人培训'],
         highlights: '年度优秀员工，培训导师',
         entryDate: '2022-01-10',
+        source: '智联招聘',
         address: '上海市浦东新区陆家嘴环路1000号',
         maritalStatus: '未婚',
         photo: 'https://api.dicebear.com/7.x/avataaars/svg?seed=wangqiang',
@@ -113,6 +116,7 @@ const mockEmployees = [
         tags: ['海外背景', '项目管理', '数据分析'],
         highlights: '硅谷归国人才，专利发明人',
         entryDate: '2019-08-20',
+        source: '51Job',
         address: '深圳市南山区科技园',
         maritalStatus: '已婚',
         photo: 'https://api.dicebear.com/7.x/avataaars/svg?seed=liuyang',
@@ -124,18 +128,19 @@ const mockEmployees = [
     {
         id: 5,
         name: '陈静',
-        employeeNo: 'EP2021012',
+        employeeNo: '-',
         birthDate: '1992-07-08',
-        phone: '13800138005',
+        phone: '-',
         email: 'chenjing@company.com',
         education: '本科',
-        school: '浙江大学',
+        school: '-',
         graduateDate: '2014-06-30',
         department: '财务部',
         position: '财务经理',
         tags: ['数据分析', '沟通能力'],
         highlights: '注册会计师，财务流程优化专家',
         entryDate: '2021-05-18',
+        source: 'BOSS直聘',
         address: '杭州市西湖区文三路',
         maritalStatus: '未婚',
         photo: 'https://api.dicebear.com/7.x/avataaars/svg?seed=chenjing',
@@ -159,6 +164,7 @@ const mockEmployees = [
         tags: ['沟通能力', '客户管理', '新人培训'],
         highlights: '客户满意度连续12个月第一',
         entryDate: '2023-02-01',
+        source: '内推',
         address: '深圳市福田区华强北路',
         maritalStatus: '未婚',
         photo: 'https://api.dicebear.com/7.x/avataaars/svg?seed=zhaomin',
@@ -170,10 +176,10 @@ const mockEmployees = [
     {
         id: 7,
         name: '孙涛',
-        employeeNo: 'EP2020018',
+        employeeNo: '-',
         birthDate: '1989-09-20',
         phone: '13800138007',
-        email: 'suntao@company.com',
+        email: '-',
         education: '研究生',
         school: '上海交通大学',
         graduateDate: '2015-06-30',
@@ -182,6 +188,7 @@ const mockEmployees = [
         tags: ['项目管理', '数据分析', '沟通能力'],
         highlights: '供应链管理专家，成本节约500万',
         entryDate: '2020-11-11',
+        source: '智联招聘',
         address: '上海市闵行区东川路800号',
         maritalStatus: '已婚',
         photo: 'https://api.dicebear.com/7.x/avataaars/svg?seed=suntao',
@@ -205,6 +212,7 @@ const mockEmployees = [
         tags: ['沟通能力', '新人培训', '项目管理'],
         highlights: '校招负责人，年度招聘200+',
         entryDate: '2022-07-01',
+        source: '51Job',
         address: '武汉市洪山区珞喻路',
         maritalStatus: '未婚',
         photo: 'https://api.dicebear.com/7.x/avataaars/svg?seed=zhouxue',
@@ -216,11 +224,11 @@ const mockEmployees = [
     {
         id: 9,
         name: '吴磊',
-        employeeNo: 'EP2018006',
+        employeeNo: '-',
         birthDate: '1983-04-18',
         phone: '13800138009',
         email: 'wulei@company.com',
-        education: '本科',
+        education: '-',
         school: '中山大学',
         graduateDate: '2006-06-30',
         department: '销售部',
@@ -228,6 +236,7 @@ const mockEmployees = [
         tags: ['客户管理', '营销策划', '沟通能力'],
         highlights: '连续5年销冠，团队管理经验丰富',
         entryDate: '2018-03-15',
+        source: 'BOSS直聘',
         address: '广州市天河区珠江新城',
         maritalStatus: '已婚',
         photo: 'https://api.dicebear.com/7.x/avataaars/svg?seed=wulei',
@@ -251,6 +260,7 @@ const mockEmployees = [
         tags: ['海外背景', '数据分析', '项目管理'],
         highlights: '微服务架构专家，开源贡献者',
         entryDate: '2021-09-01',
+        source: '内推',
         address: '南京市鼓楼区汉口路22号',
         maritalStatus: '已婚',
         photo: 'https://api.dicebear.com/7.x/avataaars/svg?seed=zhengfang',
@@ -262,18 +272,19 @@ const mockEmployees = [
     {
         id: 11,
         name: '钱明',
-        employeeNo: 'EP2023030',
+        employeeNo: '-',
         birthDate: '1997-10-12',
-        phone: '13800138011',
+        phone: '-',
         email: 'qianming@company.com',
         education: '本科',
-        school: '四川大学',
+        school: '-',
         graduateDate: '2020-06-30',
         department: '设计部',
         position: 'UI设计师',
         tags: ['营销策划', '沟通能力'],
         highlights: '红点奖获得者，设计系统搭建者',
         entryDate: '2023-06-01',
+        source: 'BOSS直聘',
         address: '成都市武侯区一环路南一段',
         maritalStatus: '未婚',
         photo: 'https://api.dicebear.com/7.x/avataaars/svg?seed=qianming',
@@ -297,6 +308,7 @@ const mockEmployees = [
         tags: ['项目管理', '沟通能力'],
         highlights: '仓储管理专家，库存准确率99.9%',
         entryDate: '2019-05-20',
+        source: '智联招聘',
         address: '佛山市南海区桂城街道',
         maritalStatus: '已婚',
         photo: 'https://api.dicebear.com/7.x/avataaars/svg?seed=fengxiao',
@@ -308,11 +320,11 @@ const mockEmployees = [
     {
         id: 13,
         name: '黄丽',
-        employeeNo: 'EP2022036',
+        employeeNo: '-',
         birthDate: '1994-08-08',
         phone: '13800138013',
         email: 'huangli@company.com',
-        education: '本科',
+        education: '-',
         school: '厦门大学',
         graduateDate: '2017-06-30',
         department: '采购部',
@@ -320,6 +332,7 @@ const mockEmployees = [
         tags: ['客户管理', '数据分析', '沟通能力'],
         highlights: '供应商开发专家，年节约成本300万',
         entryDate: '2022-04-10',
+        source: '51Job',
         address: '厦门市思明区思明南路',
         maritalStatus: '未婚',
         photo: 'https://api.dicebear.com/7.x/avataaars/svg?seed=huangli',
@@ -343,6 +356,7 @@ const mockEmployees = [
         tags: ['海外背景', '数据分析', '项目管理'],
         highlights: '发明专利20+，国家科技进步奖获得者',
         entryDate: '2021-01-05',
+        source: '内推',
         address: '北京市石景山区玉泉路19号',
         maritalStatus: '已婚',
         photo: 'https://api.dicebear.com/7.x/avataaars/svg?seed=linfeng',
@@ -354,10 +368,10 @@ const mockEmployees = [
     {
         id: 15,
         name: '何静',
-        employeeNo: 'EP2023045',
+        employeeNo: '-',
         birthDate: '1996-05-22',
         phone: '13800138015',
-        email: 'hejing@company.com',
+        email: '-',
         education: '本科',
         school: '华中科技大学',
         graduateDate: '2019-06-30',
@@ -366,6 +380,7 @@ const mockEmployees = [
         tags: ['数据分析', '沟通能力', '新人培训'],
         highlights: '六西格玛黑带，质量管理体系建设',
         entryDate: '2023-08-15',
+        source: 'BOSS直聘',
         address: '武汉市洪山区珞喻路1037号',
         maritalStatus: '未婚',
         photo: 'https://api.dicebear.com/7.x/avataaars/svg?seed=hejing',
@@ -389,6 +404,7 @@ const mockEmployees = [
         tags: ['项目管理', '数据分析', '沟通能力'],
         highlights: '团队Leader，技术委员会成员',
         entryDate: '2020-02-28',
+        source: '智联招聘',
         address: '哈尔滨市南岗区西大直街92号',
         maritalStatus: '已婚',
         photo: 'https://api.dicebear.com/7.x/avataaars/svg?seed=xupeng',
@@ -400,18 +416,19 @@ const mockEmployees = [
     {
         id: 17,
         name: '马超',
-        employeeNo: 'EP2022055',
-        birthDate: '1993-09-05',
+        employeeNo: '-',
+        birthDate: '-',
         phone: '13800138017',
         email: 'machao@company.com',
         education: '本科',
-        school: '西安交通大学',
+        school: '-',
         graduateDate: '2016-06-30',
         department: '物流部',
         position: '物流经理',
         tags: ['项目管理', '客户管理', '数据分析'],
         highlights: '物流优化专家，配送时效提升30%',
         entryDate: '2022-10-08',
+        source: '51Job',
         address: '西安市碑林区咸宁西路28号',
         maritalStatus: '未婚',
         photo: 'https://api.dicebear.com/7.x/avataaars/svg?seed=machao',
@@ -435,6 +452,7 @@ const mockEmployees = [
         tags: ['海外背景', '数据分析', '营销策划'],
         highlights: '产品增长专家，DAU提升200%',
         entryDate: '2021-06-20',
+        source: '内推',
         address: '上海市杨浦区四平路1239号',
         maritalStatus: '已婚',
         photo: 'https://api.dicebear.com/7.x/avataaars/svg?seed=zhuting',
@@ -446,10 +464,10 @@ const mockEmployees = [
     {
         id: 19,
         name: '罗军',
-        employeeNo: 'EP2019065',
+        employeeNo: '-',
         birthDate: '1986-07-14',
         phone: '13800138019',
-        email: 'luojun@company.com',
+        email: '-',
         education: '本科',
         school: '天津大学',
         graduateDate: '2009-06-30',
@@ -458,6 +476,7 @@ const mockEmployees = [
         tags: ['营销策划', '客户管理', '项目管理'],
         highlights: '运营体系搭建者，GMV增长5倍',
         entryDate: '2019-09-10',
+        source: 'BOSS直聘',
         address: '天津市南开区卫津路92号',
         maritalStatus: '已婚',
         photo: 'https://api.dicebear.com/7.x/avataaars/svg?seed=luojun',
@@ -481,6 +500,7 @@ const mockEmployees = [
         tags: ['沟通能力', '新人培训'],
         highlights: '行政管理流程优化，效率提升50%',
         entryDate: '2023-04-01',
+        source: '智联招聘',
         address: '济南市历城区旅游路4516号',
         maritalStatus: '未婚',
         photo: 'https://api.dicebear.com/7.x/avataaars/svg?seed=liangyu',
@@ -518,12 +538,14 @@ const educationTabs = [
     { key: '大专', label: '大专' }
 ];
 
-// --------------- 页签配置 ---------------
-const pageTabs = [
-    { key: 'employee-mgmt', label: '员工信息管理' },
-    { key: 'employee-dashboard', label: '员工数据看板' },
-    { key: 'employee-org', label: '组织架构管理' }
-];
+// --------------- 人才来源配置 ---------------
+const sourceColors = {
+    '内推': 'bg-purple-100 text-purple-700 border-purple-200',
+    'BOSS直聘': 'bg-green-100 text-green-700 border-green-200',
+    '智联招聘': 'bg-blue-100 text-blue-700 border-blue-200',
+    '51Job': 'bg-orange-100 text-orange-700 border-orange-200',
+    '-': 'bg-gray-100 text-gray-500 border-gray-200'
+};
 
 // --------------- 下拉选择器组件 ---------------
 const SelectFilter = ({ label, value, options, onChange, placeholder }) => {
@@ -708,7 +730,7 @@ const EmployeeDetailDrawer = ({ employee, onClose }) => {
                                 <p className="text-gray-900">{employee.ethnicity}</p>
                             </div>
                             <div>
-                                <p className="text-gray-500 text-xs mb-1">入职日期</p>
+                                <p className="text-gray-500 text-xs mb-1">入库时间</p>
                                 <p className="text-gray-900">{employee.entryDate}</p>
                             </div>
                         </div>
@@ -803,12 +825,8 @@ const EmployeeDetailDrawer = ({ employee, onClose }) => {
 
 // --------------- 主组件 ---------------
 export default function EmployeeManagementPage() {
-    // 页签状态
-    const [activeTab, setActiveTab] = useState('employee-mgmt');
-    
     // 筛选状态
     const [filters, setFilters] = useState({
-        employeeNo: '',
         name: '',
         ethnicity: '',
         department: ''
@@ -831,7 +849,6 @@ export default function EmployeeManagementPage() {
     const [selectedEmployee, setSelectedEmployee] = useState(null);
 
     // 筛选选项
-    const employeeNos = [...new Set(mockEmployees.map(e => e.employeeNo))].sort();
     const names = [...new Set(mockEmployees.map(e => e.name))].sort();
     const ethnicities = [...new Set(mockEmployees.map(e => e.ethnicity))].sort();
     const departments = [...new Set(mockEmployees.map(e => e.department))].sort();
@@ -846,9 +863,6 @@ export default function EmployeeManagementPage() {
         }
         
         // 下拉筛选
-        if (filters.employeeNo) {
-            result = result.filter(e => e.employeeNo === filters.employeeNo);
-        }
         if (filters.name) {
             result = result.filter(e => e.name === filters.name);
         }
@@ -899,46 +913,18 @@ export default function EmployeeManagementPage() {
 
     // 重置筛选
     const handleReset = () => {
-        setFilters({ employeeNo: '', name: '', ethnicity: '', department: '' });
+        setFilters({ name: '', ethnicity: '', department: '' });
         setActiveEducationTab('all');
         setSearchQuery('');
         setCurrentPage(1);
     };
 
+
     return (
         <div className="h-full flex flex-col bg-gray-50">
-            {/* 页签区域 */}
-            <div className="bg-white border-b border-gray-200 px-6 pt-4">
-                <div className="flex items-center gap-1">
-                    {pageTabs.map(tab => (
-                        <button
-                            key={tab.key}
-                            onClick={() => setActiveTab(tab.key)}
-                            className={cn(
-                                'px-4 py-3 text-sm font-medium border-b-2 transition-colors',
-                                activeTab === tab.key
-                                    ? 'border-indigo-600 text-indigo-600'
-                                    : 'border-transparent text-gray-500 hover:text-gray-700'
-                            )}
-                        >
-                            {tab.label}
-                        </button>
-                    ))}
-                </div>
-            </div>
-
-            {/* 内容区 */}
             <div className="flex-1 p-6 overflow-auto">
-                {/* 第一行：筛选框 */}
                 <div className="bg-white rounded-xl border border-gray-200 p-4 mb-4">
-                    <div className="grid grid-cols-4 gap-4">
-                        <SelectFilter
-                            label="员工号"
-                            value={filters.employeeNo}
-                            options={employeeNos}
-                            onChange={(val) => setFilters(prev => ({ ...prev, employeeNo: val }))}
-                            placeholder="请选择员工号"
-                        />
+                    <div className="grid grid-cols-3 gap-4">
                         <SelectFilter
                             label="姓名"
                             value={filters.name}
@@ -972,7 +958,6 @@ export default function EmployeeManagementPage() {
                     </div>
                 </div>
 
-                {/* 第二行：学历 Tab */}
                 <div className="bg-white rounded-xl border border-gray-200 p-4 mb-4">
                     <div className="flex items-center gap-2">
                         <span className="text-sm text-gray-500 mr-2">学历筛选：</span>
@@ -996,9 +981,7 @@ export default function EmployeeManagementPage() {
                     </div>
                 </div>
 
-                {/* 表格区域 */}
                 <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
-                    {/* 表格工具栏 */}
                     <div className="px-4 py-3 border-b border-gray-200 flex items-center justify-between">
                         <div className="flex items-center gap-2">
                             <span className="text-sm text-gray-500">
@@ -1006,12 +989,11 @@ export default function EmployeeManagementPage() {
                             </span>
                         </div>
                         <div className="flex items-center gap-2">
-                            {/* 搜索框 */}
                             <div className="relative">
                                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                                 <input
                                     type="text"
-                                    placeholder="搜索员工..."
+                                    placeholder="搜索人才..."
                                     value={searchQuery}
                                     onChange={(e) => {
                                         setSearchQuery(e.target.value);
@@ -1020,7 +1002,6 @@ export default function EmployeeManagementPage() {
                                     className="pl-9 pr-4 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 w-48"
                                 />
                             </div>
-                            {/* 工具按钮 */}
                             <button className="flex items-center gap-2 px-3 py-2 text-sm text-gray-600 hover:bg-gray-100 rounded-lg transition-colors">
                                 <Filter className="w-4 h-4" />
                                 筛选
@@ -1048,21 +1029,20 @@ export default function EmployeeManagementPage() {
                         </div>
                     </div>
 
-                    {/* 表格 */}
                     <div className="overflow-x-auto">
                         <table className="w-full">
                             <thead className="bg-gray-50">
                                 <tr>
-                                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500">员工姓名</th>
-                                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500">员工号</th>
+                                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500">姓名</th>
                                     <th className="px-4 py-3 text-left text-xs font-medium text-gray-500">出生日期</th>
                                     <th className="px-4 py-3 text-left text-xs font-medium text-gray-500">联系电话</th>
                                     <th className="px-4 py-3 text-left text-xs font-medium text-gray-500">最高学历</th>
                                     <th className="px-4 py-3 text-left text-xs font-medium text-gray-500">电子邮箱</th>
-                                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500">职位</th>
+                                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500">应聘职位</th>
                                     <th className="px-4 py-3 text-left text-xs font-medium text-gray-500">个人标签&亮点</th>
                                     <th className="px-4 py-3 text-left text-xs font-medium text-gray-500">毕业院校</th>
-                                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500">入职日期</th>
+                                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500">人才来源</th>
+                                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500">入库时间</th>
                                     <th className="px-4 py-3 text-left text-xs font-medium text-gray-500">操作</th>
                                 </tr>
                             </thead>
@@ -1079,7 +1059,6 @@ export default function EmployeeManagementPage() {
                                                 <span className="text-sm font-medium text-gray-900">{employee.name}</span>
                                             </div>
                                         </td>
-                                        <td className="px-4 py-3 text-sm text-gray-600">{employee.employeeNo}</td>
                                         <td className="px-4 py-3 text-sm text-gray-600">{employee.birthDate}</td>
                                         <td className="px-4 py-3 text-sm text-gray-600">{employee.phone}</td>
                                         <td className="px-4 py-3">
@@ -1118,6 +1097,14 @@ export default function EmployeeManagementPage() {
                                             </div>
                                         </td>
                                         <td className="px-4 py-3 text-sm text-gray-600">{employee.school}</td>
+                                        <td className="px-4 py-3">
+                                            <span className={cn(
+                                                'inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium border',
+                                                sourceColors[employee.source] || sourceColors['-']
+                                            )}>
+                                                {employee.source}
+                                            </span>
+                                        </td>
                                         <td className="px-4 py-3 text-sm text-gray-600">{employee.entryDate}</td>
                                         <td className="px-4 py-3">
                                             <button
@@ -1134,7 +1121,6 @@ export default function EmployeeManagementPage() {
                         </table>
                     </div>
 
-                    {/* 分页 */}
                     <div className="px-4 py-3 border-t border-gray-200 flex items-center justify-between">
                         <div className="flex items-center gap-4">
                             <span className="text-sm text-gray-500">
@@ -1203,7 +1189,6 @@ export default function EmployeeManagementPage() {
                 </div>
             </div>
 
-            {/* 员工详情 Drawer */}
             {selectedEmployee && (
                 <EmployeeDetailDrawer
                     employee={selectedEmployee}

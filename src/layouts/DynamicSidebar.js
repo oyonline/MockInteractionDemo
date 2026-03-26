@@ -1,7 +1,7 @@
 // src/layouts/DynamicSidebar.js
 // 动态左侧导航 - 根据当前模块显示不同导航
 import React from 'react';
-import { ChevronLeft, Package, TrendingUp, ShoppingCart, Truck, DollarSign, TestTube, Users, Settings } from 'lucide-react';
+import { ChevronLeft, Package, TrendingUp, ShoppingCart, Truck, DollarSign, TestTube, Users, Settings, Briefcase, BarChart3, FolderKanban, CalendarDays } from 'lucide-react';
 
 const cn = (...args) => args.filter(Boolean).join(' ');
 
@@ -11,13 +11,17 @@ const navConfig = {
     home: {
         title: '工作台',
         items: [
-            { id: 'product', name: '产品中心', icon: Package, path: '/product' },
-            { id: 'sales', name: '销售与计划', icon: TrendingUp, path: '/sales' },
-            { id: 'procurement', name: '供应链采购', icon: ShoppingCart, path: '/procurement' },
-            { id: 'logistics', name: '物流与报关', icon: Truck, path: '/logistics' },
-            { id: 'finance', name: '财务中心', icon: DollarSign, path: '/finance' },
-            { id: 'quality', name: '质量管理', icon: TestTube, path: '/quality' },
-            { id: 'organization', name: '组织权限', icon: Users, path: '/organization' },
+            { id: 'product', name: '产品中心', icon: Package, path: '/product/overview' },
+            { id: 'sales', name: '销售与计划', icon: TrendingUp, path: '/sales/us/overview' },
+            { id: 'procurement', name: '供应链采购', icon: ShoppingCart, path: '/procurement/overview' },
+            { id: 'supply-chain', name: '供应链计划', icon: CalendarDays, path: '/supply-chain/overview' },
+            { id: 'logistics', name: '物流与报关', icon: Truck, path: '/logistics/overview' },
+            { id: 'finance', name: '财务中心', icon: DollarSign, path: '/finance/overview' },
+            { id: 'quality', name: '质量管理', icon: TestTube, path: '/quality/overview' },
+            { id: 'project', name: '项目管理', icon: FolderKanban, path: '/project/overview' },
+            { id: 'business-analysis', name: '经营分析', icon: BarChart3, path: '/business-analysis/overview' },
+            { id: 'organization', name: '组织权限', icon: Users, path: '/organization/overview' },
+            { id: 'hr', name: '人力资源', icon: Briefcase, path: '/hr/overview' },
             { id: 'settings', name: '系统设置', icon: Settings, path: '/settings', badge: 'IT专用' },
         ]
     },
@@ -27,6 +31,7 @@ const navConfig = {
         title: '产品中心',
         parent: '/home',
         items: [
+            { name: '产品概览', path: '/product/overview' },
             { name: '产品主数据', path: '/product/master' },
             { name: 'BOM管理', path: '/product/bom' },
             { name: '虚拟组合', path: '/product/virtual-combo' },
@@ -44,6 +49,7 @@ const navConfig = {
         title: '美国事业部',
         parent: '/home',
         items: [
+            { name: '事业部概览', path: '/sales/us/overview' },
             { name: '销售主数据', path: '/sales/us/product' },
             { name: '销售目标', path: '/sales/us/target' },
             { name: '销量预测', path: '/sales/us/forecast' },
@@ -53,33 +59,36 @@ const navConfig = {
         ]
     },
     
-    // 中国事业部子导航（占位）
+    // 中国事业部子导航
     'sales-cn': {
         title: '中国事业部',
         parent: '/home',
         items: [
+            { name: '事业部概览', path: '/sales/cn/overview' },
             { name: '销售主数据', path: '/sales/cn' },
             { name: '销售目标', path: '/sales/cn' },
             { name: '销量预测', path: '/sales/cn' },
         ]
     },
     
-    // 东南亚事业部子导航（占位）
+    // 东南亚事业部子导航
     'sales-sea': {
         title: '东南亚事业部',
         parent: '/home',
         items: [
+            { name: '事业部概览', path: '/sales/sea/overview' },
             { name: '销售主数据', path: '/sales/sea' },
             { name: '销售目标', path: '/sales/sea' },
             { name: '销量预测', path: '/sales/sea' },
         ]
     },
     
-    // 欧洲事业部子导航（占位）
+    // 欧洲事业部子导航
     'sales-eu': {
         title: '欧洲事业部',
         parent: '/home',
         items: [
+            { name: '事业部概览', path: '/sales/eu/overview' },
             { name: '销售主数据', path: '/sales/eu' },
             { name: '销售目标', path: '/sales/eu' },
             { name: '销量预测', path: '/sales/eu' },
@@ -91,9 +100,10 @@ const navConfig = {
         title: '项目管理',
         parent: '/home',
         items: [
+            { name: '项目概览', path: '/project/overview' },
             { name: '项目列表', path: '/project' },
-            { name: '任务管理', path: '/project' },
-            { name: '里程碑', path: '/project' },
+            { name: '任务管理', path: '/project/tasks' },
+            { name: '里程碑', path: '/project/milestones' },
         ]
     },
     
@@ -102,9 +112,10 @@ const navConfig = {
         title: '经营分析',
         parent: '/home',
         items: [
+            { name: '经营概览', path: '/business-analysis/overview' },
             { name: '经营指标', path: '/business-analysis' },
-            { name: '数据分析', path: '/business-analysis' },
-            { name: '决策支持', path: '/business-analysis' },
+            { name: '数据分析', path: '/business-analysis/data' },
+            { name: '决策支持', path: '/business-analysis/decision' },
         ]
     },
     
@@ -113,10 +124,11 @@ const navConfig = {
         title: '人力资源',
         parent: '/home',
         items: [
-            { name: '员工信息管理', path: '/hr/employees' },
-            { name: '招聘管理', path: '/hr' },
-            { name: '绩效管理', path: '/hr' },
-            { name: '薪酬管理', path: '/hr' },
+            { name: '人力概览', path: '/hr/overview' },
+            { name: '企业人才库', path: '/hr/employees' },
+            { name: '招聘管理', path: '/hr/recruitment' },
+            { name: '绩效管理', path: '/hr/performance' },
+            { name: '薪酬管理', path: '/hr/salary' },
         ]
     },
     
@@ -125,6 +137,7 @@ const navConfig = {
         title: '供应链采购',
         parent: '/home',
         items: [
+            { name: '采购概览', path: '/procurement/overview' },
             { name: '供应商管理', path: '/procurement/supplier' },
             { name: 'SKU迭代', path: '/procurement/sku-iteration' },
             { name: '采购计划', path: '/procurement/plan-tracking' },
@@ -136,6 +149,7 @@ const navConfig = {
         title: '供应链计划',
         parent: '/home',
         items: [
+            { name: '计划概览', path: '/supply-chain/overview' },
             { name: 'Forecast Tracking', path: '/supply-chain/forecast-tracking' },
             { name: '供应计划管理', path: '/supply-chain/supply-plan' },
         ]
@@ -146,6 +160,7 @@ const navConfig = {
         title: '物流与报关',
         parent: '/home',
         items: [
+            { name: '物流概览', path: '/logistics/overview' },
             { name: '物流商档案', path: '/logistics/vendors' },
             { name: '物流商渠道', path: '/logistics/channels' },
             { name: '仓库地址', path: '/logistics/addresses' },
@@ -162,6 +177,7 @@ const navConfig = {
         title: '财务中心',
         parent: '/home',
         items: [
+            { name: '财务概览', path: '/finance/overview' },
             { name: '成本中心', path: '/finance/cost-center' },
             { name: '预算版本', path: '/finance/budget-version' },
             { name: '费用类别', path: '/finance/expense-category' },
@@ -179,6 +195,7 @@ const navConfig = {
         title: '质量管理',
         parent: '/home',
         items: [
+            { name: '质量概览', path: '/quality/overview' },
             { name: '入库质检', path: '/quality/inbound' },
             { name: '客诉质量', path: '/quality/complaint' },
         ]
@@ -189,6 +206,7 @@ const navConfig = {
         title: '组织权限',
         parent: '/home',
         items: [
+            { name: '组织概览', path: '/organization/overview' },
             { name: '组织架构', path: '/organization/structure' },
             { name: '用户管理', path: '/organization/users' },
             { name: '角色权限', path: '/organization/roles' },
@@ -220,17 +238,16 @@ const getCurrentModule = (path) => {
     if (path.startsWith('/sales/cn')) return 'sales-cn';
     if (path.startsWith('/sales/sea')) return 'sales-sea';
     if (path.startsWith('/sales/eu')) return 'sales-eu';
-    if (path.startsWith('/sales')) return 'sales-us'; // 旧销售路由默认到美国事业部
     if (path.startsWith('/procurement')) return 'procurement';
+    if (path.startsWith('/supply-chain')) return 'supply-chain-plan';
     if (path.startsWith('/logistics')) return 'logistics';
     if (path.startsWith('/finance')) return 'finance';
     if (path.startsWith('/quality')) return 'quality';
-    if (path.startsWith('/organization')) return 'organization';
-    if (path.startsWith('/settings')) return 'settings';
     if (path.startsWith('/project')) return 'project';
     if (path.startsWith('/business-analysis')) return 'business-analysis';
+    if (path.startsWith('/organization')) return 'organization';
     if (path.startsWith('/hr')) return 'hr';
-    if (path.startsWith('/supply-chain')) return 'supply-chain-plan';
+    if (path.startsWith('/settings')) return 'settings';
     return 'home';
 };
 

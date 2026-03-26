@@ -242,27 +242,24 @@ export default function AnnouncementDetailPage({ record, onClose }) {
 
                         {/* 富文本内容 */}
                         <div 
-                            className="prose prose-gray max-w-none mt-6"
+                            className="max-w-none mt-6 text-gray-700 leading-relaxed"
                             dangerouslySetInnerHTML={{ __html: record.content }}
-                            style={{
-                                lineHeight: '1.8',
-                                color: '#374151'
-                            }}
                         />
 
                         {/* 自定义富文本样式 */}
                         <style>{`
-                            .prose h3 {
+                            .max-w-none h3 {
                                 font-size: 1.125rem;
                                 font-weight: 600;
                                 color: #111827;
                                 margin-top: 1.5rem;
                                 margin-bottom: 0.75rem;
                             }
-                            .prose p {
+                            .max-w-none p {
                                 margin-bottom: 0.75rem;
+                                line-height: 1.8;
                             }
-                            .prose strong {
+                            .max-w-none strong {
                                 font-weight: 600;
                                 color: #111827;
                             }

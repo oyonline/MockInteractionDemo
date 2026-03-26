@@ -1,11 +1,13 @@
 // src/pages/SupplierDetailPage.js
-// 供应商详情页（融合基本信息 + 绩效评估）
+// 供应商详情页（融合基本信息 + 绩效评估 + 采购信息）
 import React, { useState, useMemo } from 'react';
 import { 
   ArrowLeft, Edit2, Phone, Mail, MapPin, Star, Award, 
   TrendingUp, TrendingDown, Minus, ChevronDown, ChevronUp,
   Save, X, CheckCircle, Building2, Package, FileText,
-  Calendar, User, AlertCircle
+  Calendar, User, AlertCircle, ShoppingCart, Truck,
+  CreditCard, TrendingUp as TrendIcon, Clock,
+  ChevronLeft, ChevronRight, Eye, Download
 } from 'lucide-react';
 
 const cn = (...args) => args.filter(Boolean).join(' ');
@@ -34,6 +36,34 @@ const defaultPerformanceHistory = [
       S1: 0.82, S2: 0.85, S3: 0.80, S4: 0
     }
   }
+];
+
+// -------------- 模拟采购单据数据 --------------
+const mockPurchaseOrders = [
+  { id: 'PO2024001', date: '2024-03-15', skuCount: 12, amount: 156000, deliveryStatus: '已完成', paymentStatus: '已付款' },
+  { id: 'PO2024002', date: '2024-03-08', skuCount: 8, amount: 89000, deliveryStatus: '已完成', paymentStatus: '已付款' },
+  { id: 'PO2024003', date: '2024-02-28', skuCount: 15, amount: 234000, deliveryStatus: '已完成', paymentStatus: '已付款' },
+  { id: 'PO2024004', date: '2024-02-20', skuCount: 6, amount: 67000, deliveryStatus: '已完成', paymentStatus: '已付款' },
+  { id: 'PO2024005', date: '2024-02-10', skuCount: 20, amount: 312000, deliveryStatus: '已完成', paymentStatus: '已付款' },
+  { id: 'PO2024006', date: '2024-01-25', skuCount: 10, amount: 145000, deliveryStatus: '已完成', paymentStatus: '已付款' },
+  { id: 'PO2024007', date: '2024-01-18', skuCount: 5, amount: 56000, deliveryStatus: '已完成', paymentStatus: '已付款' },
+  { id: 'PO2024008', date: '2024-01-10', skuCount: 18, amount: 278000, deliveryStatus: '已完成', paymentStatus: '已付款' },
+  { id: 'PO2023009', date: '2023-12-28', skuCount: 14, amount: 198000, deliveryStatus: '已完成', paymentStatus: '已付款' },
+  { id: 'PO2023010', date: '2023-12-15', skuCount: 9, amount: 123000, deliveryStatus: '已完成', paymentStatus: '已付款' },
+  { id: 'PO2023011', date: '2023-12-05', skuCount: 11, amount: 167000, deliveryStatus: '已完成', paymentStatus: '已付款' },
+  { id: 'PO2023012', date: '2023-11-28', skuCount: 7, amount: 89000, deliveryStatus: '已完成', paymentStatus: '已付款' },
+  { id: 'PO2023013', date: '2023-11-20', skuCount: 16, amount: 256000, deliveryStatus: '已完成', paymentStatus: '已付款' },
+  { id: 'PO2023014', date: '2023-11-10', skuCount: 4, amount: 45000, deliveryStatus: '已完成', paymentStatus: '已付款' },
+  { id: 'PO2023015', date: '2023-11-01', skuCount: 13, amount: 189000, deliveryStatus: '已完成', paymentStatus: '已付款' },
+];
+
+// -------------- 模拟资质证书数据 --------------
+const mockQualifications = [
+  { name: 'ISO9001', type: '质量管理体系', validDate: '2025-06-30', status: '有效' },
+  { name: 'ISO14001', type: '环境管理体系', validDate: '2025-08-15', status: '有效' },
+  { name: 'IATF16949', type: '汽车行业质量管理体系', validDate: '2024-12-31', status: '即将到期' },
+  { name: 'CE认证', type: '欧盟产品安全认证', validDate: '2026-03-20', status: '有效' },
+  { name: 'RoHS', type: '有害物质限制指令', validDate: '2025-09-10', status: '有效' },
 ];
 
 // -------------- 评估指标配置 --------------
@@ -229,12 +259,17 @@ const SupplierDetailPage = ({ data, onClose }) => {
   const [showEvalForm, setShowEvalForm] = useState(false);
   const [expandedPerf, setExpandedPerf] = useState(null);
   const [performanceHistory, setPerformanceHistory] = useState(defaultPerformanceHistory);
+  
+  // 采购信息分页
+  const [purchasePage, setPurchasePage] = useState(1);
+  const purchasePageSize = 10;
+  const totalPurchasePages = Math.ceil(mockPurchaseOrders.length / purchasePageSize);
+  const paginatedPurchaseOrders = mockPurchaseOrders.slice((purchasePage - 1) * purchasePageSize, purchasePage * purchasePageSize);
 
   const tabs = [
     { id: 'basic', name: '基本信息' },
-    { id: 'contact', name: '联系人' },
-    { id: 'qualification', name: '资质证书' },
     { id: 'performance', name: '绩效评估' },
+    { id: 'purchase', name: '采购信息' },
   ];
 
   const latestPerformance = performanceHistory[0];
@@ -258,6 +293,7 @@ const SupplierDetailPage = ({ data, onClose }) => {
 
   const renderBasicInfo = () => (
     <div className="space-y-6">
+      {/* 供应商基础信息 */}
       <Card className="p-6">
         <div className="flex items-start justify-between mb-6">
           <div>
@@ -302,6 +338,7 @@ const SupplierDetailPage = ({ data, onClose }) => {
         </div>
       </Card>
 
+      {/* 联系信息 + 业务信息 */}
       <div className="grid grid-cols-2 gap-6">
         <Card className="p-6">
           <h4 className="font-medium text-gray-800 mb-4 flex items-center gap-2">
@@ -353,6 +390,31 @@ const SupplierDetailPage = ({ data, onClose }) => {
           </div>
         </Card>
       </div>
+
+      {/* 资质证书 */}
+      <Card className="p-6">
+        <h4 className="font-medium text-gray-800 mb-4 flex items-center gap-2">
+          <Award className="w-4 h-4 text-amber-600" />资质证书
+        </h4>
+        <div className="grid grid-cols-5 gap-3">
+          {mockQualifications.map((cert, index) => (
+            <div key={index} className={cn(
+              "p-3 rounded-lg border text-center",
+              cert.status === '有效' ? 'bg-green-50 border-green-200' : 'bg-yellow-50 border-yellow-200'
+            )}>
+              <div className="text-sm font-semibold text-gray-800">{cert.name}</div>
+              <div className="text-xs text-gray-500 mt-1">{cert.type}</div>
+              <div className="text-xs text-gray-400 mt-2">有效期至：{cert.validDate}</div>
+              <div className={cn(
+                "inline-block px-2 py-0.5 rounded-full text-xs mt-2",
+                cert.status === '有效' ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'
+              )}>
+                {cert.status}
+              </div>
+            </div>
+          ))}
+        </div>
+      </Card>
     </div>
   );
 
@@ -502,6 +564,195 @@ const SupplierDetailPage = ({ data, onClose }) => {
     </div>
   );
 
+  const renderPurchaseInfo = () => (
+    <div className="space-y-6">
+      {/* 采购核心指标卡片 */}
+      <div className="grid grid-cols-4 gap-4">
+        <Card className="p-5">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-lg bg-blue-100 flex items-center justify-center">
+              <Package className="w-5 h-5 text-blue-600" />
+            </div>
+            <div>
+              <p className="text-xs text-gray-500">关联SKU数</p>
+              <p className="text-xl font-bold text-gray-900">{supplier.relatedSKU || 156}</p>
+            </div>
+          </div>
+        </Card>
+        <Card className="p-5">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-lg bg-green-100 flex items-center justify-center">
+              <TrendIcon className="w-5 h-5 text-green-600" />
+            </div>
+            <div>
+              <p className="text-xs text-gray-500">年度累计采购额</p>
+              <p className="text-xl font-bold text-gray-900">¥{(supplier.recentOrderAmount * 12 / 10000).toFixed(0)}万</p>
+            </div>
+          </div>
+        </Card>
+        <Card className="p-5">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-lg bg-orange-100 flex items-center justify-center">
+              <CreditCard className="w-5 h-5 text-orange-600" />
+            </div>
+            <div>
+              <p className="text-xs text-gray-500">结算方式</p>
+              <p className="text-sm font-bold text-gray-900">{supplier.paymentTerms || '月结30天'}</p>
+            </div>
+          </div>
+        </Card>
+        <Card className="p-5">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-lg bg-purple-100 flex items-center justify-center">
+              <Calendar className="w-5 h-5 text-purple-600" />
+            </div>
+            <div>
+              <p className="text-xs text-gray-500">合作起始日期</p>
+              <p className="text-sm font-bold text-gray-900">{supplier.cooperationDate || '2022-03-15'}</p>
+            </div>
+          </div>
+        </Card>
+        <Card className="p-5">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-lg bg-pink-100 flex items-center justify-center">
+              <ShoppingCart className="w-5 h-5 text-pink-600" />
+            </div>
+            <div>
+              <p className="text-xs text-gray-500">最近订单金额</p>
+              <p className="text-xl font-bold text-gray-900">¥15.6万</p>
+            </div>
+          </div>
+        </Card>
+        <Card className="p-5">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-lg bg-indigo-100 flex items-center justify-center">
+              <Clock className="w-5 h-5 text-indigo-600" />
+            </div>
+            <div>
+              <p className="text-xs text-gray-500">平均交付周期</p>
+              <p className="text-xl font-bold text-gray-900">7天</p>
+            </div>
+          </div>
+        </Card>
+        <Card className="p-5">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-lg bg-teal-100 flex items-center justify-center">
+              <CheckCircle className="w-5 h-5 text-teal-600" />
+            </div>
+            <div>
+              <p className="text-xs text-gray-500">质量合格率</p>
+              <p className="text-xl font-bold text-gray-900">98.5%</p>
+            </div>
+          </div>
+        </Card>
+        <Card className="p-5">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-lg bg-amber-100 flex items-center justify-center">
+              <Truck className="w-5 h-5 text-amber-600" />
+            </div>
+            <div>
+              <p className="text-xs text-gray-500">最近下单日期</p>
+              <p className="text-sm font-bold text-gray-900">2024-03-15</p>
+            </div>
+          </div>
+        </Card>
+      </div>
+
+      {/* 采购单据明细表格 */}
+      <Card className="overflow-hidden">
+        <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
+          <h4 className="font-semibold text-gray-800 flex items-center gap-2">
+            <FileText className="w-4 h-4 text-gray-500" />
+            采购单据明细
+          </h4>
+          <button className="flex items-center gap-2 px-3 py-1.5 text-sm text-gray-600 hover:bg-gray-100 rounded-lg transition-colors">
+            <Download className="w-4 h-4" />
+            导出
+          </button>
+        </div>
+        <div className="overflow-x-auto">
+          <table className="w-full">
+            <thead className="bg-gray-50">
+              <tr>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500">订单号</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500">下单日期</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500">SKU数量</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500">订单金额</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500">交付状态</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500">付款状态</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500">操作</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-100">
+              {paginatedPurchaseOrders.map((order) => (
+                <tr key={order.id} className="hover:bg-gray-50">
+                  <td className="px-6 py-4 text-sm font-medium text-gray-900">{order.id}</td>
+                  <td className="px-6 py-4 text-sm text-gray-600">{order.date}</td>
+                  <td className="px-6 py-4 text-sm text-gray-600">{order.skuCount}</td>
+                  <td className="px-6 py-4 text-sm font-medium text-gray-900">
+                    ¥{(order.amount / 10000).toFixed(2)}万
+                  </td>
+                  <td className="px-6 py-4">
+                    <span className={cn(
+                      "inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium",
+                      order.deliveryStatus === '已完成' ? 'bg-green-100 text-green-700' : 
+                      order.deliveryStatus === '进行中' ? 'bg-blue-100 text-blue-700' : 
+                      'bg-yellow-100 text-yellow-700'
+                    )}>
+                      {order.deliveryStatus}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4">
+                    <span className={cn(
+                      "inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium",
+                      order.paymentStatus === '已付款' ? 'bg-green-100 text-green-700' : 
+                      order.paymentStatus === '待付款' ? 'bg-orange-100 text-orange-700' : 
+                      'bg-gray-100 text-gray-700'
+                    )}>
+                      {order.paymentStatus}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4">
+                    <button className="flex items-center gap-1 text-sm text-indigo-600 hover:text-indigo-700">
+                      <Eye className="w-4 h-4" />
+                      查看
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+        
+        {/* 分页 */}
+        <div className="px-6 py-4 border-t border-gray-200 flex items-center justify-between">
+          <span className="text-sm text-gray-500">
+            共 {mockPurchaseOrders.length} 条记录
+          </span>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setPurchasePage(p => Math.max(1, p - 1))}
+              disabled={purchasePage === 1}
+              className="p-2 rounded-lg border border-gray-200 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <ChevronLeft className="w-4 h-4" />
+            </button>
+            <span className="text-sm text-gray-700">
+              第 {purchasePage} / {totalPurchasePages} 页
+            </span>
+            <button
+              onClick={() => setPurchasePage(p => Math.min(totalPurchasePages, p + 1))}
+              disabled={purchasePage === totalPurchasePages}
+              className="p-2 rounded-lg border border-gray-200 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <ChevronRight className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+      </Card>
+    </div>
+  );
+
   return (
     <div className="h-full flex flex-col bg-gray-50">
       {/* 头部 */}
@@ -558,19 +809,8 @@ const SupplierDetailPage = ({ data, onClose }) => {
       {/* 内容区 */}
       <div className="flex-1 overflow-auto p-6">
         {activeTab === 'basic' && renderBasicInfo()}
-        {activeTab === 'contact' && (
-          <Card className="p-8 text-center text-gray-500">
-            <User className="w-12 h-12 mx-auto mb-3 text-gray-300" />
-            <p>联系人信息模块开发中...</p>
-          </Card>
-        )}
-        {activeTab === 'qualification' && (
-          <Card className="p-8 text-center text-gray-500">
-            <CheckCircle className="w-12 h-12 mx-auto mb-3 text-gray-300" />
-            <p>资质证书模块开发中...</p>
-          </Card>
-        )}
         {activeTab === 'performance' && renderPerformance()}
+        {activeTab === 'purchase' && renderPurchaseInfo()}
       </div>
     </div>
   );
