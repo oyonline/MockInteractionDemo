@@ -1,0 +1,103 @@
+---
+description: EPoseidon2.0 module overview page pattern - use when creating new module overview pages
+globs: src/pages/overview/*.js
+alwaysApply: false
+---
+
+# Module Overview Page Pattern
+
+## 概览页用途
+每个业务模块的入口页面，展示：
+1. 模块统计指标（卡片）
+2. 功能入口或快捷操作
+3. 待办/提醒（可选）
+
+## 文件命名
+```
+{Module}OverviewPage.js
+```
+示例：`UsSalesOverviewPage.js`, `ProductOverviewPage.js`
+
+## 标准结构
+```javascript
+import React from 'react';
+import { ModuleIcon, TrendingUp } from 'lucide-react';
+
+const ModuleOverviewPage = () => {
+    return (
+        <div className="h-full flex flex-col bg-gray-50">
+            {/* 标题区 */}
+            <div className="bg-white border-b px-6 py-4">
+                <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 bg-{brand-color}-50 rounded-lg flex items-center justify-center">
+                            <ModuleIcon className="w-5 h-5 text-{brand-color}-600" />
+                        </div>
+                        <div>
+                            <h1 className="text-xl font-semibold text-gray-800">模块名称</h1>
+                            <p className="text-sm text-gray-500">模块描述</p>
+                        </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                        <span className="px-3 py-1 bg-green-100 text-green-700 rounded-full text-sm">
+                            运营中
+                        </span>
+                    </div>
+                </div>
+            </div>
+
+            {/* 统计卡片 - 4列网格 */}
+            <div className="grid grid-cols-4 gap-4 p-6">
+                <div className="bg-white rounded-lg border p-4">
+                    <div className="flex items-center justify-between">
+                        <div>
+                            <p className="text-sm text-gray-500">指标名称</p>
+                            <p className="text-2xl font-semibold text-gray-800 mt-1">数值</p>
+                        </div>
+                        <div className="w-10 h-10 bg-blue-50 rounded-lg flex items-center justify-center">
+                            <TrendingUp className="w-5 h-5 text-blue-500" />
+                        </div>
+                    </div>
+                    <div className="mt-2 flex items-center text-sm">
+                        <TrendingUp className="w-4 h-4 text-green-500 mr-1" />
+                        <span className="text-green-600">+12.5%</span>
+                    </div>
+                </div>
+                {/* 更多卡片... */}
+            </div>
+
+            {/* 主内容占位 */}
+            <div className="flex-1 px-6 pb-6">
+                <div className="bg-white rounded-lg border border-dashed border-gray-300 p-12 h-full flex flex-col items-center justify-center text-center">
+                    {/* 功能模块入口 或 图表 或 表格 */}
+                </div>
+            </div>
+        </div>
+    );
+};
+```
+
+## 路径注册
+在 `App.js` 和 `DynamicSidebar.js` 中注册：
+```javascript
+// App.js
+case '/{module}/overview':
+    return (
+        <ModuleLayout>
+            <ModuleOverviewPage />
+        </ModuleLayout>
+    );
+
+// DynamicSidebar.js navConfig
+items: [
+    { name: '模块概览', path: '/{module}/overview' },
+    { name: '功能1', path: '/{module}/feature1' },
+    // ...
+]
+```
+
+## 配色方案
+每个模块使用品牌色，保持统一：
+- 图标背景: `bg-{color}-50`
+- 图标颜色: `text-{color}-600`
+- 状态标签: `bg-{color}-100 text-{color}-700`

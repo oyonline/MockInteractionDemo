@@ -1,0 +1,56 @@
+---
+description: EPoseidon2.0 service layer - data access abstraction for pages
+globs: src/services/**/*.js
+alwaysApply: false
+---
+
+# Service Layer
+
+## 核心原则
+页面只调用 service，不直接读写 localStorage
+
+## Service 结构
+```
+src/services/
+├── index.js      # 聚合导出
+├── settings.js   # 系统设置
+├── logistics.js  # 物流报关
+├── system.js     # 系统权限
+└── quality.js    # 质量管理（新增）
+```
+
+## List 接口规范
+返回 `{ list, total }`：
+
+```javascript
+export function getXxxList(query) {
+    const { keyword, status, page = 1, pageSize = 10 } = query;
+    let list = getMockXxxList();
+    
+    // 筛选
+    if (keyword) list = list.filter(item => 
+        item.name.includes(keyword) || item.code?.includes(keyword)
+    );
+    if (status) list = list.filter(item => item.status === status);
+    
+    const total = list.length;
+    list = list.slice((page - 1) * pageSize, page * pageSize);
+    
+    return { list, total };
+}
+```
+
+## CRUD 规范
+```javascript
+export function getXxxById(id) { }
+export function createXxx(data) { }
+export function updateXxx(id, data) { }
+export function deleteXxx(id) { }
+```
+
+## Query 字段标准
+- `keyword` - 关键词搜索
+- `status` - 状态筛选
+- `page` / `pageSize` - 分页
+- `sortBy` / `sortOrder` - 排序
+- `startDate` / `endDate` - 日期范围
