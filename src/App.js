@@ -75,9 +75,13 @@ import SalesSeaPage from './pages/sales/SalesSeaPage';
 import SalesEuropePage from './pages/sales/SalesEuropePage';
 import ProcurementPlanTrackingPage from './pages/procurement/ProcurementPlanTrackingPage';
 import ProjectManagementPage from './pages/project/ProjectManagementPage';
+import PMOverviewPage from './pages/project/ProjectOverviewPage';
+import ProjectWorkspacePage from './pages/project/ProjectWorkspacePage';
+import ProjectCreatePage from './pages/project/ProjectCreatePage';
 import BusinessAnalysisPage from './pages/business/BusinessAnalysisPage';
 import HumanResourcesPage from './pages/hr/HumanResourcesPage';
 import UsSalesOverviewPage from './pages/overview/UsSalesOverviewPage';
+import UsPrivateDomainPage from './pages/sales/UsPrivateDomainPage';
 import CnSalesOverviewPage from './pages/overview/CnSalesOverviewPage';
 import SeaSalesOverviewPage from './pages/overview/SeaSalesOverviewPage';
 import EuSalesOverviewPage from './pages/overview/EuSalesOverviewPage';
@@ -95,6 +99,8 @@ import RevenueAnalysisPage from './pages/RevenueAnalysisPage';
 import ProfitAnalysisPage from './pages/ProfitAnalysisPage';
 import AnnouncementsPage from './pages/AnnouncementsPage';
 import EmployeeManagementPage from './pages/EmployeeManagementPage';
+import ActiveEmployeeListPage from './pages/hr/ActiveEmployeeListPage';
+import FormerEmployeeListPage from './pages/hr/FormerEmployeeListPage';
 import AnnouncementDetailPage from './pages/AnnouncementDetailPage';
 import ModuleLayout from './layouts/ModuleLayout';
 import DynamicSidebar from './layouts/DynamicSidebar';
@@ -390,11 +396,14 @@ function App() {
             '/product': '产品中心',
             '/product/master': '产品主数据',
             '/hr/employees': '企业人才库',
+            '/hr/active-employees': '在职员工列表',
+            '/hr/former-employees': '离职员工列表',
             '/procurement/supplier': '供应商管理',
             '/logistics': '物流与报关',
             '/finance/expense-fact': '费用事实',
             '/announcements': '公司公告',
             '/supply-chain-plan': '供应链计划',
+            '/project': '新品开发项目',
         };
         // 尝试直接匹配
         if (pathMap[path]) return pathMap[path];
@@ -489,6 +498,15 @@ function App() {
                 <div className="flex-1 min-h-0 overflow-auto">
                     <LogisticsConsolidationRuleDetailPage tab={tab} />
                 </div>
+            );
+        }
+        // ---------- 项目工作台（动态路由）----------
+        if (tab.path && tab.path.startsWith('/project/') && tab.path !== '/project/create') {
+            return (
+                <ProjectWorkspacePage
+                    record={tab.data}
+                    onClose={() => closeTab(tab.id)}
+                />
             );
         }
         switch (tab.path) {
@@ -814,6 +832,17 @@ function App() {
                         <SalesPlanDashboardPage />
                     </ModuleLayout>
                 );
+            case '/us-private-domain':
+            case '/us-private-domain/customers':
+            case '/us-private-domain/marketing':
+            case '/us-private-domain/community':
+            case '/us-private-domain/analysis':
+            case '/us-private-domain/targets':
+                return (
+                    <ModuleLayout>
+                        <UsPrivateDomainPage />
+                    </ModuleLayout>
+                );
             // 其他事业部（占位）
             case '/sales/cn/overview':
                 return (
@@ -899,6 +928,18 @@ function App() {
                 return (
                     <ModuleLayout>
                         <EmployeeManagementPage />
+                    </ModuleLayout>
+                );
+            case '/hr/active-employees':
+                return (
+                    <ModuleLayout>
+                        <ActiveEmployeeListPage />
+                    </ModuleLayout>
+                );
+            case '/hr/former-employees':
+                return (
+                    <ModuleLayout>
+                        <FormerEmployeeListPage />
                     </ModuleLayout>
                 );
             // 供应链采购模块
@@ -1048,6 +1089,30 @@ function App() {
                     <CostAnalysisDetailPage
                         data={tab.data}
                         onClose={() => closeTab(tab.id)}
+                    />
+                );
+            
+            // 项目管理 - 新品开发PM模块
+            case '/project':
+                return (
+                    <PMOverviewPage
+                        onOpenProject={(project) => openTab({
+                            id: `project-${project.id}`,
+                            name: project.name,
+                            path: `/project/${project.id}`,
+                            data: project
+                        })}
+                        onCreateProject={() => handleNavigate('/project/create', '新建项目')}
+                    />
+                );
+            case '/project/create':
+                return (
+                    <ProjectCreatePage
+                        onClose={() => closeTab(tab.id)}
+                        onSave={(data) => {
+                            console.log('创建项目:', data);
+                            closeTab(tab.id);
+                        }}
                     />
                 );
             

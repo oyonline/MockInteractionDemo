@@ -18,7 +18,7 @@ const navConfig = {
             { id: 'logistics', name: '物流与报关', icon: Truck, path: '/logistics/overview' },
             { id: 'finance', name: '财务中心', icon: DollarSign, path: '/finance/overview' },
             { id: 'quality', name: '质量管理', icon: TestTube, path: '/quality/overview' },
-            { id: 'project', name: '项目管理', icon: FolderKanban, path: '/project/overview' },
+            { id: 'project', name: '项目管理', icon: FolderKanban, path: '/project' },
             { id: 'business-analysis', name: '经营分析', icon: BarChart3, path: '/business-analysis/overview' },
             { id: 'organization', name: '组织权限', icon: Users, path: '/organization/overview' },
             { id: 'hr', name: '人力资源', icon: Briefcase, path: '/hr/overview' },
@@ -59,6 +59,20 @@ const navConfig = {
         ]
     },
     
+    // 美国事业部私域管理 - 独立模块
+    'us-private-domain': {
+        title: '美国事业部私域管理',
+        parent: '/home',
+        items: [
+            { name: '概览', path: '/us-private-domain' },
+            { name: '客户管理', path: '/us-private-domain/customers' },
+            { name: '营销工具', path: '/us-private-domain/marketing' },
+            { name: '社群运营', path: '/us-private-domain/community' },
+            { name: '数据分析', path: '/us-private-domain/analysis' },
+            { name: '目标管理', path: '/us-private-domain/targets' },
+        ]
+    },
+    
     // 中国事业部子导航
     'sales-cn': {
         title: '中国事业部',
@@ -95,18 +109,6 @@ const navConfig = {
         ]
     },
     
-    // 项目管理子导航
-    'project': {
-        title: '项目管理',
-        parent: '/home',
-        items: [
-            { name: '项目概览', path: '/project/overview' },
-            { name: '项目列表', path: '/project' },
-            { name: '任务管理', path: '/project/tasks' },
-            { name: '里程碑', path: '/project/milestones' },
-        ]
-    },
-    
     // 经营分析子导航
     'business-analysis': {
         title: '经营分析',
@@ -126,9 +128,22 @@ const navConfig = {
         items: [
             { name: '人力概览', path: '/hr/overview' },
             { name: '企业人才库', path: '/hr/employees' },
+            { name: '在职员工列表', path: '/hr/active-employees' },
+            { name: '离职员工列表', path: '/hr/former-employees' },
             { name: '招聘管理', path: '/hr/recruitment' },
             { name: '绩效管理', path: '/hr/performance' },
             { name: '薪酬管理', path: '/hr/salary' },
+        ]
+    },
+    
+    // 项目管理子导航
+    'project': {
+        title: '项目管理',
+        parent: '/home',
+        items: [
+            { name: '新品开发项目', path: '/project' },
+            { name: '项目看板', path: '/project' },
+            { name: '任务管理', path: '/project' },
         ]
     },
     
@@ -235,6 +250,7 @@ const getCurrentModule = (path) => {
     if (path === '/home' || path === '/') return 'home';
     if (path.startsWith('/product')) return 'product';
     if (path.startsWith('/sales/us')) return 'sales-us';
+    if (path.startsWith('/us-private-domain')) return 'us-private-domain';
     if (path.startsWith('/sales/cn')) return 'sales-cn';
     if (path.startsWith('/sales/sea')) return 'sales-sea';
     if (path.startsWith('/sales/eu')) return 'sales-eu';
