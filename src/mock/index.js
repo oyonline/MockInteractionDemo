@@ -10,3 +10,14 @@ export { default as getMockEnumRules } from './settings/enum';
 export { default as getMockUserList, getMockUserMeta } from './system/users';
 export { default as getMockRoleList } from './system/roles';
 export { getMockPermissionMeta, getMockInitialRolePermissions, getMockFieldPermissionMeta, getMockDataPermissionMeta } from './system/rolePermissions';
+
+// 供应链计划
+export {
+  getMockForecastList,
+  getMockForecastByMonth,
+  getMockTrendData,
+  getMockPieData,
+  getMockTopUnderperformed,
+  getMockCategoryAnalysis,
+  resetForecastData,
+} from './supply-chain';

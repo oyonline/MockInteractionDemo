@@ -1,0 +1,54 @@
+---
+description: EPoseidon2.0 mock data layer - localStorage-backed with schema versioning
+globs: src/mock/**/*.js, src/utils/storage.js
+alwaysApply: false
+---
+
+# Mock Data Layer
+
+## Key 命名规范
+```
+ecommerce:{module}:{datatype}
+```
+
+示例：
+- `ecommerce:settings:params`
+- `ecommerce:logistics:vendors`
+- `ecommerce:quality:inbound`
+
+## Storage 封装
+```javascript
+import { get, set, remove, clearByPrefix } from '../utils/storage';
+
+// 读取
+const data = get('ecommerce:settings:params');
+
+// 写入（自动 schemaVersion）
+set('ecommerce:settings:params', newData);
+
+// 清空模块
+clearByPrefix('ecommerce:settings:');
+```
+
+## Mock 文件模板
+```javascript
+// src/mock/{module}/{datatype}.js
+import { get, set } from '../../utils/storage';
+
+const STORAGE_KEY = 'ecommerce:{module}:{datatype}';
+
+const defaultData = [
+    { id: 1, name: '示例', status: 'enabled', createdAt: '2024-01-15' }
+];
+
+export default function getMockXxxList() {
+    const stored = get(STORAGE_KEY);
+    if (stored) return stored;
+    set(STORAGE_KEY, defaultData);
+    return defaultData;
+}
+```
+
+## Schema Version
+存储结构：`{ schemaVersion: 1, data: <any> }`
+版本不符 → 返回 null → service 用 mock 回填
