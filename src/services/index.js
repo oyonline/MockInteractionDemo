@@ -3,3 +3,4 @@
 export { settingsParams } from './settings';
 export { userService, rolePermissionService } from './system';
 export { logisticsService } from './logistics';
+export * as supplyChainService from './supply-chain';
