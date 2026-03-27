@@ -102,17 +102,58 @@ ecommerce-system/
 │   │   ├── DynamicSidebar.js    # 动态左侧导航
 │   │   └── ModuleLayout.js      # 模块布局
 │   ├── mock/                # Mock 数据
+│   │   ├── index.js
+│   │   ├── logistics/       # 物流相关mock
+│   │   ├── settings/        # 设置相关mock
+│   │   └── system/          # 系统相关mock
 │   ├── pages/               # 页面组件
+│   │   ├── business/        # 经营分析
+│   │   │   └── BusinessAnalysisPage.js
+│   │   ├── hr/              # 人力资源
+│   │   │   └── HumanResourcesPage.js
 │   │   ├── logistics/       # 物流与报关
 │   │   │   ├── LogisticsVendorListPage.js
 │   │   │   ├── LogisticsVendorDetailPage.js
 │   │   │   ├── LogisticsChannelListPage.js
+│   │   │   ├── LogisticsChannelDetailPage.js
 │   │   │   ├── LogisticsAddressListPage.js
+│   │   │   ├── LogisticsAddressDetailPage.js
 │   │   │   ├── LogisticsHsCodeListPage.js
+│   │   │   ├── LogisticsHsCodeDetailPage.js
 │   │   │   ├── LogisticsDeclarationListPage.js
+│   │   │   ├── LogisticsDeclarationDetailPage.js
 │   │   │   ├── LogisticsRoutingRuleListPage.js
+│   │   │   ├── LogisticsRoutingRuleDetailPage.js
 │   │   │   ├── LogisticsConsolidationRuleListPage.js
+│   │   │   ├── LogisticsConsolidationRuleDetailPage.js
 │   │   │   └── LogisticsTrialCalcPage.js
+│   │   ├── overview/        # 模块概览页
+│   │   │   ├── UsSalesOverviewPage.js       # 美国事业部概览
+│   │   │   ├── CnSalesOverviewPage.js       # 中国事业部概览
+│   │   │   ├── SeaSalesOverviewPage.js      # 东南亚事业部概览
+│   │   │   ├── EuSalesOverviewPage.js       # 欧洲事业部概览
+│   │   │   ├── ProductOverviewPage.js       # 产品中心概览
+│   │   │   ├── ProcurementOverviewPage.js   # 供应链采购概览
+│   │   │   ├── LogisticsOverviewPage.js     # 物流与报关概览
+│   │   │   ├── FinanceOverviewPage.js       # 财务中心概览
+│   │   │   ├── QualityOverviewPage.js       # 质量管理概览
+│   │   │   ├── HrOverviewPage.js            # 人力资源概览
+│   │   │   ├── ProjectOverviewPage.js       # 项目管理概览
+│   │   │   ├── SupplyChainOverviewPage.js   # 供应链计划概览
+│   │   │   └── BusinessAnalysisPage.js      # 经营分析概览
+│   │   ├── procurement/     # 供应链采购
+│   │   │   └── ProcurementPlanTrackingPage.js
+│   │   ├── project/         # 项目管理
+│   │   │   └── ProjectManagementPage.js
+│   │   ├── quality/         # 质量管理
+│   │   │   ├── QualityInboundPage.js
+│   │   │   └── QualityComplaintPage.js
+│   │   ├── sales/           # 销售与计划
+│   │   │   ├── SalesChinaPage.js
+│   │   │   ├── SalesEuropePage.js
+│   │   │   ├── SalesSeaPage.js
+│   │   │   ├── SalesDataAggregationPage.js
+│   │   │   └── SalesPlanDashboardPage.js
 │   │   ├── settings/        # 系统设置
 │   │   │   ├── SettingsParamsPage.js
 │   │   │   ├── SettingsLogPage.js
@@ -124,19 +165,58 @@ ecommerce-system/
 │   │   ├── supply-chain/    # 供应链计划
 │   │   │   ├── ForecastTrackingPage.js
 │   │   │   └── SupplyPlanPage.js
-│   │   ├── HomePage.js
-│   │   ├── ProductMasterPage.js
-│   │   ├── SalesForecastPage.js         # 销量预测（含版本管理）
-│   │   ├── SupplierListPage.js
-│   │   ├── CostCenterPage.js
-│   │   └── ...
+│   │   ├── HomePage.js                          # 首页工作台
+│   │   ├── ProductMasterPage.js                 # 产品主数据
+│   │   ├── SkuDetailPage.simple.js              # SKU详情
+│   │   ├── BOMManagementPage.js                 # BOM管理
+│   │   ├── BrandManagementPage.js               # 品牌管理
+│   │   ├── ProductStructurePage.js              # 产品结构分类
+│   │   ├── CategoryTemplatePage.js              # 类目属性模板
+│   │   ├── ProductTagPage.js                    # 产品标签
+│   │   ├── CodingRulePage.js                    # 编码规则
+│   │   ├── ProductAttributePage.js              # 属性管理
+│   │   ├── VirtualComboPage.js                  # 虚拟组合
+│   │   ├── SalesProductPage.js                  # 销售主数据
+│   │   ├── SalesTargetPage.js                   # 销售目标
+│   │   ├── SalesForecastPage.js                 # 销量预测
+│   │   ├── SlowMovingAnalysisPage.js            # 滞销分析
+│   │   ├── SupplierListPage.js                  # 供应商列表
+│   │   ├── SupplierDetailPage.js                # 供应商详情
+│   │   ├── SupplierPerformancePage.js           # 供应商绩效评估
+│   │   ├── SupplierPerformanceListPage.js       # 供应商绩效列表
+│   │   ├── SkuIterationPage.js                  # SKU迭代管理
+│   │   ├── CostCenterPage.js                    # 成本中心
+│   │   ├── AllocationRulePage.js                # 分摊规则
+│   │   ├── StoreDeptMappingPage.js              # 店铺与部门映射
+│   │   ├── StoreDeptEditStoreDrawer.js          # 店铺编辑抽屉
+│   │   ├── ExpenseCategoryPage.js               # 费用类别
+│   │   ├── ExpenseFactPage.js                   # 费用事实
+│   │   ├── ExpenseFactDetailPage.js             # 费用事实详情
+│   │   ├── ExpenseApprovalListPage.simple.js    # 费用审批列表
+│   │   ├── ExpenseApprovalDetailPage.simple.js  # 费用审批详情
+│   │   ├── BudgetVersionPage.js                 # 预算版本
+│   │   ├── BudgetVersionDetailPage.js           # 预算版本详情
+│   │   ├── RevenueAnalysisPage.js               # 收入分析
+│   │   ├── CostAnalysisPage.js                  # 成本分析
+│   │   ├── CostAnalysisDetailPage.js            # 成本分析详情
+│   │   ├── ProfitAnalysisPage.js                # 利润分析
+│   │   ├── OrganizationManagementPage.js        # 组织架构管理
+│   │   ├── UserManagementPage.js                # 用户管理
+│   │   ├── UserEditPage.js                      # 用户编辑
+│   │   ├── RolePermissionPage.js                # 角色权限
+│   │   ├── EmployeeManagementPage.js            # 企业人才库
+│   │   ├── AnnouncementsPage.js                 # 公告列表
+│   │   ├── AnnouncementDetailPage.js            # 公告详情
+│   │   └── PlaceholderPage.js                   # 占位页面
 │   ├── App.js               # 主应用与路由
 │   ├── index.js             # 入口文件
 │   └── index.css            # 全局样式（含 Tailwind）
 ├── public/                  # 静态资源
 ├── docs/                    # 项目文档
+├── build/                   # 构建产物
 ├── tailwind.config.js       # Tailwind 配置
 ├── postcss.config.js        # PostCSS 配置
+└── package.json             # 项目依赖
 └── package.json             # 项目依赖
 ```
 

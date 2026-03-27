@@ -66,12 +66,41 @@ import LogisticsConsolidationRuleDetailPage from './pages/logistics/LogisticsCon
 import LogisticsTrialCalcPage from './pages/logistics/LogisticsTrialCalcPage';
 import ForecastTrackingPage from './pages/supply-chain/ForecastTrackingPage';
 import SupplyPlanPage from './pages/supply-chain/SupplyPlanPage';
+import QualityInboundPage from './pages/quality/QualityInboundPage';
+import QualityComplaintPage from './pages/quality/QualityComplaintPage';
+import SalesDataAggregationPage from './pages/sales/SalesDataAggregationPage';
+import SalesPlanDashboardPage from './pages/sales/SalesPlanDashboardPage';
+import SalesChinaPage from './pages/sales/SalesChinaPage';
+import SalesSeaPage from './pages/sales/SalesSeaPage';
+import SalesEuropePage from './pages/sales/SalesEuropePage';
+import ProcurementPlanTrackingPage from './pages/procurement/ProcurementPlanTrackingPage';
+import ProjectManagementPage from './pages/project/ProjectManagementPage';
+import PMOverviewPage from './pages/project/ProjectOverviewPage';
+import ProjectWorkspacePage from './pages/project/ProjectWorkspacePage';
+import ProjectCreatePage from './pages/project/ProjectCreatePage';
+import BusinessAnalysisPage from './pages/business/BusinessAnalysisPage';
+import HumanResourcesPage from './pages/hr/HumanResourcesPage';
+import UsSalesOverviewPage from './pages/overview/UsSalesOverviewPage';
+import UsPrivateDomainPage from './pages/sales/UsPrivateDomainPage';
+import CnSalesOverviewPage from './pages/overview/CnSalesOverviewPage';
+import SeaSalesOverviewPage from './pages/overview/SeaSalesOverviewPage';
+import EuSalesOverviewPage from './pages/overview/EuSalesOverviewPage';
+import ProductOverviewPage from './pages/overview/ProductOverviewPage';
+import ProcurementOverviewPage from './pages/overview/ProcurementOverviewPage';
+import SupplyChainOverviewPage from './pages/overview/SupplyChainOverviewPage';
+import LogisticsOverviewPage from './pages/overview/LogisticsOverviewPage';
+import FinanceOverviewPage from './pages/overview/FinanceOverviewPage';
+import QualityOverviewPage from './pages/overview/QualityOverviewPage';
+import ProjectOverviewPage from './pages/overview/ProjectOverviewPage';
+import HrOverviewPage from './pages/overview/HrOverviewPage';
 import CostAnalysisPage from './pages/CostAnalysisPage';
 import CostAnalysisDetailPage from './pages/CostAnalysisDetailPage';
 import RevenueAnalysisPage from './pages/RevenueAnalysisPage';
 import ProfitAnalysisPage from './pages/ProfitAnalysisPage';
 import AnnouncementsPage from './pages/AnnouncementsPage';
 import EmployeeManagementPage from './pages/EmployeeManagementPage';
+import ActiveEmployeeListPage from './pages/hr/ActiveEmployeeListPage';
+import FormerEmployeeListPage from './pages/hr/FormerEmployeeListPage';
 import AnnouncementDetailPage from './pages/AnnouncementDetailPage';
 import ModuleLayout from './layouts/ModuleLayout';
 import DynamicSidebar from './layouts/DynamicSidebar';
@@ -297,27 +326,38 @@ function App() {
     const [tabs, setTabs] = useState([{ id: '/home', name: '首页', path: '/home' }]);
     const [activeTabId, setActiveTabId] = useState('/home');
 
+    // 更新浏览器 URL（不改变页面状态）
+    const updateUrl = useCallback((path) => {
+        if (path && window.location.pathname !== path) {
+            window.history.pushState({ path }, '', path);
+        }
+    }, []);
+
     // 打开新标签页（内部打开详情等用）
     const openTab = useCallback((tabInfo) => {
         const { id, name, path, data } = tabInfo;
         const existingTab = tabs.find(t => t.id === id);
         if (existingTab) {
             setActiveTabId(id);
+            updateUrl(existingTab.path);
             return;
         }
         setTabs(prev => [...prev, { id, name, path, data }]);
         setActiveTabId(id);
-    }, [tabs]);
+        updateUrl(path);
+    }, [tabs, updateUrl]);
 
     // 从侧栏导航：有同 path 的标签则激活，否则新增一个标签
     const handleNavigate = (path, name) => {
         const existing = tabs.find(t => t.path === path);
         if (existing) {
             setActiveTabId(existing.id);
+            updateUrl(path);
             return;
         }
         setTabs(prev => [...prev, { id: path, name, path }]);
         setActiveTabId(path);
+        updateUrl(path);
     };
 
     const openSkuDetail = (row) => {
@@ -342,7 +382,69 @@ function App() {
 
     const switchTab = useCallback((tabId) => {
         setActiveTabId(tabId);
+        // 切换标签时同步更新 URL
+        const tab = tabs.find(t => t.id === tabId);
+        if (tab) {
+            updateUrl(tab.path);
+        }
+    }, [tabs, updateUrl]);
+
+    // 根据 URL 路径获取页面名称
+    const getPageNameFromPath = useCallback((path) => {
+        const pathMap = {
+            '/home': '首页',
+            '/product': '产品中心',
+            '/product/master': '产品主数据',
+            '/hr/employees': '企业人才库',
+            '/hr/active-employees': '在职员工列表',
+            '/hr/former-employees': '离职员工列表',
+            '/procurement/supplier': '供应商管理',
+            '/logistics': '物流与报关',
+            '/finance/expense-fact': '费用事实',
+            '/announcements': '公司公告',
+            '/supply-chain-plan': '供应链计划',
+            '/project': '新品开发项目',
+        };
+        // 尝试直接匹配
+        if (pathMap[path]) return pathMap[path];
+        // 尝试前缀匹配
+        for (const [key, value] of Object.entries(pathMap)) {
+            if (path.startsWith(key)) return value;
+        }
+        return '页面';
     }, []);
+
+    // 首次加载：根据 URL 打开对应页面
+    React.useEffect(() => {
+        const currentPath = window.location.pathname;
+        if (currentPath && currentPath !== '/' && currentPath !== '/home') {
+            const pageName = getPageNameFromPath(currentPath);
+            // 清空默认标签页，直接打开 URL 对应的页面
+            setTabs([{ id: currentPath, name: pageName, path: currentPath }]);
+            setActiveTabId(currentPath);
+        }
+    }, [getPageNameFromPath]);
+
+    // 监听浏览器前进/后退
+    React.useEffect(() => {
+        const handlePopState = (event) => {
+            const path = event.state?.path || window.location.pathname;
+            if (path) {
+                // 查找是否已有对应标签页
+                const existingTab = tabs.find(t => t.path === path);
+                if (existingTab) {
+                    setActiveTabId(existingTab.id);
+                } else {
+                    // 没有则新建标签页
+                    const pageName = getPageNameFromPath(path);
+                    setTabs(prev => [...prev, { id: path, name: pageName, path }]);
+                    setActiveTabId(path);
+                }
+            }
+        };
+        window.addEventListener('popstate', handlePopState);
+        return () => window.removeEventListener('popstate', handlePopState);
+    }, [tabs, getPageNameFromPath]);
 
     // 根据当前激活的标签渲染内容（所有页面统一走标签）
     const renderTabContent = (tab) => {
@@ -398,6 +500,15 @@ function App() {
                 </div>
             );
         }
+        // ---------- 项目工作台（动态路由）----------
+        if (tab.path && tab.path.startsWith('/project/') && tab.path !== '/project/create') {
+            return (
+                <ProjectWorkspacePage
+                    record={tab.data}
+                    onClose={() => closeTab(tab.id)}
+                />
+            );
+        }
         switch (tab.path) {
             case '/home':
                 return (
@@ -432,10 +543,10 @@ function App() {
                 );
             
             // ---------- 一级入口默认跳转 ----------
-            case '/product':
+            case '/product/overview':
                 return (
                     <ModuleLayout>
-                        <ProductMasterPage onOpenSkuDetail={openSkuDetail} />
+                        <ProductOverviewPage />
                     </ModuleLayout>
                 );
             case '/sales':
@@ -444,34 +555,34 @@ function App() {
                         <SalesProductPage />
                     </ModuleLayout>
                 );
-            case '/procurement':
+            case '/procurement/overview':
                 return (
                     <ModuleLayout>
-                        <SupplierListPage onOpenDetail={openTab} onOpenPerformance={openTab} />
+                        <ProcurementOverviewPage />
                     </ModuleLayout>
                 );
-            case '/logistics':
+            case '/logistics/overview':
                 return (
                     <ModuleLayout>
-                        <LogisticsVendorListPage onOpenDetail={openTab} />
+                        <LogisticsOverviewPage />
                     </ModuleLayout>
                 );
-            case '/finance':
+            case '/finance/overview':
                 return (
                     <ModuleLayout>
-                        <CostCenterPage />
+                        <FinanceOverviewPage />
                     </ModuleLayout>
                 );
-            case '/quality':
+            case '/quality/overview':
                 return (
                     <ModuleLayout>
-                        <PlaceholderPage pageName="入库质检" path="/quality/inbound" />
+                        <QualityOverviewPage />
                     </ModuleLayout>
                 );
-            case '/organization':
+            case '/organization/overview':
                 return (
                     <ModuleLayout>
-                        <OrganizationManagementPage />
+                        <PlaceholderPage pageName="组织概览" path={tab.path} />
                     </ModuleLayout>
                 );
             
@@ -631,6 +742,13 @@ function App() {
                         <ProfitAnalysisPage onOpenDetail={openTab} />
                     </ModuleLayout>
                 );
+            case '/finance/expense-fact/detail':
+                return (
+                    <ExpenseFactDetailPage
+                        record={tab.data}
+                        onClose={() => closeTab(tab.id)}
+                    />
+                );
             
             // 旧财务路由兼容（重定向到新路由）
             case '/finance-gov/expense-category':
@@ -672,10 +790,10 @@ function App() {
                     </ModuleLayout>
                 );
             // 销售与计划模块 - 美国事业部（继承现有全部页面）
-            case '/sales/us':
+            case '/sales/us/overview':
                 return (
                     <ModuleLayout>
-                        <SalesProductPage />
+                        <UsSalesOverviewPage />
                     </ModuleLayout>
                 );
             case '/sales/us/product':
@@ -699,7 +817,7 @@ function App() {
             case '/sales/us/data-aggregation':
                 return (
                     <ModuleLayout>
-                        <PlaceholderPage pageName="数据聚合分析" path={tab.path} />
+                        <SalesDataAggregationPage />
                     </ModuleLayout>
                 );
             case '/sales/us/slow-moving':
@@ -711,26 +829,37 @@ function App() {
             case '/sales/us/plan-dashboard':
                 return (
                     <ModuleLayout>
-                        <PlaceholderPage pageName="计划测算看板" path={tab.path} />
+                        <SalesPlanDashboardPage />
+                    </ModuleLayout>
+                );
+            case '/us-private-domain':
+            case '/us-private-domain/customers':
+            case '/us-private-domain/marketing':
+            case '/us-private-domain/community':
+            case '/us-private-domain/analysis':
+            case '/us-private-domain/targets':
+                return (
+                    <ModuleLayout>
+                        <UsPrivateDomainPage />
                     </ModuleLayout>
                 );
             // 其他事业部（占位）
-            case '/sales/cn':
+            case '/sales/cn/overview':
                 return (
                     <ModuleLayout>
-                        <PlaceholderPage pageName="中国事业部" path={tab.path} />
+                        <CnSalesOverviewPage />
                     </ModuleLayout>
                 );
-            case '/sales/sea':
+            case '/sales/sea/overview':
                 return (
                     <ModuleLayout>
-                        <PlaceholderPage pageName="东南亚事业部" path={tab.path} />
+                        <SeaSalesOverviewPage />
                     </ModuleLayout>
                 );
-            case '/sales/eu':
+            case '/sales/eu/overview':
                 return (
                     <ModuleLayout>
-                        <PlaceholderPage pageName="欧洲事业部" path={tab.path} />
+                        <EuSalesOverviewPage />
                     </ModuleLayout>
                 );
             // 旧销售路由兼容（重定向到美国事业部对应页面）
@@ -757,10 +886,15 @@ function App() {
                     </ModuleLayout>
                 );
             case '/sales/data-aggregation':
+                return (
+                    <ModuleLayout>
+                        <SalesDataAggregationPage />
+                    </ModuleLayout>
+                );
             case '/sales/plan-dashboard':
                 return (
                     <ModuleLayout>
-                        <PlaceholderPage pageName="计划中" path={tab.path} />
+                        <SalesPlanDashboardPage />
                     </ModuleLayout>
                 );
             case '/sales/slow-moving':
@@ -770,30 +904,42 @@ function App() {
                     </ModuleLayout>
                 );
             // 项目管理
-            case '/project':
+            case '/project/overview':
                 return (
                     <ModuleLayout>
-                        <PlaceholderPage pageName="项目管理" path={tab.path} />
+                        <ProjectOverviewPage />
                     </ModuleLayout>
                 );
             // 经营分析
-            case '/business-analysis':
+            case '/business-analysis/overview':
                 return (
                     <ModuleLayout>
-                        <PlaceholderPage pageName="经营分析" path={tab.path} />
+                        <PlaceholderPage pageName="经营概览" path={tab.path} />
                     </ModuleLayout>
                 );
             // 人力资源
-            case '/hr':
+            case '/hr/overview':
                 return (
                     <ModuleLayout>
-                        <PlaceholderPage pageName="人力资源" path={tab.path} />
+                        <HrOverviewPage />
                     </ModuleLayout>
                 );
             case '/hr/employees':
                 return (
                     <ModuleLayout>
                         <EmployeeManagementPage />
+                    </ModuleLayout>
+                );
+            case '/hr/active-employees':
+                return (
+                    <ModuleLayout>
+                        <ActiveEmployeeListPage />
+                    </ModuleLayout>
+                );
+            case '/hr/former-employees':
+                return (
+                    <ModuleLayout>
+                        <FormerEmployeeListPage />
                     </ModuleLayout>
                 );
             // 供应链采购模块
@@ -819,10 +965,16 @@ function App() {
             case '/procurement/plan-tracking':
                 return (
                     <ModuleLayout>
-                        <PlaceholderPage pageName="采购计划执行跟进" path={tab.path} />
+                        <ProcurementPlanTrackingPage />
                     </ModuleLayout>
                 );
             // 供应链计划模块
+            case '/supply-chain/overview':
+                return (
+                    <ModuleLayout>
+                        <SupplyChainOverviewPage />
+                    </ModuleLayout>
+                );
             case '/supply-chain/forecast-tracking':
                 return (
                     <ModuleLayout>
@@ -886,19 +1038,7 @@ function App() {
                     </ModuleLayout>
                 );
             // ---------- 系统设置（逐步上线：未做的继续走 default 占位） ----------
-            // 质量管理模块
-            case '/quality/inbound':
-                return (
-                    <ModuleLayout>
-                        <PlaceholderPage pageName="入库质检" path={tab.path} />
-                    </ModuleLayout>
-                );
-            case '/quality/complaint':
-                return (
-                    <ModuleLayout>
-                        <PlaceholderPage pageName="客诉质量" path={tab.path} />
-                    </ModuleLayout>
-                );
+            // 质量管理模块（已在上面定义）
             
             // 系统设置模块（保留左侧导航，但也可以用ModuleLayout统一）
             case '/settings/params':
@@ -952,13 +1092,41 @@ function App() {
                     />
                 );
             
+            // 项目管理 - 新品开发PM模块
+            case '/project':
+                return (
+                    <PMOverviewPage
+                        onOpenProject={(project) => openTab({
+                            id: `project-${project.id}`,
+                            name: project.name,
+                            path: `/project/${project.id}`,
+                            data: project
+                        })}
+                        onCreateProject={() => handleNavigate('/project/create', '新建项目')}
+                    />
+                );
+            case '/project/create':
+                return (
+                    <ProjectCreatePage
+                        onClose={() => closeTab(tab.id)}
+                        onSave={(data) => {
+                            console.log('创建项目:', data);
+                            closeTab(tab.id);
+                        }}
+                    />
+                );
+            
             // 旧路由兼容
             case '/system/users':
                 return <UserManagementPage />;
             case '/system/roles':
                 return <RolePermissionPage />;
             default:
-                return <PlaceholderPage pageName={tab.name} path={tab.path} />;
+                return (
+                    <ModuleLayout>
+                        <PlaceholderPage pageName={tab.name} path={tab.path} />
+                    </ModuleLayout>
+                );
         }
     };
 
