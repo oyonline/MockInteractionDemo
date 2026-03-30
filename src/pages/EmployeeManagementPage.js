@@ -1,6 +1,7 @@
 // src/pages/EmployeeManagementPage.js
-// 企业人才库页面
+// 企业人才库页面 - 增强版（支持面试管理和 Offer 管理）
 import React, { useState, useMemo } from 'react';
+import { parseISO, isWithinInterval } from 'date-fns';
 import {
     Search,
     Filter,
@@ -12,22 +13,48 @@ import {
     Eye,
     Download,
     User,
-    Mail,
     Phone,
     MapPin,
     GraduationCap,
-    Building2,
-    Briefcase,
-    Calendar,
-    CreditCard,
-    Shield,
     Tag,
-    CheckCircle2
+    CheckCircle2,
+    CalendarPlus,
+    Send,
+    MessageSquare,
+    History,
+    FileCheck,
+    Star,
+    ChevronDown,
+    ChevronUp
 } from 'lucide-react';
 
 const cn = (...args) => args.filter(Boolean).join(' ');
 
-// --------------- Mock 员工数据 ---------------
+// --------------- 日期范围选择组件 ---------------
+const DateRangeFilter = ({ label, startDate, endDate, onChange }) => {
+    return (
+        <div>
+            <label className="block text-xs text-gray-500 mb-1.5">{label}</label>
+            <div className="flex items-center gap-2">
+                <input
+                    type="date"
+                    value={startDate}
+                    onChange={(e) => onChange(e.target.value, endDate)}
+                    className="flex-1 px-2.5 py-2 bg-white border border-gray-200 rounded-lg text-sm hover:border-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                />
+                <span className="text-gray-400">-</span>
+                <input
+                    type="date"
+                    value={endDate}
+                    onChange={(e) => onChange(startDate, e.target.value)}
+                    className="flex-1 px-2.5 py-2 bg-white border border-gray-200 rounded-lg text-sm hover:border-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                />
+            </div>
+        </div>
+    );
+};
+
+// --------------- Mock 员工数据（增加面试和Offer相关字段）---------------
 const mockEmployees = [
     {
         id: 1,
@@ -51,7 +78,54 @@ const mockEmployees = [
         socialSecurity: '11010119900515001X',
         providentFund: '11010119900515001X',
         bankCard: '6222021234567890123',
-        ethnicity: '汉族'
+        ethnicity: '汉族',
+        // 招聘状态
+        status: 'interviewing', // new / interviewing / offered / hired / rejected
+        statusLabel: '面试中',
+        // 面试记录
+        interviews: [
+            {
+                id: 1,
+                round: 1,
+                type: '电话面试',
+                interviewer: '李经理',
+                date: '2024-01-15',
+                time: '14:00',
+                duration: '30分钟',
+                result: '通过',
+                score: 85,
+                evaluation: '基础扎实，沟通清晰，对项目经验描述详细。建议进入下一轮。',
+                notes: '重点关注了其主导的系统重构项目细节'
+            },
+            {
+                id: 2,
+                round: 2,
+                type: '技术面试',
+                interviewer: '王总监',
+                date: '2024-01-18',
+                time: '10:00',
+                duration: '60分钟',
+                result: '通过',
+                score: 88,
+                evaluation: '技术能力优秀，算法基础扎实，系统设计思路清晰。',
+                notes: '现场编程题完成度很高'
+            },
+            {
+                id: 3,
+                round: 3,
+                type: 'HR面试',
+                interviewer: 'HRBP陈静',
+                date: '2024-01-22',
+                time: '15:00',
+                duration: '45分钟',
+                result: '待定',
+                score: null,
+                evaluation: '',
+                notes: '待进一步沟通薪资期望'
+            }
+        ],
+        // Offer记录
+        offers: []
     },
     {
         id: 2,
@@ -75,7 +149,52 @@ const mockEmployees = [
         socialSecurity: '11010119880822002X',
         providentFund: '11010119880822002X',
         bankCard: '6222021234567890124',
-        ethnicity: '汉族'
+        ethnicity: '汉族',
+        status: 'hired',
+        statusLabel: '已入职',
+        interviews: [
+            {
+                id: 1,
+                round: 1,
+                type: 'HR面试',
+                interviewer: 'HRBP周雪',
+                date: '2020-05-20',
+                time: '14:00',
+                duration: '45分钟',
+                result: '通过',
+                score: 90,
+                evaluation: '经验丰富，职业规划清晰，价值观匹配度高。',
+                notes: '对薪资期望在预算范围内'
+            },
+            {
+                id: 2,
+                round: 2,
+                type: '总监面试',
+                interviewer: '产品VP',
+                date: '2020-05-25',
+                time: '10:00',
+                duration: '90分钟',
+                result: '通过',
+                score: 92,
+                evaluation: '产品思维出色，过往业绩优秀，非常符合岗位需求。',
+                notes: '建议尽快发offer'
+            }
+        ],
+        offers: [
+            {
+                id: 1,
+                sendDate: '2020-05-28',
+                position: '产品总监',
+                department: '产品部',
+                baseSalary: 35000,
+                bonus: '3个月',
+                stock: '5000股',
+                probation: '3个月',
+                status: 'accepted',
+                acceptDate: '2020-05-30',
+                notes: '候选人接受offer，约定6月15日入职'
+            }
+        ]
     },
     {
         id: 3,
@@ -99,7 +218,39 @@ const mockEmployees = [
         socialSecurity: '31010119950310003X',
         providentFund: '31010119950310003X',
         bankCard: '6222021234567890125',
-        ethnicity: '汉族'
+        ethnicity: '汉族',
+        status: 'offered',
+        statusLabel: 'Offer已发',
+        interviews: [
+            {
+                id: 1,
+                round: 1,
+                type: '视频面试',
+                interviewer: '市场总监',
+                date: '2024-01-10',
+                time: '16:00',
+                duration: '40分钟',
+                result: '通过',
+                score: 82,
+                evaluation: '市场敏感度高，策划能力强，沟通能力优秀。',
+                notes: '对市场营销有独到见解'
+            }
+        ],
+        offers: [
+            {
+                id: 1,
+                sendDate: '2024-01-15',
+                position: '市场经理',
+                department: '市场部',
+                baseSalary: 18000,
+                bonus: '2个月',
+                stock: null,
+                probation: '3个月',
+                status: 'pending',
+                acceptDate: null,
+                notes: '候选人在考虑中，预计3天内回复'
+            }
+        ]
     },
     {
         id: 4,
@@ -123,7 +274,39 @@ const mockEmployees = [
         socialSecurity: '44030119851128004X',
         providentFund: '44030119851128004X',
         bankCard: '6222021234567890126',
-        ethnicity: '汉族'
+        ethnicity: '汉族',
+        status: 'hired',
+        statusLabel: '已入职',
+        interviews: [
+            {
+                id: 1,
+                round: 1,
+                type: '视频面试',
+                interviewer: 'CEO',
+                date: '2019-07-15',
+                time: '09:00',
+                duration: '120分钟',
+                result: '通过',
+                score: 95,
+                evaluation: '技术视野开阔，管理经验丰富，战略思维强。',
+                notes: '硅谷背景非常有价值'
+            }
+        ],
+        offers: [
+            {
+                id: 1,
+                sendDate: '2019-07-20',
+                position: '技术VP',
+                department: '技术部',
+                baseSalary: 80000,
+                bonus: '6个月',
+                stock: '20000股',
+                probation: '3个月',
+                status: 'accepted',
+                acceptDate: '2019-07-22',
+                notes: ' special offer，需要CEO特批'
+            }
+        ]
     },
     {
         id: 5,
@@ -147,7 +330,11 @@ const mockEmployees = [
         socialSecurity: '33010619920708005X',
         providentFund: '33010619920708005X',
         bankCard: '6222021234567890127',
-        ethnicity: '汉族'
+        ethnicity: '汉族',
+        status: 'new',
+        statusLabel: '新入库',
+        interviews: [],
+        offers: []
     },
     {
         id: 6,
@@ -171,7 +358,39 @@ const mockEmployees = [
         socialSecurity: '44030419980214006X',
         providentFund: '44030419980214006X',
         bankCard: '6222021234567890128',
-        ethnicity: '壮族'
+        ethnicity: '壮族',
+        status: 'hired',
+        statusLabel: '已入职',
+        interviews: [
+            {
+                id: 1,
+                round: 1,
+                type: '现场面试',
+                interviewer: '客服经理',
+                date: '2023-01-15',
+                time: '14:00',
+                duration: '30分钟',
+                result: '通过',
+                score: 88,
+                evaluation: '服务意识强，应变能力强，有经验。',
+                notes: '推荐录用'
+            }
+        ],
+        offers: [
+            {
+                id: 1,
+                sendDate: '2023-01-18',
+                position: '客服主管',
+                department: '客服部',
+                baseSalary: 12000,
+                bonus: '1个月',
+                stock: null,
+                probation: '3个月',
+                status: 'accepted',
+                acceptDate: '2023-01-20',
+                notes: '内推候选人，表现优秀'
+            }
+        ]
     },
     {
         id: 7,
@@ -195,7 +414,25 @@ const mockEmployees = [
         socialSecurity: '31011219890920007X',
         providentFund: '31011219890920007X',
         bankCard: '6222021234567890129',
-        ethnicity: '汉族'
+        ethnicity: '汉族',
+        status: 'rejected',
+        statusLabel: '已拒绝',
+        interviews: [
+            {
+                id: 1,
+                round: 1,
+                type: '电话面试',
+                interviewer: 'HR',
+                date: '2024-01-05',
+                time: '10:00',
+                duration: '20分钟',
+                result: '不通过',
+                score: 65,
+                evaluation: '薪资期望过高，超出预算30%，且不愿意调整。',
+                notes: '建议放入人才库，后续有预算时再联系'
+            }
+        ],
+        offers: []
     },
     {
         id: 8,
@@ -219,7 +456,39 @@ const mockEmployees = [
         socialSecurity: '42011119931203008X',
         providentFund: '42011119931203008X',
         bankCard: '6222021234567890130',
-        ethnicity: '汉族'
+        ethnicity: '汉族',
+        status: 'hired',
+        statusLabel: '已入职',
+        interviews: [
+            {
+                id: 1,
+                round: 1,
+                type: '现场面试',
+                interviewer: 'HRD',
+                date: '2022-06-10',
+                time: '14:00',
+                duration: '60分钟',
+                result: '通过',
+                score: 90,
+                evaluation: '招聘经验丰富，校园资源广泛，非常符合需求。',
+                notes: '校招经验丰富'
+            }
+        ],
+        offers: [
+            {
+                id: 1,
+                sendDate: '2022-06-15',
+                position: 'HRBP',
+                department: '人力资源部',
+                baseSalary: 15000,
+                bonus: '2个月',
+                stock: null,
+                probation: '3个月',
+                status: 'accepted',
+                acceptDate: '2022-06-18',
+                notes: '表现优秀，提前转正'
+            }
+        ]
     },
     {
         id: 9,
@@ -243,7 +512,25 @@ const mockEmployees = [
         socialSecurity: '44010619830418009X',
         providentFund: '44010619830418009X',
         bankCard: '6222021234567890131',
-        ethnicity: '汉族'
+        ethnicity: '汉族',
+        status: 'interviewing',
+        statusLabel: '面试中',
+        interviews: [
+            {
+                id: 1,
+                round: 1,
+                type: '电话面试',
+                interviewer: '销售总监',
+                date: '2024-01-20',
+                time: '15:00',
+                duration: '45分钟',
+                result: '通过',
+                score: 87,
+                evaluation: '销售业绩优秀，客户资源丰富，管理能力出色。',
+                notes: '有带团队经验，符合销售总监要求'
+            }
+        ],
+        offers: []
     },
     {
         id: 10,
@@ -267,247 +554,11 @@ const mockEmployees = [
         socialSecurity: '32010619910625010X',
         providentFund: '32010619910625010X',
         bankCard: '6222021234567890132',
-        ethnicity: '满族'
-    },
-    {
-        id: 11,
-        name: '钱明',
-        employeeNo: '-',
-        birthDate: '1997-10-12',
-        phone: '-',
-        email: 'qianming@company.com',
-        education: '本科',
-        school: '-',
-        graduateDate: '2020-06-30',
-        department: '设计部',
-        position: 'UI设计师',
-        tags: ['营销策划', '沟通能力'],
-        highlights: '红点奖获得者，设计系统搭建者',
-        entryDate: '2023-06-01',
-        source: 'BOSS直聘',
-        address: '成都市武侯区一环路南一段',
-        maritalStatus: '未婚',
-        photo: 'https://api.dicebear.com/7.x/avataaars/svg?seed=qianming',
-        socialSecurity: '51010719971012011X',
-        providentFund: '51010719971012011X',
-        bankCard: '6222021234567890133',
-        ethnicity: '汉族'
-    },
-    {
-        id: 12,
-        name: '冯晓',
-        employeeNo: 'EP2019033',
-        birthDate: '1987-01-30',
-        phone: '13800138012',
-        email: 'fengxiao@company.com',
-        education: '大专',
-        school: '广东轻工职业技术学院',
-        graduateDate: '2008-06-30',
-        department: '仓储部',
-        position: '仓库主管',
-        tags: ['项目管理', '沟通能力'],
-        highlights: '仓储管理专家，库存准确率99.9%',
-        entryDate: '2019-05-20',
-        source: '智联招聘',
-        address: '佛山市南海区桂城街道',
-        maritalStatus: '已婚',
-        photo: 'https://api.dicebear.com/7.x/avataaars/svg?seed=fengxiao',
-        socialSecurity: '44060519870130012X',
-        providentFund: '44060519870130012X',
-        bankCard: '6222021234567890134',
-        ethnicity: '汉族'
-    },
-    {
-        id: 13,
-        name: '黄丽',
-        employeeNo: '-',
-        birthDate: '1994-08-08',
-        phone: '13800138013',
-        email: 'huangli@company.com',
-        education: '-',
-        school: '厦门大学',
-        graduateDate: '2017-06-30',
-        department: '采购部',
-        position: '采购经理',
-        tags: ['客户管理', '数据分析', '沟通能力'],
-        highlights: '供应商开发专家，年节约成本300万',
-        entryDate: '2022-04-10',
-        source: '51Job',
-        address: '厦门市思明区思明南路',
-        maritalStatus: '未婚',
-        photo: 'https://api.dicebear.com/7.x/avataaars/svg?seed=huangli',
-        socialSecurity: '35020319940808013X',
-        providentFund: '35020319940808013X',
-        bankCard: '6222021234567890135',
-        ethnicity: '汉族'
-    },
-    {
-        id: 14,
-        name: '林峰',
-        employeeNo: 'EP2021040',
-        birthDate: '1990-11-15',
-        phone: '13800138014',
-        email: 'linfeng@company.com',
-        education: '博士',
-        school: '中国科学院大学',
-        graduateDate: '2019-06-30',
-        department: '研发部',
-        position: '首席科学家',
-        tags: ['海外背景', '数据分析', '项目管理'],
-        highlights: '发明专利20+，国家科技进步奖获得者',
-        entryDate: '2021-01-05',
-        source: '内推',
-        address: '北京市石景山区玉泉路19号',
-        maritalStatus: '已婚',
-        photo: 'https://api.dicebear.com/7.x/avataaars/svg?seed=linfeng',
-        socialSecurity: '11010719901115014X',
-        providentFund: '11010719901115014X',
-        bankCard: '6222021234567890136',
-        ethnicity: '汉族'
-    },
-    {
-        id: 15,
-        name: '何静',
-        employeeNo: '-',
-        birthDate: '1996-05-22',
-        phone: '13800138015',
-        email: '-',
-        education: '本科',
-        school: '华中科技大学',
-        graduateDate: '2019-06-30',
-        department: '质量部',
-        position: '质量工程师',
-        tags: ['数据分析', '沟通能力', '新人培训'],
-        highlights: '六西格玛黑带，质量管理体系建设',
-        entryDate: '2023-08-15',
-        source: 'BOSS直聘',
-        address: '武汉市洪山区珞喻路1037号',
-        maritalStatus: '未婚',
-        photo: 'https://api.dicebear.com/7.x/avataaars/svg?seed=hejing',
-        socialSecurity: '42011119960522015X',
-        providentFund: '42011119960522015X',
-        bankCard: '6222021234567890137',
-        ethnicity: '回族'
-    },
-    {
-        id: 16,
-        name: '徐鹏',
-        employeeNo: 'EP2020050',
-        birthDate: '1988-03-18',
-        phone: '13800138016',
-        email: 'xupeng@company.com',
-        education: '研究生',
-        school: '哈尔滨工业大学',
-        graduateDate: '2014-06-30',
-        department: '技术部',
-        position: '技术经理',
-        tags: ['项目管理', '数据分析', '沟通能力'],
-        highlights: '团队Leader，技术委员会成员',
-        entryDate: '2020-02-28',
-        source: '智联招聘',
-        address: '哈尔滨市南岗区西大直街92号',
-        maritalStatus: '已婚',
-        photo: 'https://api.dicebear.com/7.x/avataaars/svg?seed=xupeng',
-        socialSecurity: '23010319880318016X',
-        providentFund: '23010319880318016X',
-        bankCard: '6222021234567890138',
-        ethnicity: '汉族'
-    },
-    {
-        id: 17,
-        name: '马超',
-        employeeNo: '-',
-        birthDate: '-',
-        phone: '13800138017',
-        email: 'machao@company.com',
-        education: '本科',
-        school: '-',
-        graduateDate: '2016-06-30',
-        department: '物流部',
-        position: '物流经理',
-        tags: ['项目管理', '客户管理', '数据分析'],
-        highlights: '物流优化专家，配送时效提升30%',
-        entryDate: '2022-10-08',
-        source: '51Job',
-        address: '西安市碑林区咸宁西路28号',
-        maritalStatus: '未婚',
-        photo: 'https://api.dicebear.com/7.x/avataaars/svg?seed=machao',
-        socialSecurity: '61010319930905017X',
-        providentFund: '61010319930905017X',
-        bankCard: '6222021234567890139',
-        ethnicity: '汉族'
-    },
-    {
-        id: 18,
-        name: '朱婷',
-        employeeNo: 'EP2021060',
-        birthDate: '1992-12-28',
-        phone: '13800138018',
-        email: 'zhuting@company.com',
-        education: '研究生',
-        school: '同济大学',
-        graduateDate: '2017-06-30',
-        department: '产品部',
-        position: '高级产品经理',
-        tags: ['海外背景', '数据分析', '营销策划'],
-        highlights: '产品增长专家，DAU提升200%',
-        entryDate: '2021-06-20',
-        source: '内推',
-        address: '上海市杨浦区四平路1239号',
-        maritalStatus: '已婚',
-        photo: 'https://api.dicebear.com/7.x/avataaars/svg?seed=zhuting',
-        socialSecurity: '31011019921228018X',
-        providentFund: '31011019921228018X',
-        bankCard: '6222021234567890140',
-        ethnicity: '汉族'
-    },
-    {
-        id: 19,
-        name: '罗军',
-        employeeNo: '-',
-        birthDate: '1986-07-14',
-        phone: '13800138019',
-        email: '-',
-        education: '本科',
-        school: '天津大学',
-        graduateDate: '2009-06-30',
-        department: '运营部',
-        position: '运营总监',
-        tags: ['营销策划', '客户管理', '项目管理'],
-        highlights: '运营体系搭建者，GMV增长5倍',
-        entryDate: '2019-09-10',
-        source: 'BOSS直聘',
-        address: '天津市南开区卫津路92号',
-        maritalStatus: '已婚',
-        photo: 'https://api.dicebear.com/7.x/avataaars/svg?seed=luojun',
-        socialSecurity: '12010419860714019X',
-        providentFund: '12010419860714019X',
-        bankCard: '6222021234567890141',
-        ethnicity: '汉族'
-    },
-    {
-        id: 20,
-        name: '梁雨',
-        employeeNo: 'EP2023070',
-        birthDate: '1998-04-02',
-        phone: '13800138020',
-        email: 'liangyu@company.com',
-        education: '大专',
-        school: '山东商业职业技术学院',
-        graduateDate: '2019-06-30',
-        department: '行政部',
-        position: '行政专员',
-        tags: ['沟通能力', '新人培训'],
-        highlights: '行政管理流程优化，效率提升50%',
-        entryDate: '2023-04-01',
-        source: '智联招聘',
-        address: '济南市历城区旅游路4516号',
-        maritalStatus: '未婚',
-        photo: 'https://api.dicebear.com/7.x/avataaars/svg?seed=liangyu',
-        socialSecurity: '37011219980402020X',
-        providentFund: '37011219980402020X',
-        bankCard: '6222021234567890142',
-        ethnicity: '汉族'
+        ethnicity: '满族',
+        status: 'hired',
+        statusLabel: '已入职',
+        interviews: [],
+        offers: []
     }
 ];
 
@@ -529,16 +580,34 @@ const educationColors = {
     '大专': 'bg-gray-100 text-gray-700 border-gray-200'
 };
 
-// --------------- 学历 Tab 配置 ---------------
-const educationTabs = [
-    { key: 'all', label: '全部' },
-    { key: '博士', label: '博士' },
-    { key: '研究生', label: '研究生' },
-    { key: '本科', label: '本科' },
-    { key: '大专', label: '大专' }
-];
+// 状态颜色配置
+const statusColors = {
+    'new': 'bg-gray-100 text-gray-600 border-gray-200',
+    'interviewing': 'bg-blue-100 text-blue-700 border-blue-200',
+    'offered': 'bg-orange-100 text-orange-700 border-orange-200',
+    'hired': 'bg-green-100 text-green-700 border-green-200',
+    'rejected': 'bg-red-100 text-red-700 border-red-200'
+};
 
-// --------------- 人才来源配置 ---------------
+const interviewResultColors = {
+    '通过': 'bg-green-100 text-green-700',
+    '不通过': 'bg-red-100 text-red-700',
+    '待定': 'bg-yellow-100 text-yellow-700'
+};
+
+const offerStatusColors = {
+    'pending': 'bg-yellow-100 text-yellow-700',
+    'accepted': 'bg-green-100 text-green-700',
+    'rejected': 'bg-red-100 text-red-700'
+};
+
+const offerStatusLabels = {
+    'pending': '待确认',
+    'accepted': '已接受',
+    'rejected': '已拒绝'
+};
+
+// 人才来源配置
 const sourceColors = {
     '内推': 'bg-purple-100 text-purple-700 border-purple-200',
     'BOSS直聘': 'bg-green-100 text-green-700 border-green-200',
@@ -547,7 +616,9 @@ const sourceColors = {
     '-': 'bg-gray-100 text-gray-500 border-gray-200'
 };
 
-// --------------- 下拉选择器组件 ---------------
+// ============== 子组件 ==============
+
+// 下拉选择器
 const SelectFilter = ({ label, value, options, onChange, placeholder }) => {
     const [isOpen, setIsOpen] = useState(false);
     const [searchQuery, setSearchQuery] = useState('');
@@ -634,9 +705,384 @@ const SelectFilter = ({ label, value, options, onChange, placeholder }) => {
     );
 };
 
-// --------------- 员工详情 Drawer 组件 ---------------
-const EmployeeDetailDrawer = ({ employee, onClose }) => {
+// 安排面试弹窗
+const ScheduleInterviewModal = ({ employee, onClose, onSubmit }) => {
+    const [form, setForm] = useState({
+        type: '现场面试',
+        round: employee.interviews?.length + 1 || 1,
+        date: '',
+        time: '',
+        interviewer: '',
+        notes: ''
+    });
+
+    const handleSubmit = () => {
+        onSubmit({ ...form, employeeId: employee.id });
+        onClose();
+    };
+
+    return (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+            <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={onClose} />
+            <div className="relative bg-white rounded-xl shadow-2xl w-[480px] max-h-[90vh] overflow-auto">
+                <div className="sticky top-0 bg-white border-b px-6 py-4 flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+                            <CalendarPlus className="w-5 h-5 text-blue-600" />
+                        </div>
+                        <div>
+                            <h3 className="text-lg font-semibold text-gray-900">安排面试</h3>
+                            <p className="text-sm text-gray-500">候选人：{employee?.name}</p>
+                        </div>
+                    </div>
+                    <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-lg">
+                        <X className="w-5 h-5 text-gray-500" />
+                    </button>
+                </div>
+                
+                <div className="p-6 space-y-4">
+                    <div className="grid grid-cols-2 gap-4">
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1.5">面试类型</label>
+                            <select
+                                value={form.type}
+                                onChange={(e) => setForm({ ...form, type: e.target.value })}
+                                className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            >
+                                <option>电话面试</option>
+                                <option>视频面试</option>
+                                <option>现场面试</option>
+                                <option>HR面试</option>
+                                <option>总监面试</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1.5">面试轮次</label>
+                            <input
+                                type="number"
+                                value={form.round}
+                                onChange={(e) => setForm({ ...form, round: parseInt(e.target.value) })}
+                                className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                min={1}
+                            />
+                        </div>
+                    </div>
+                    
+                    <div className="grid grid-cols-2 gap-4">
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1.5">面试日期</label>
+                            <input
+                                type="date"
+                                value={form.date}
+                                onChange={(e) => setForm({ ...form, date: e.target.value })}
+                                className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1.5">面试时间</label>
+                            <input
+                                type="time"
+                                value={form.time}
+                                onChange={(e) => setForm({ ...form, time: e.target.value })}
+                                className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            />
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1.5">面试官</label>
+                        <input
+                            type="text"
+                            value={form.interviewer}
+                            onChange={(e) => setForm({ ...form, interviewer: e.target.value })}
+                            placeholder="请输入面试官姓名"
+                            className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        />
+                    </div>
+                    
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1.5">备注</label>
+                        <textarea
+                            value={form.notes}
+                            onChange={(e) => setForm({ ...form, notes: e.target.value })}
+                            placeholder="请输入备注信息..."
+                            rows={3}
+                            className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+                        />
+                    </div>
+                </div>
+                
+                <div className="sticky bottom-0 bg-gray-50 px-6 py-4 flex justify-end gap-3 border-t">
+                    <button
+                        onClick={onClose}
+                        className="px-4 py-2 text-sm text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+                    >
+                        取消
+                    </button>
+                    <button
+                        onClick={handleSubmit}
+                        className="px-4 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                    >
+                        确认安排
+                    </button>
+                </div>
+            </div>
+        </div>
+    );
+};
+
+// 发送 Offer 弹窗
+const SendOfferModal = ({ employee, onClose, onSubmit }) => {
+    const [form, setForm] = useState({
+        position: employee?.position || '',
+        department: employee?.department || '',
+        baseSalary: '',
+        bonus: '',
+        stock: '',
+        probation: '3个月',
+        notes: ''
+    });
+
+    const handleSubmit = () => {
+        onSubmit({ ...form, employeeId: employee.id });
+        onClose();
+    };
+
+    return (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+            <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={onClose} />
+            <div className="relative bg-white rounded-xl shadow-2xl w-[480px] max-h-[90vh] overflow-auto">
+                <div className="sticky top-0 bg-white border-b px-6 py-4 flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
+                            <Send className="w-5 h-5 text-green-600" />
+                        </div>
+                        <div>
+                            <h3 className="text-lg font-semibold text-gray-900">发送 Offer</h3>
+                            <p className="text-sm text-gray-500">候选人：{employee?.name}</p>
+                        </div>
+                    </div>
+                    <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-lg">
+                        <X className="w-5 h-5 text-gray-500" />
+                    </button>
+                </div>
+                
+                <div className="p-6 space-y-4">
+                    <div className="grid grid-cols-2 gap-4">
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1.5">职位</label>
+                            <input
+                                type="text"
+                                value={form.position}
+                                onChange={(e) => setForm({ ...form, position: e.target.value })}
+                                className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1.5">部门</label>
+                            <input
+                                type="text"
+                                value={form.department}
+                                onChange={(e) => setForm({ ...form, department: e.target.value })}
+                                className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
+                            />
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1.5">基本工资（元/月）</label>
+                        <input
+                            type="number"
+                            value={form.baseSalary}
+                            onChange={(e) => setForm({ ...form, baseSalary: e.target.value })}
+                            placeholder="请输入基本工资"
+                            className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
+                        />
+                    </div>
+                    
+                    <div className="grid grid-cols-2 gap-4">
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1.5">年终奖</label>
+                            <input
+                                type="text"
+                                value={form.bonus}
+                                onChange={(e) => setForm({ ...form, bonus: e.target.value })}
+                                placeholder="如：3个月"
+                                className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1.5">期权/股权</label>
+                            <input
+                                type="text"
+                                value={form.stock}
+                                onChange={(e) => setForm({ ...form, stock: e.target.value })}
+                                placeholder="如：5000股"
+                                className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
+                            />
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1.5">试用期</label>
+                        <select
+                            value={form.probation}
+                            onChange={(e) => setForm({ ...form, probation: e.target.value })}
+                            className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
+                        >
+                            <option>1个月</option>
+                            <option>2个月</option>
+                            <option>3个月</option>
+                            <option>6个月</option>
+                        </select>
+                    </div>
+                    
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1.5">备注</label>
+                        <textarea
+                            value={form.notes}
+                            onChange={(e) => setForm({ ...form, notes: e.target.value })}
+                            placeholder="请输入备注信息..."
+                            rows={3}
+                            className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-green-500 resize-none"
+                        />
+                    </div>
+                </div>
+                
+                <div className="sticky bottom-0 bg-gray-50 px-6 py-4 flex justify-end gap-3 border-t">
+                    <button
+                        onClick={onClose}
+                        className="px-4 py-2 text-sm text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+                    >
+                        取消
+                    </button>
+                    <button
+                        onClick={handleSubmit}
+                        className="px-4 py-2 text-sm bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+                    >
+                        发送 Offer
+                    </button>
+                </div>
+            </div>
+        </div>
+    );
+};
+
+// 面试评价弹窗
+const InterviewEvaluationModal = ({ interview, onClose, onSubmit }) => {
+    const [form, setForm] = useState({
+        result: interview?.result || '通过',
+        score: interview?.score || 80,
+        evaluation: interview?.evaluation || '',
+        notes: interview?.notes || ''
+    });
+
+    const handleSubmit = () => {
+        onSubmit({ ...form, interviewId: interview.id });
+        onClose();
+    };
+
+    return (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+            <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={onClose} />
+            <div className="relative bg-white rounded-xl shadow-2xl w-[480px] max-h-[90vh] overflow-auto">
+                <div className="sticky top-0 bg-white border-b px-6 py-4 flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
+                            <MessageSquare className="w-5 h-5 text-purple-600" />
+                        </div>
+                        <div>
+                            <h3 className="text-lg font-semibold text-gray-900">面试评价</h3>
+                            <p className="text-sm text-gray-500">第{interview?.round}轮 {interview?.type}</p>
+                        </div>
+                    </div>
+                    <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-lg">
+                        <X className="w-5 h-5 text-gray-500" />
+                    </button>
+                </div>
+                
+                <div className="p-6 space-y-4">
+                    <div className="grid grid-cols-2 gap-4">
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1.5">面试结果</label>
+                            <select
+                                value={form.result}
+                                onChange={(e) => setForm({ ...form, result: e.target.value })}
+                                className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
+                            >
+                                <option>通过</option>
+                                <option>不通过</option>
+                                <option>待定</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1.5">综合评分</label>
+                            <input
+                                type="number"
+                                value={form.score}
+                                onChange={(e) => setForm({ ...form, score: parseInt(e.target.value) })}
+                                min={0}
+                                max={100}
+                                className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
+                            />
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1.5">评价内容</label>
+                        <textarea
+                            value={form.evaluation}
+                            onChange={(e) => setForm({ ...form, evaluation: e.target.value })}
+                            placeholder="请输入面试评价..."
+                            rows={4}
+                            className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 resize-none"
+                        />
+                    </div>
+                    
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1.5">备注</label>
+                        <textarea
+                            value={form.notes}
+                            onChange={(e) => setForm({ ...form, notes: e.target.value })}
+                            placeholder="请输入备注信息..."
+                            rows={2}
+                            className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 resize-none"
+                        />
+                    </div>
+                </div>
+                
+                <div className="sticky bottom-0 bg-gray-50 px-6 py-4 flex justify-end gap-3 border-t">
+                    <button
+                        onClick={onClose}
+                        className="px-4 py-2 text-sm text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+                    >
+                        取消
+                    </button>
+                    <button
+                        onClick={handleSubmit}
+                        className="px-4 py-2 text-sm bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
+                    >
+                        保存评价
+                    </button>
+                </div>
+            </div>
+        </div>
+    );
+};
+
+// 员工详情 Drawer 组件
+const EmployeeDetailDrawer = ({ employee, onClose, onScheduleInterview, onSendOffer }) => {
+    const [activeTab, setActiveTab] = useState('basic'); // basic / interviews / offers
+    const [expandedInterview, setExpandedInterview] = useState(null);
+    const [evaluationModal, setEvaluationModal] = useState(null);
+
     if (!employee) return null;
+
+    const handleSaveEvaluation = (data) => {
+        console.log('保存评价:', data);
+        // 实际应用中这里会调用 API
+        alert('评价已保存！');
+    };
 
     return (
         <div className="fixed inset-0 z-50 flex justify-end">
@@ -644,233 +1090,521 @@ const EmployeeDetailDrawer = ({ employee, onClose }) => {
                 className="absolute inset-0 bg-black/30 backdrop-blur-sm"
                 onClick={onClose}
             />
-            <div className="relative w-[500px] h-full bg-white shadow-2xl overflow-y-auto animate-in slide-in-from-right">
+            <div className="relative w-[50vw] min-w-[600px] h-full bg-white shadow-2xl overflow-hidden animate-in slide-in-from-right flex flex-col">
                 {/* Header */}
                 <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between z-10">
-                    <h2 className="text-lg font-bold text-gray-900">员工档案详情</h2>
-                    <button
-                        onClick={onClose}
-                        className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-                    >
-                        <X className="w-5 h-5 text-gray-500" />
-                    </button>
+                    <div className="flex items-center gap-4">
+                        <h2 className="text-lg font-bold text-gray-900">人才档案详情</h2>
+                        <span className={cn(
+                            'px-2.5 py-1 rounded-full text-xs font-medium border',
+                            statusColors[employee.status]
+                        )}>
+                            {employee.statusLabel}
+                        </span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                        {employee.status !== 'hired' && employee.status !== 'rejected' && (
+                            <>
+                                <button
+                                    onClick={() => onScheduleInterview(employee)}
+                                    className="flex items-center gap-1.5 px-3 py-1.5 text-sm bg-blue-50 text-blue-600 hover:bg-blue-100 rounded-lg transition-colors"
+                                >
+                                    <CalendarPlus className="w-4 h-4" />
+                                    安排面试
+                                </button>
+                                {employee.interviews?.length > 0 && (
+                                    <button
+                                        onClick={() => onSendOffer(employee)}
+                                        className="flex items-center gap-1.5 px-3 py-1.5 text-sm bg-green-50 text-green-600 hover:bg-green-100 rounded-lg transition-colors"
+                                    >
+                                        <Send className="w-4 h-4" />
+                                        发送 Offer
+                                    </button>
+                                )}
+                            </>
+                        )}
+                        <button
+                            onClick={onClose}
+                            className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                        >
+                            <X className="w-5 h-5 text-gray-500" />
+                        </button>
+                    </div>
                 </div>
 
-                <div className="p-6 space-y-6">
-                    {/* 基本信息卡片 */}
-                    <div className="bg-gradient-to-br from-indigo-500 to-purple-600 rounded-2xl p-6 text-white">
-                        <div className="flex items-center gap-4">
-                            <img
-                                src={employee.photo}
-                                alt={employee.name}
-                                className="w-20 h-20 rounded-full bg-white/20 p-1"
-                            />
-                            <div>
-                                <h3 className="text-2xl font-bold">{employee.name}</h3>
-                                <p className="text-white/80 text-sm mt-1">{employee.employeeNo}</p>
-                                <div className="flex items-center gap-2 mt-2">
-                                    <span className="px-2 py-0.5 bg-white/20 rounded text-xs">
-                                        {employee.department}
-                                    </span>
-                                    <span className="px-2 py-0.5 bg-white/20 rounded text-xs">
-                                        {employee.position}
-                                    </span>
+                {/* 标签页导航 */}
+                <div className="flex border-b border-gray-200 px-6">
+                    {[
+                        { key: 'basic', label: '基本信息', icon: User },
+                        { key: 'interviews', label: `面试记录 (${employee.interviews?.length || 0})`, icon: History },
+                        { key: 'offers', label: `Offer记录 (${employee.offers?.length || 0})`, icon: FileCheck }
+                    ].map(tab => (
+                        <button
+                            key={tab.key}
+                            onClick={() => setActiveTab(tab.key)}
+                            className={cn(
+                                'flex items-center gap-2 px-4 py-3 text-sm font-medium border-b-2 transition-colors',
+                                activeTab === tab.key
+                                    ? 'border-indigo-500 text-indigo-600'
+                                    : 'border-transparent text-gray-500 hover:text-gray-700'
+                            )}
+                        >
+                            <tab.icon className="w-4 h-4" />
+                            {tab.label}
+                        </button>
+                    ))}
+                </div>
+
+                {/* 内容区域 */}
+                <div className="flex-1 overflow-auto p-6">
+                    {/* 基本信息 Tab */}
+                    {activeTab === 'basic' && (
+                        <div className="space-y-6">
+                            {/* 基本信息卡片 */}
+                            <div className="bg-gradient-to-br from-indigo-500 to-purple-600 rounded-2xl p-6 text-white">
+                                <div className="flex items-center gap-4">
+                                    <img
+                                        src={employee.photo}
+                                        alt={employee.name}
+                                        className="w-20 h-20 rounded-full bg-white/20 p-1"
+                                    />
+                                    <div>
+                                        <h3 className="text-2xl font-bold">{employee.name}</h3>
+                                        <p className="text-white/80 text-sm mt-1">期望职位：{employee.position}</p>
+                                        <div className="flex items-center gap-2 mt-2">
+                                            <span className="px-2 py-0.5 bg-white/20 rounded text-xs">
+                                                {employee.education}
+                                            </span>
+                                            <span className="px-2 py-0.5 bg-white/20 rounded text-xs">
+                                                {employee.school}
+                                            </span>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
-                        </div>
-                    </div>
 
-                    {/* 联系信息 */}
-                    <div className="bg-gray-50 rounded-xl p-4 space-y-3">
-                        <h4 className="text-sm font-semibold text-gray-700 flex items-center gap-2">
-                            <Phone className="w-4 h-4" />
-                            联系信息
-                        </h4>
-                        <div className="grid grid-cols-2 gap-4 text-sm">
-                            <div>
-                                <p className="text-gray-500 text-xs mb-1">联系电话</p>
-                                <p className="text-gray-900">{employee.phone}</p>
+                            {/* 联系信息 */}
+                            <div className="bg-gray-50 rounded-xl p-4 space-y-3">
+                                <h4 className="text-sm font-semibold text-gray-700 flex items-center gap-2">
+                                    <Phone className="w-4 h-4" />
+                                    联系信息
+                                </h4>
+                                <div className="grid grid-cols-2 gap-4 text-sm">
+                                    <div>
+                                        <p className="text-gray-500 text-xs mb-1">联系电话</p>
+                                        <p className="text-gray-900">{employee.phone}</p>
+                                    </div>
+                                    <div>
+                                        <p className="text-gray-500 text-xs mb-1">电子邮箱</p>
+                                        <a href={`mailto:${employee.email}`} className="text-blue-600 hover:underline">
+                                            {employee.email}
+                                        </a>
+                                    </div>
+                                    <div className="col-span-2">
+                                        <p className="text-gray-500 text-xs mb-1">家庭住址</p>
+                                        <p className="text-gray-900 flex items-center gap-1">
+                                            <MapPin className="w-3.5 h-3.5 text-gray-400" />
+                                            {employee.address}
+                                        </p>
+                                    </div>
+                                </div>
                             </div>
-                            <div>
-                                <p className="text-gray-500 text-xs mb-1">电子邮箱</p>
-                                <a 
-                                    href={`mailto:${employee.email}`}
-                                    className="text-blue-600 hover:underline"
-                                >
-                                    {employee.email}
-                                </a>
+
+                            {/* 个人信息 */}
+                            <div className="bg-gray-50 rounded-xl p-4 space-y-3">
+                                <h4 className="text-sm font-semibold text-gray-700 flex items-center gap-2">
+                                    <User className="w-4 h-4" />
+                                    个人信息
+                                </h4>
+                                <div className="grid grid-cols-2 gap-4 text-sm">
+                                    <div>
+                                        <p className="text-gray-500 text-xs mb-1">出生日期</p>
+                                        <p className="text-gray-900">{employee.birthDate}</p>
+                                    </div>
+                                    <div>
+                                        <p className="text-gray-500 text-xs mb-1">婚姻状况</p>
+                                        <p className="text-gray-900">{employee.maritalStatus}</p>
+                                    </div>
+                                    <div>
+                                        <p className="text-gray-500 text-xs mb-1">民族</p>
+                                        <p className="text-gray-900">{employee.ethnicity}</p>
+                                    </div>
+                                    <div>
+                                        <p className="text-gray-500 text-xs mb-1">入库时间</p>
+                                        <p className="text-gray-900">{employee.entryDate}</p>
+                                    </div>
+                                </div>
                             </div>
-                            <div className="col-span-2">
-                                <p className="text-gray-500 text-xs mb-1">家庭住址</p>
-                                <p className="text-gray-900 flex items-center gap-1">
-                                    <MapPin className="w-3.5 h-3.5 text-gray-400" />
-                                    {employee.address}
+
+                            {/* 教育背景 */}
+                            <div className="bg-gray-50 rounded-xl p-4 space-y-3">
+                                <h4 className="text-sm font-semibold text-gray-700 flex items-center gap-2">
+                                    <GraduationCap className="w-4 h-4" />
+                                    教育背景
+                                </h4>
+                                <div className="grid grid-cols-2 gap-4 text-sm">
+                                    <div>
+                                        <p className="text-gray-500 text-xs mb-1">最高学历</p>
+                                        <span className={cn(
+                                            'inline-flex px-2 py-0.5 rounded-full text-xs font-medium border',
+                                            educationColors[employee.education]
+                                        )}>
+                                            {employee.education}
+                                        </span>
+                                    </div>
+                                    <div>
+                                        <p className="text-gray-500 text-xs mb-1">毕业院校</p>
+                                        <p className="text-gray-900">{employee.school}</p>
+                                    </div>
+                                    <div>
+                                        <p className="text-gray-500 text-xs mb-1">毕业时间</p>
+                                        <p className="text-gray-900">{employee.graduateDate}</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* 个人标签 & 亮点 */}
+                            <div className="bg-gray-50 rounded-xl p-4 space-y-3">
+                                <h4 className="text-sm font-semibold text-gray-700 flex items-center gap-2">
+                                    <Tag className="w-4 h-4" />
+                                    个人标签 & 亮点
+                                </h4>
+                                <div className="flex flex-wrap gap-2">
+                                    {employee.tags?.map(tag => (
+                                        <span
+                                            key={tag}
+                                            className={cn(
+                                                'px-2.5 py-1 rounded-full text-xs font-medium border',
+                                                tagColors[tag] || 'bg-gray-100 text-gray-700 border-gray-200'
+                                            )}
+                                        >
+                                            {tag}
+                                        </span>
+                                    ))}
+                                </div>
+                                <p className="text-sm text-gray-600 mt-2 bg-white p-3 rounded-lg border border-gray-100">
+                                    {employee.highlights}
                                 </p>
                             </div>
                         </div>
-                    </div>
+                    )}
 
-                    {/* 个人信息 */}
-                    <div className="bg-gray-50 rounded-xl p-4 space-y-3">
-                        <h4 className="text-sm font-semibold text-gray-700 flex items-center gap-2">
-                            <User className="w-4 h-4" />
-                            个人信息
-                        </h4>
-                        <div className="grid grid-cols-2 gap-4 text-sm">
-                            <div>
-                                <p className="text-gray-500 text-xs mb-1">出生日期</p>
-                                <p className="text-gray-900">{employee.birthDate}</p>
-                            </div>
-                            <div>
-                                <p className="text-gray-500 text-xs mb-1">婚姻状况</p>
-                                <p className="text-gray-900">{employee.maritalStatus}</p>
-                            </div>
-                            <div>
-                                <p className="text-gray-500 text-xs mb-1">民族</p>
-                                <p className="text-gray-900">{employee.ethnicity}</p>
-                            </div>
-                            <div>
-                                <p className="text-gray-500 text-xs mb-1">入库时间</p>
-                                <p className="text-gray-900">{employee.entryDate}</p>
-                            </div>
+                    {/* 面试记录 Tab */}
+                    {activeTab === 'interviews' && (
+                        <div className="space-y-4">
+                            {employee.interviews?.length === 0 ? (
+                                <div className="text-center py-12">
+                                    <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                                        <History className="w-8 h-8 text-gray-400" />
+                                    </div>
+                                    <p className="text-gray-500">暂无面试记录</p>
+                                    <button
+                                        onClick={() => onScheduleInterview(employee)}
+                                        className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-lg text-sm hover:bg-blue-700"
+                                    >
+                                        安排面试
+                                    </button>
+                                </div>
+                            ) : (
+                                employee.interviews?.map((interview, index) => (
+                                    <div
+                                        key={interview.id}
+                                        className="bg-white border border-gray-200 rounded-xl overflow-hidden"
+                                    >
+                                        <div
+                                            className="px-4 py-3 bg-gray-50 flex items-center justify-between cursor-pointer"
+                                            onClick={() => setExpandedInterview(
+                                                expandedInterview === interview.id ? null : interview.id
+                                            )}
+                                        >
+                                            <div className="flex items-center gap-3">
+                                                <div className="w-8 h-8 bg-indigo-100 rounded-lg flex items-center justify-center">
+                                                    <span className="text-sm font-bold text-indigo-600">{interview.round}</span>
+                                                </div>
+                                                <div>
+                                                    <p className="text-sm font-medium text-gray-900">
+                                                        第{interview.round}轮 {interview.type}
+                                                    </p>
+                                                    <p className="text-xs text-gray-500">
+                                                        {interview.date} {interview.time} · {interview.interviewer}
+                                                    </p>
+                                                </div>
+                                            </div>
+                                            <div className="flex items-center gap-2">
+                                                <span className={cn(
+                                                    'px-2 py-0.5 rounded-full text-xs font-medium',
+                                                    interviewResultColors[interview.result]
+                                                )}>
+                                                    {interview.result}
+                                                </span>
+                                                {interview.score && (
+                                                    <span className="flex items-center gap-1 text-xs text-amber-600">
+                                                        <Star className="w-3 h-3 fill-current" />
+                                                        {interview.score}
+                                                    </span>
+                                                )}
+                                                {expandedInterview === interview.id ? (
+                                                    <ChevronUp className="w-4 h-4 text-gray-400" />
+                                                ) : (
+                                                    <ChevronDown className="w-4 h-4 text-gray-400" />
+                                                )}
+                                            </div>
+                                        </div>
+                                        
+                                        {expandedInterview === interview.id && (
+                                            <div className="px-4 py-3 border-t border-gray-100">
+                                                <div className="grid grid-cols-2 gap-3 mb-3 text-sm">
+                                                    <div>
+                                                        <span className="text-gray-500">时长：</span>
+                                                        <span className="text-gray-900">{interview.duration}</span>
+                                                    </div>
+                                                    <div>
+                                                        <span className="text-gray-500">面试官：</span>
+                                                        <span className="text-gray-900">{interview.interviewer}</span>
+                                                    </div>
+                                                </div>
+                                                
+                                                {interview.evaluation && (
+                                                    <div className="mb-3">
+                                                        <p className="text-xs text-gray-500 mb-1">面试评价</p>
+                                                        <p className="text-sm text-gray-700 bg-gray-50 p-3 rounded-lg">
+                                                            {interview.evaluation}
+                                                        </p>
+                                                    </div>
+                                                )}
+                                                
+                                                {interview.notes && (
+                                                    <div>
+                                                        <p className="text-xs text-gray-500 mb-1">备注</p>
+                                                        <p className="text-sm text-gray-600">{interview.notes}</p>
+                                                    </div>
+                                                )}
+                                                
+                                                <div className="flex justify-end gap-2 mt-3">
+                                                    <button
+                                                        onClick={() => setEvaluationModal(interview)}
+                                                        className="flex items-center gap-1 px-3 py-1.5 text-sm text-purple-600 hover:bg-purple-50 rounded-lg"
+                                                    >
+                                                        <MessageSquare className="w-3.5 h-3.5" />
+                                                        {interview.evaluation ? '修改评价' : '添加评价'}
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        )}
+                                    </div>
+                                ))
+                            )}
                         </div>
-                    </div>
+                    )}
 
-                    {/* 教育背景 */}
-                    <div className="bg-gray-50 rounded-xl p-4 space-y-3">
-                        <h4 className="text-sm font-semibold text-gray-700 flex items-center gap-2">
-                            <GraduationCap className="w-4 h-4" />
-                            教育背景
-                        </h4>
-                        <div className="grid grid-cols-2 gap-4 text-sm">
-                            <div>
-                                <p className="text-gray-500 text-xs mb-1">最高学历</p>
-                                <span className={cn(
-                                    'inline-flex px-2 py-0.5 rounded-full text-xs font-medium border',
-                                    educationColors[employee.education]
-                                )}>
-                                    {employee.education}
-                                </span>
-                            </div>
-                            <div>
-                                <p className="text-gray-500 text-xs mb-1">毕业院校</p>
-                                <p className="text-gray-900">{employee.school}</p>
-                            </div>
-                            <div>
-                                <p className="text-gray-500 text-xs mb-1">毕业时间</p>
-                                <p className="text-gray-900">{employee.graduateDate}</p>
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* 个人标签 & 亮点 */}
-                    <div className="bg-gray-50 rounded-xl p-4 space-y-3">
-                        <h4 className="text-sm font-semibold text-gray-700 flex items-center gap-2">
-                            <Tag className="w-4 h-4" />
-                            个人标签 & 亮点
-                        </h4>
-                        <div className="flex flex-wrap gap-2">
-                            {employee.tags.map(tag => (
-                                <span
-                                    key={tag}
-                                    className={cn(
-                                        'px-2.5 py-1 rounded-full text-xs font-medium border',
-                                        tagColors[tag] || 'bg-gray-100 text-gray-700 border-gray-200'
+                    {/* Offer记录 Tab */}
+                    {activeTab === 'offers' && (
+                        <div className="space-y-4">
+                            {employee.offers?.length === 0 ? (
+                                <div className="text-center py-12">
+                                    <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                                        <FileCheck className="w-8 h-8 text-gray-400" />
+                                    </div>
+                                    <p className="text-gray-500">暂无Offer记录</p>
+                                    {employee.interviews?.length > 0 && (
+                                        <button
+                                            onClick={() => onSendOffer(employee)}
+                                            className="mt-4 px-4 py-2 bg-green-600 text-white rounded-lg text-sm hover:bg-green-700"
+                                        >
+                                            发送 Offer
+                                        </button>
                                     )}
-                                >
-                                    {tag}
-                                </span>
-                            ))}
+                                </div>
+                            ) : (
+                                employee.offers?.map((offer, index) => (
+                                    <div
+                                        key={offer.id}
+                                        className="bg-white border border-gray-200 rounded-xl p-4"
+                                    >
+                                        <div className="flex items-start justify-between mb-4">
+                                            <div className="flex items-center gap-3">
+                                                <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
+                                                    <FileCheck className="w-5 h-5 text-green-600" />
+                                                </div>
+                                                <div>
+                                                    <p className="text-sm font-medium text-gray-900">
+                                                        {offer.department} - {offer.position}
+                                                    </p>
+                                                    <p className="text-xs text-gray-500">
+                                                        发送日期：{offer.sendDate}
+                                                    </p>
+                                                </div>
+                                            </div>
+                                            <span className={cn(
+                                                'px-2.5 py-1 rounded-full text-xs font-medium border',
+                                                offerStatusColors[offer.status]
+                                            )}>
+                                                {offerStatusLabels[offer.status]}
+                                            </span>
+                                        </div>
+                                        
+                                        <div className="grid grid-cols-2 gap-3 mb-4 text-sm">
+                                            <div className="bg-gray-50 rounded-lg p-2.5">
+                                                <p className="text-xs text-gray-500 mb-0.5">基本工资</p>
+                                                <p className="text-lg font-semibold text-gray-900">
+                                                    ¥{offer.baseSalary?.toLocaleString()}
+                                                </p>
+                                            </div>
+                                            <div className="bg-gray-50 rounded-lg p-2.5">
+                                                <p className="text-xs text-gray-500 mb-0.5">年终奖</p>
+                                                <p className="text-gray-900">{offer.bonus}</p>
+                                            </div>
+                                            {offer.stock && (
+                                                <div className="bg-gray-50 rounded-lg p-2.5">
+                                                    <p className="text-xs text-gray-500 mb-0.5">期权/股权</p>
+                                                    <p className="text-gray-900">{offer.stock}</p>
+                                                </div>
+                                            )}
+                                            <div className="bg-gray-50 rounded-lg p-2.5">
+                                                <p className="text-xs text-gray-500 mb-0.5">试用期</p>
+                                                <p className="text-gray-900">{offer.probation}</p>
+                                            </div>
+                                        </div>
+                                        
+                                        {offer.status === 'accepted' && offer.acceptDate && (
+                                            <div className="flex items-center gap-2 text-sm text-green-700 bg-green-50 rounded-lg p-2.5">
+                                                <CheckCircle2 className="w-4 h-4" />
+                                                <span>候选人已于 {offer.acceptDate} 接受 Offer</span>
+                                            </div>
+                                        )}
+                                        
+                                        {offer.notes && (
+                                            <div className="mt-3 pt-3 border-t border-gray-100">
+                                                <p className="text-xs text-gray-500 mb-1">备注</p>
+                                                <p className="text-sm text-gray-600">{offer.notes}</p>
+                                            </div>
+                                        )}
+                                    </div>
+                                ))
+                            )}
                         </div>
-                        <p className="text-sm text-gray-600 mt-2 bg-white p-3 rounded-lg border border-gray-100">
-                            {employee.highlights}
-                        </p>
-                    </div>
-
-                    {/* 账户信息 */}
-                    <div className="bg-gray-50 rounded-xl p-4 space-y-3">
-                        <h4 className="text-sm font-semibold text-gray-700 flex items-center gap-2">
-                            <CreditCard className="w-4 h-4" />
-                            账户信息
-                        </h4>
-                        <div className="space-y-2 text-sm">
-                            <div className="flex items-center justify-between p-2 bg-white rounded-lg">
-                                <span className="text-gray-500 flex items-center gap-2">
-                                    <Shield className="w-3.5 h-3.5" />
-                                    社保账号
-                                </span>
-                                <span className="text-gray-900 font-mono">{employee.socialSecurity}</span>
-                            </div>
-                            <div className="flex items-center justify-between p-2 bg-white rounded-lg">
-                                <span className="text-gray-500 flex items-center gap-2">
-                                    <Building2 className="w-3.5 h-3.5" />
-                                    公积金账号
-                                </span>
-                                <span className="text-gray-900 font-mono">{employee.providentFund}</span>
-                            </div>
-                            <div className="flex items-center justify-between p-2 bg-white rounded-lg">
-                                <span className="text-gray-500 flex items-center gap-2">
-                                    <CreditCard className="w-3.5 h-3.5" />
-                                    银行卡号
-                                </span>
-                                <span className="text-gray-900 font-mono">{employee.bankCard}</span>
-                            </div>
-                        </div>
-                    </div>
+                    )}
                 </div>
             </div>
+
+            {/* 面试评价弹窗 */}
+            {evaluationModal && (
+                <InterviewEvaluationModal
+                    interview={evaluationModal}
+                    onClose={() => setEvaluationModal(null)}
+                    onSubmit={handleSaveEvaluation}
+                />
+            )}
         </div>
     );
 };
 
 // --------------- 主组件 ---------------
 export default function EmployeeManagementPage() {
-    // 筛选状态
     const [filters, setFilters] = useState({
         name: '',
-        ethnicity: '',
-        department: ''
+        department: '',
+        position: '',
+        education: '',
+        source: '',
+        school: '',
+        birthDateStart: '',
+        birthDateEnd: '',
+        entryDateStart: '',
+        entryDateEnd: ''
     });
     
-    // 学历 Tab
-    const [activeEducationTab, setActiveEducationTab] = useState('all');
-    
-    // 搜索
     const [searchQuery, setSearchQuery] = useState('');
-    
-    // 分页
     const [currentPage, setCurrentPage] = useState(1);
     const [pageSize, setPageSize] = useState(20);
-    
-    // 排序
     const [sortConfig, setSortConfig] = useState({ key: null, direction: 'asc' });
-    
-    // 选中的员工（用于详情 Drawer）
     const [selectedEmployee, setSelectedEmployee] = useState(null);
+    
+    // 弹窗状态
+    const [scheduleModal, setScheduleModal] = useState(null);
+    const [offerModal, setOfferModal] = useState(null);
 
     // 筛选选项
     const names = [...new Set(mockEmployees.map(e => e.name))].sort();
-    const ethnicities = [...new Set(mockEmployees.map(e => e.ethnicity))].sort();
-    const departments = [...new Set(mockEmployees.map(e => e.department))].sort();
+    const departments = [...new Set(mockEmployees.map(e => e.department).filter(Boolean))].sort();
+    const positions = [...new Set(mockEmployees.map(e => e.position).filter(Boolean))].sort();
+    const sources = [...new Set(mockEmployees.map(e => e.source).filter(Boolean))].sort();
+    const schools = [...new Set(mockEmployees.map(e => e.school).filter(Boolean))].sort();
+    const educations = ['博士', '研究生', '本科', '大专'];
 
-    // 筛选逻辑
     const filteredData = useMemo(() => {
         let result = [...mockEmployees];
         
-        // 学历筛选
-        if (activeEducationTab !== 'all') {
-            result = result.filter(e => e.education === activeEducationTab);
-        }
-        
-        // 下拉筛选
+        // 姓名筛选
         if (filters.name) {
             result = result.filter(e => e.name === filters.name);
         }
-        if (filters.ethnicity) {
-            result = result.filter(e => e.ethnicity === filters.ethnicity);
-        }
+        
+        // 应聘部门筛选
         if (filters.department) {
             result = result.filter(e => e.department === filters.department);
+        }
+        
+        // 应聘岗位筛选
+        if (filters.position) {
+            result = result.filter(e => e.position === filters.position);
+        }
+        
+        // 最高学历筛选
+        if (filters.education) {
+            result = result.filter(e => e.education === filters.education);
+        }
+        
+        // 人才来源筛选
+        if (filters.source) {
+            result = result.filter(e => e.source === filters.source);
+        }
+        
+        // 毕业院校筛选
+        if (filters.school) {
+            result = result.filter(e => e.school === filters.school);
+        }
+        
+        // 出生日期范围筛选
+        if (filters.birthDateStart || filters.birthDateEnd) {
+            result = result.filter(e => {
+                if (!e.birthDate || e.birthDate === '-') return false;
+                const birthDate = parseISO(e.birthDate);
+                if (filters.birthDateStart && filters.birthDateEnd) {
+                    return isWithinInterval(birthDate, {
+                        start: parseISO(filters.birthDateStart),
+                        end: parseISO(filters.birthDateEnd)
+                    });
+                }
+                if (filters.birthDateStart) {
+                    return birthDate >= parseISO(filters.birthDateStart);
+                }
+                if (filters.birthDateEnd) {
+                    return birthDate <= parseISO(filters.birthDateEnd);
+                }
+                return true;
+            });
+        }
+        
+        // 入库时间范围筛选
+        if (filters.entryDateStart || filters.entryDateEnd) {
+            result = result.filter(e => {
+                if (!e.entryDate) return false;
+                const entryDate = parseISO(e.entryDate);
+                if (filters.entryDateStart && filters.entryDateEnd) {
+                    return isWithinInterval(entryDate, {
+                        start: parseISO(filters.entryDateStart),
+                        end: parseISO(filters.entryDateEnd)
+                    });
+                }
+                if (filters.entryDateStart) {
+                    return entryDate >= parseISO(filters.entryDateStart);
+                }
+                if (filters.entryDateEnd) {
+                    return entryDate <= parseISO(filters.entryDateEnd);
+                }
+                return true;
+            });
         }
         
         // 搜索
@@ -896,14 +1630,12 @@ export default function EmployeeManagementPage() {
         }
         
         return result;
-    }, [activeEducationTab, filters, searchQuery, sortConfig]);
+    }, [filters, searchQuery, sortConfig]);
 
-    // 分页数据
     const totalItems = filteredData.length;
     const totalPages = Math.ceil(totalItems / pageSize);
     const paginatedData = filteredData.slice((currentPage - 1) * pageSize, currentPage * pageSize);
 
-    // 处理排序
     const handleSort = (key) => {
         setSortConfig(prev => ({
             key,
@@ -911,76 +1643,148 @@ export default function EmployeeManagementPage() {
         }));
     };
 
-    // 重置筛选
     const handleReset = () => {
-        setFilters({ name: '', ethnicity: '', department: '' });
-        setActiveEducationTab('all');
+        setFilters({
+            name: '',
+            department: '',
+            position: '',
+            education: '',
+            source: '',
+            school: '',
+            birthDateStart: '',
+            birthDateEnd: '',
+            entryDateStart: '',
+            entryDateEnd: ''
+        });
         setSearchQuery('');
         setCurrentPage(1);
     };
 
+    const handleScheduleInterview = (data) => {
+        console.log('安排面试:', data);
+        alert('面试已安排！');
+    };
+
+    const handleSendOffer = (data) => {
+        console.log('发送Offer:', data);
+        alert('Offer已发送！');
+    };
 
     return (
         <div className="h-full flex flex-col bg-gray-50">
             <div className="flex-1 p-6 overflow-auto">
+                {/* 筛选区域 */}
                 <div className="bg-white rounded-xl border border-gray-200 p-4 mb-4">
-                    <div className="grid grid-cols-3 gap-4">
+                    <div className="grid grid-cols-6 gap-4">
+                        {/* 第一行：姓名、应聘部门、应聘岗位、最高学历 */}
                         <SelectFilter
                             label="姓名"
                             value={filters.name}
                             options={names}
-                            onChange={(val) => setFilters(prev => ({ ...prev, name: val }))}
+                            onChange={(val) => {
+                                setFilters(prev => ({ ...prev, name: val }));
+                                setCurrentPage(1);
+                            }}
                             placeholder="请选择姓名"
                         />
                         <SelectFilter
-                            label="民族"
-                            value={filters.ethnicity}
-                            options={ethnicities}
-                            onChange={(val) => setFilters(prev => ({ ...prev, ethnicity: val }))}
-                            placeholder="请选择民族"
-                        />
-                        <SelectFilter
-                            label="部门"
+                            label="应聘部门"
                             value={filters.department}
                             options={departments}
-                            onChange={(val) => setFilters(prev => ({ ...prev, department: val }))}
+                            onChange={(val) => {
+                                setFilters(prev => ({ ...prev, department: val }));
+                                setCurrentPage(1);
+                            }}
                             placeholder="请选择部门"
                         />
+                        <SelectFilter
+                            label="应聘岗位"
+                            value={filters.position}
+                            options={positions}
+                            onChange={(val) => {
+                                setFilters(prev => ({ ...prev, position: val }));
+                                setCurrentPage(1);
+                            }}
+                            placeholder="请选择岗位"
+                        />
+                        <SelectFilter
+                            label="最高学历"
+                            value={filters.education}
+                            options={educations}
+                            onChange={(val) => {
+                                setFilters(prev => ({ ...prev, education: val }));
+                                setCurrentPage(1);
+                            }}
+                            placeholder="请选择学历"
+                        />
+                        <SelectFilter
+                            label="人才来源"
+                            value={filters.source}
+                            options={sources}
+                            onChange={(val) => {
+                                setFilters(prev => ({ ...prev, source: val }));
+                                setCurrentPage(1);
+                            }}
+                            placeholder="请选择来源"
+                        />
+                        <SelectFilter
+                            label="毕业院校"
+                            value={filters.school}
+                            options={schools}
+                            onChange={(val) => {
+                                setFilters(prev => ({ ...prev, school: val }));
+                                setCurrentPage(1);
+                            }}
+                            placeholder="请选择院校"
+                        />
                     </div>
-                    <div className="flex justify-end mt-4 pt-4 border-t border-gray-100">
-                        <button
-                            onClick={handleReset}
-                            className="flex items-center gap-2 px-4 py-2 text-sm text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
-                        >
-                            <X className="w-4 h-4" />
-                            清空筛选
-                        </button>
-                    </div>
-                </div>
-
-                <div className="bg-white rounded-xl border border-gray-200 p-4 mb-4">
-                    <div className="flex items-center gap-2">
-                        <span className="text-sm text-gray-500 mr-2">学历筛选：</span>
-                        {educationTabs.map(tab => (
-                            <button
-                                key={tab.key}
-                                onClick={() => {
-                                    setActiveEducationTab(tab.key);
+                    
+                    {/* 第二行：日期范围筛选 */}
+                    <div className="grid grid-cols-6 gap-4 mt-4">
+                        <div className="col-span-2">
+                            <DateRangeFilter
+                                label="出生日期"
+                                startDate={filters.birthDateStart}
+                                endDate={filters.birthDateEnd}
+                                onChange={(start, end) => {
+                                    setFilters(prev => ({
+                                        ...prev,
+                                        birthDateStart: start,
+                                        birthDateEnd: end
+                                    }));
                                     setCurrentPage(1);
                                 }}
-                                className={cn(
-                                    'px-4 py-2 text-sm font-medium rounded-lg transition-colors',
-                                    activeEducationTab === tab.key
-                                        ? 'bg-indigo-600 text-white'
-                                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                                )}
+                            />
+                        </div>
+                        <div className="col-span-2">
+                            <DateRangeFilter
+                                label="入库时间"
+                                startDate={filters.entryDateStart}
+                                endDate={filters.entryDateEnd}
+                                onChange={(start, end) => {
+                                    setFilters(prev => ({
+                                        ...prev,
+                                        entryDateStart: start,
+                                        entryDateEnd: end
+                                    }));
+                                    setCurrentPage(1);
+                                }}
+                            />
+                        </div>
+                        {/* 清空按钮放在第二行右侧 */}
+                        <div className="col-span-2 flex items-end justify-end">
+                            <button
+                                onClick={handleReset}
+                                className="flex items-center gap-2 px-4 py-2 text-sm text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
                             >
-                                {tab.label}
+                                <X className="w-4 h-4" />
+                                清空筛选
                             </button>
-                        ))}
+                        </div>
                     </div>
                 </div>
 
+                {/* 数据表格 */}
                 <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
                     <div className="px-4 py-3 border-b border-gray-200 flex items-center justify-between">
                         <div className="flex items-center gap-2">
@@ -1039,7 +1843,7 @@ export default function EmployeeManagementPage() {
                                     <th className="px-4 py-3 text-left text-xs font-medium text-gray-500">最高学历</th>
                                     <th className="px-4 py-3 text-left text-xs font-medium text-gray-500">电子邮箱</th>
                                     <th className="px-4 py-3 text-left text-xs font-medium text-gray-500">应聘职位</th>
-                                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500">个人标签&亮点</th>
+                                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500">状态</th>
                                     <th className="px-4 py-3 text-left text-xs font-medium text-gray-500">毕业院校</th>
                                     <th className="px-4 py-3 text-left text-xs font-medium text-gray-500">人才来源</th>
                                     <th className="px-4 py-3 text-left text-xs font-medium text-gray-500">入库时间</th>
@@ -1079,22 +1883,12 @@ export default function EmployeeManagementPage() {
                                         </td>
                                         <td className="px-4 py-3 text-sm text-gray-600">{employee.position}</td>
                                         <td className="px-4 py-3">
-                                            <div className="flex flex-wrap gap-1 max-w-[200px]">
-                                                {employee.tags.slice(0, 2).map(tag => (
-                                                    <span
-                                                        key={tag}
-                                                        className={cn(
-                                                            'px-1.5 py-0.5 rounded text-xs border',
-                                                            tagColors[tag] || 'bg-gray-100 text-gray-700 border-gray-200'
-                                                        )}
-                                                    >
-                                                        {tag}
-                                                    </span>
-                                                ))}
-                                                {employee.tags.length > 2 && (
-                                                    <span className="text-xs text-gray-400">+{employee.tags.length - 2}</span>
-                                                )}
-                                            </div>
+                                            <span className={cn(
+                                                'inline-flex px-2 py-0.5 rounded-full text-xs font-medium border',
+                                                statusColors[employee.status]
+                                            )}>
+                                                {employee.statusLabel}
+                                            </span>
                                         </td>
                                         <td className="px-4 py-3 text-sm text-gray-600">{employee.school}</td>
                                         <td className="px-4 py-3">
@@ -1107,13 +1901,35 @@ export default function EmployeeManagementPage() {
                                         </td>
                                         <td className="px-4 py-3 text-sm text-gray-600">{employee.entryDate}</td>
                                         <td className="px-4 py-3">
-                                            <button
-                                                onClick={() => setSelectedEmployee(employee)}
-                                                className="flex items-center gap-1 px-3 py-1.5 text-sm text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
-                                            >
-                                                <Eye className="w-4 h-4" />
-                                                查看详情
-                                            </button>
+                                            <div className="flex items-center gap-1">
+                                                <button
+                                                    onClick={() => setSelectedEmployee(employee)}
+                                                    className="flex items-center gap-1 px-2 py-1 text-xs text-indigo-600 hover:bg-indigo-50 rounded transition-colors"
+                                                >
+                                                    <Eye className="w-3.5 h-3.5" />
+                                                    详情
+                                                </button>
+                                                {employee.status !== 'hired' && employee.status !== 'rejected' && (
+                                                    <>
+                                                        <button
+                                                            onClick={() => setScheduleModal(employee)}
+                                                            className="flex items-center gap-1 px-2 py-1 text-xs text-blue-600 hover:bg-blue-50 rounded transition-colors"
+                                                        >
+                                                            <CalendarPlus className="w-3.5 h-3.5" />
+                                                            面试
+                                                        </button>
+                                                        {employee.interviews?.length > 0 && (
+                                                            <button
+                                                                onClick={() => setOfferModal(employee)}
+                                                                className="flex items-center gap-1 px-2 py-1 text-xs text-green-600 hover:bg-green-50 rounded transition-colors"
+                                                            >
+                                                                <Send className="w-3.5 h-3.5" />
+                                                                Offer
+                                                            </button>
+                                                        )}
+                                                    </>
+                                                )}
+                                            </div>
                                         </td>
                                     </tr>
                                 ))}
@@ -1121,6 +1937,7 @@ export default function EmployeeManagementPage() {
                         </table>
                     </div>
 
+                    {/* 分页 */}
                     <div className="px-4 py-3 border-t border-gray-200 flex items-center justify-between">
                         <div className="flex items-center gap-4">
                             <span className="text-sm text-gray-500">
@@ -1189,10 +2006,37 @@ export default function EmployeeManagementPage() {
                 </div>
             </div>
 
+            {/* 详情抽屉 */}
             {selectedEmployee && (
                 <EmployeeDetailDrawer
                     employee={selectedEmployee}
                     onClose={() => setSelectedEmployee(null)}
+                    onScheduleInterview={(emp) => {
+                        setSelectedEmployee(null);
+                        setScheduleModal(emp);
+                    }}
+                    onSendOffer={(emp) => {
+                        setSelectedEmployee(null);
+                        setOfferModal(emp);
+                    }}
+                />
+            )}
+
+            {/* 安排面试弹窗 */}
+            {scheduleModal && (
+                <ScheduleInterviewModal
+                    employee={scheduleModal}
+                    onClose={() => setScheduleModal(null)}
+                    onSubmit={handleScheduleInterview}
+                />
+            )}
+
+            {/* 发送Offer弹窗 */}
+            {offerModal && (
+                <SendOfferModal
+                    employee={offerModal}
+                    onClose={() => setOfferModal(null)}
+                    onSubmit={handleSendOffer}
                 />
             )}
         </div>

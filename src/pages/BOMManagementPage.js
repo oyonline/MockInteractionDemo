@@ -413,7 +413,7 @@ const BOMManagement = () => {
             className="absolute inset-0 bg-black bg-opacity-30"
             onClick={() => setDrawerOpen(false)}
           />
-          <div className="relative bg-white w-2/3 h-full shadow-2xl flex flex-col">
+          <div className="relative bg-white w-[50vw] min-w-[600px] h-full shadow-2xl flex flex-col">
             {/* 抽屉头部 */}
             <div className="flex items-center justify-between p-6 border-b">
               <div>

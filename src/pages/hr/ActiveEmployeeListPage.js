@@ -514,7 +514,7 @@ const EmployeeDetailDrawer = ({ employee, onClose }) => {
                 className="absolute inset-0 bg-black/30 backdrop-blur-sm"
                 onClick={onClose}
             />
-            <div className="relative w-[500px] h-full bg-white shadow-2xl overflow-y-auto animate-in slide-in-from-right">
+            <div className="relative w-[50vw] min-w-[600px] h-full bg-white shadow-2xl overflow-y-auto animate-in slide-in-from-right">
                 {/* Header */}
                 <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between z-10">
                     <h2 className="text-lg font-bold text-gray-900">在职员工档案详情</h2>

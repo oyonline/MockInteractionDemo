@@ -95,7 +95,7 @@ export default function StoreDeptEditStoreDrawer({ isOpen, onClose, store, onSav
             />
             
             {/* 抽屉 */}
-            <div className="fixed right-0 top-0 h-full w-[33vw] max-w-[1500px] bg-white shadow-xl z-[9999] flex flex-col transform transition-transform">
+            <div className="fixed right-0 top-0 h-full w-[50vw] min-w-[600px] bg-white shadow-xl z-[9999] flex flex-col transform transition-transform">
                 {/* 头部 */}
                 <div className="px-6 pt-6 pb-4 border-b bg-gradient-to-r from-blue-50 to-white">
                     <div className="flex items-center justify-between mb-3">

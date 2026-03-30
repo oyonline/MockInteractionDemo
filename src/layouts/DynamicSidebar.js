@@ -127,6 +127,7 @@ const navConfig = {
         parent: '/home',
         items: [
             { name: '人力概览', path: '/hr/overview' },
+            { name: '组织架构管理', path: '/hr/organization' },
             { name: '企业人才库', path: '/hr/employees' },
             { name: '在职员工列表', path: '/hr/active-employees' },
             { name: '离职员工列表', path: '/hr/former-employees' },

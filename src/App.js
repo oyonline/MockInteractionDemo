@@ -101,6 +101,7 @@ import AnnouncementsPage from './pages/AnnouncementsPage';
 import EmployeeManagementPage from './pages/EmployeeManagementPage';
 import ActiveEmployeeListPage from './pages/hr/ActiveEmployeeListPage';
 import FormerEmployeeListPage from './pages/hr/FormerEmployeeListPage';
+import HrOrganizationPage from './pages/hr/HrOrganizationPage';
 import AnnouncementDetailPage from './pages/AnnouncementDetailPage';
 import ModuleLayout from './layouts/ModuleLayout';
 import DynamicSidebar from './layouts/DynamicSidebar';
@@ -398,6 +399,7 @@ function App() {
             '/hr/employees': '企业人才库',
             '/hr/active-employees': '在职员工列表',
             '/hr/former-employees': '离职员工列表',
+            '/hr/organization': '组织架构管理',
             '/procurement/supplier': '供应商管理',
             '/logistics': '物流与报关',
             '/finance/expense-fact': '费用事实',
@@ -940,6 +942,12 @@ function App() {
                 return (
                     <ModuleLayout>
                         <FormerEmployeeListPage />
+                    </ModuleLayout>
+                );
+            case '/hr/organization':
+                return (
+                    <ModuleLayout>
+                        <HrOrganizationPage />
                     </ModuleLayout>
                 );
             // 供应链采购模块

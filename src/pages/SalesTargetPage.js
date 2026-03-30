@@ -214,7 +214,7 @@ function EditTargetDrawer({ isOpen, onClose, store, year, targetData, onSave }) 
   return (
     <div className="fixed inset-0 z-50 flex">
       <div className="absolute inset-0 bg-black/50" onClick={onClose} />
-      <div className="absolute right-0 top-0 bottom-0 w-[500px] bg-white shadow-xl flex flex-col">
+      <div className="absolute right-0 top-0 bottom-0 w-[50vw] min-w-[600px] bg-white shadow-xl flex flex-col">
         <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
           <div>
             <h3 className="text-lg font-semibold text-gray-900">编辑销售目标</h3>

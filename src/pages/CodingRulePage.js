@@ -519,7 +519,7 @@ const RuleEditDrawer = ({ isOpen, onClose, rule, onSave }) => {
     return (
         <div className="fixed inset-0 z-50 flex justify-end">
             <div className="absolute inset-0 bg-black/30" onClick={onClose} />
-            <div className="relative w-[640px] bg-white h-full shadow-xl flex flex-col">
+            <div className="relative w-[50vw] min-w-[600px] bg-white h-full shadow-xl flex flex-col">
                 {/* Header */}
                 <div className="flex items-center justify-between px-6 py-4 border-b">
                     <h2 className="text-lg font-semibold">{rule ? '编辑编码规则' : '新建编码规则'}</h2>
@@ -715,7 +715,7 @@ const LogsModal = ({ isOpen, onClose, rule }) => {
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center">
             <div className="absolute inset-0 bg-black/30" onClick={onClose} />
-            <div className="relative w-[560px] bg-white rounded-xl shadow-xl">
+            <div className="relative w-[50vw] min-w-[600px] bg-white rounded-xl shadow-xl">
                 <div className="flex items-center justify-between px-6 py-4 border-b">
                     <h2 className="text-lg font-semibold">修改日志 - {rule.name}</h2>
                     <IconButton icon={X} onClick={onClose} />
