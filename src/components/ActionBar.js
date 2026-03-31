@@ -7,11 +7,12 @@
 
 import React, { useRef, useState, useEffect, useCallback } from 'react';
 import ReactDOM from 'react-dom';
+import { getButtonClassName } from './ui/Button';
 
-const BTN_BASE = 'inline-flex items-center justify-center whitespace-nowrap gap-1 h-8 px-3 text-sm rounded';
-const PRIMARY_CLASS = `${BTN_BASE} bg-blue-600 text-white hover:bg-blue-700`;
-const SECONDARY_CLASS = `${BTN_BASE} border border-gray-300 text-gray-700 hover:bg-gray-50`;
-const DISABLED_CLASS = `${BTN_BASE} bg-blue-600 text-white opacity-50 cursor-not-allowed`;
+const BTN_BASE = 'inline-flex items-center justify-center whitespace-nowrap gap-1';
+const PRIMARY_CLASS = getButtonClassName({ variant: 'primary', size: 'sm' });
+const SECONDARY_CLASS = getButtonClassName({ variant: 'secondary', size: 'sm' });
+const DISABLED_CLASS = getButtonClassName({ variant: 'primary', size: 'sm', disabled: true });
 
 const MORE_MENU_WIDTH = 180;
 const MORE_MENU_ESTIMATE_HEIGHT = 200;
@@ -117,7 +118,7 @@ function ActionBar({ primary, secondary, more, moreLabel = '⋯ 更多', moreIco
     ReactDOM.createPortal(
       <div
         ref={moreMenuRef}
-        className="fixed w-[180px] bg-white border border-gray-200 rounded-lg shadow-lg z-[9999] p-1"
+        className="fixed z-[9999] w-[180px] rounded-2xl border border-border bg-surface p-1 shadow-elevated"
         style={{ top: morePosition.top, left: morePosition.left }}
       >
         {more.map((item, idx) => (
@@ -126,7 +127,7 @@ function ActionBar({ primary, secondary, more, moreLabel = '⋯ 更多', moreIco
             type="button"
             onClick={wrapMoreClick(item.onClick)}
             disabled={item.disabled}
-            className={`w-full text-left px-3 py-2 rounded text-sm disabled:opacity-50 disabled:cursor-not-allowed ${item.danger ? 'text-red-600 hover:bg-red-50' : 'hover:bg-gray-50'}`}
+            className={`w-full rounded-xl px-3 py-2 text-left text-sm disabled:cursor-not-allowed disabled:opacity-50 ${item.danger ? 'text-danger-600 hover:bg-danger-50' : 'text-text-muted hover:bg-surface-subtle'}`}
           >
             {item.iconText}
             {item.label}
@@ -165,7 +166,7 @@ function ActionBar({ primary, secondary, more, moreLabel = '⋯ 更多', moreIco
           ref={moreTriggerRef}
           type="button"
           onClick={toggleMore}
-          className={`${BTN_BASE} border border-gray-300 text-gray-700 hover:bg-gray-50`}
+          className={getButtonClassName({ variant: 'secondary', size: 'sm', className: BTN_BASE })}
         >
           {moreLabel}
           {moreIcon}

@@ -2,13 +2,17 @@
 // 成本中心管理页面
 import React, { useState } from 'react';
 import {
-    Search, Plus, Edit2, Trash2, X, Save, Download, Upload,
+    Search, Plus, Edit2, Trash2, Save, Download, Upload,
     Building2, ChevronRight, Check, AlertCircle, Calendar,
     User, History
 } from 'lucide-react';
-
-// 轻量工具：className 拼接
-const cn = (...args) => args.filter(Boolean).join(' ');
+import Button from '../components/ui/Button';
+import Badge from '../components/ui/Badge';
+import Card from '../components/ui/Card';
+import DrawerShell from '../components/ui/DrawerShell';
+import ModalShell from '../components/ui/ModalShell';
+import TableShell from '../components/ui/TableShell';
+import cn from '../utils/cn';
 
 // --------------- 部门数据（用于选择归属部门） ---------------
 const departmentTree = [
@@ -256,42 +260,12 @@ const IconButton = ({ icon: Icon, onClick, className, title, disabled }) => (
         disabled={disabled}
         title={title}
         className={cn(
-            'p-2 rounded-lg transition-colors',
-            disabled ? 'text-gray-300 cursor-not-allowed' : 'text-gray-500 hover:text-gray-700 hover:bg-gray-100',
+            'rounded-xl p-2 transition-colors',
+            disabled ? 'cursor-not-allowed text-text-subtle' : 'text-text-subtle hover:bg-surface-subtle hover:text-text',
             className
         )}
     >
         <Icon className="w-4 h-4" />
-    </button>
-);
-
-const PrimaryButton = ({ children, onClick, icon: Icon, className, disabled, size = 'md' }) => (
-    <button
-        onClick={onClick}
-        disabled={disabled}
-        className={cn(
-            'inline-flex items-center gap-2 bg-blue-600 text-white font-medium rounded-lg transition-colors',
-            disabled ? 'opacity-50 cursor-not-allowed' : 'hover:bg-blue-700',
-            size === 'sm' ? 'px-3 py-1.5 text-xs' : 'px-4 py-2 text-sm',
-            className
-        )}
-    >
-        {Icon && <Icon className={size === 'sm' ? 'w-3 h-3' : 'w-4 h-4'} />}
-        {children}
-    </button>
-);
-
-const SecondaryButton = ({ children, onClick, icon: Icon, className, size = 'md' }) => (
-    <button
-        onClick={onClick}
-        className={cn(
-            'inline-flex items-center gap-2 border border-gray-300 text-gray-700 font-medium rounded-lg hover:bg-gray-50 transition-colors',
-            size === 'sm' ? 'px-3 py-1.5 text-xs' : 'px-4 py-2 text-sm',
-            className
-        )}
-    >
-        {Icon && <Icon className={size === 'sm' ? 'w-3 h-3' : 'w-4 h-4'} />}
-        {children}
     </button>
 );
 
@@ -309,9 +283,8 @@ const Input = ({ value, onChange, placeholder, className, icon: Icon, disabled, 
             placeholder={placeholder}
             disabled={disabled}
             className={cn(
-                'w-full border border-gray-300 rounded-lg py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500',
+                'ui-input',
                 Icon ? 'pl-10 pr-4' : 'px-4',
-                disabled && 'bg-gray-50 text-gray-500',
                 className
             )}
         />
@@ -324,8 +297,7 @@ const Select = ({ value, onChange, options, className, placeholder, disabled }) 
         onChange={onChange}
         disabled={disabled}
         className={cn(
-            'border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white',
-            disabled && 'bg-gray-50 text-gray-500',
+            'ui-select bg-white',
             className
         )}
     >
@@ -334,31 +306,6 @@ const Select = ({ value, onChange, options, className, placeholder, disabled }) 
             <option key={opt.value} value={opt.value}>{opt.label}</option>
         ))}
     </select>
-);
-
-const Badge = ({ children, variant = 'default', className }) => {
-    const variants = {
-        default: 'bg-gray-100 text-gray-700',
-        success: 'bg-green-100 text-green-700',
-        warning: 'bg-yellow-100 text-yellow-700',
-        danger: 'bg-red-100 text-red-700',
-        info: 'bg-blue-100 text-blue-700',
-    };
-    return (
-        <span className={cn(
-            'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium',
-            variants[variant],
-            className
-        )}>
-            {children}
-        </span>
-    );
-};
-
-const Card = ({ children, className }) => (
-    <div className={cn('bg-white rounded-xl border border-gray-200 shadow-sm', className)}>
-        {children}
-    </div>
 );
 
 const Toggle = ({ checked, onChange, disabled }) => (
@@ -430,23 +377,29 @@ const CostCenterEditDrawer = ({ isOpen, onClose, costCenter, onSave }) => {
         onClose();
     };
 
-    if (!isOpen) return null;
-
     return (
-        <div className="fixed inset-0 z-50 flex justify-end">
-            <div className="absolute inset-0 bg-black/30" onClick={onClose} />
-            <div className="relative w-[50vw] min-w-[600px] bg-white h-full shadow-xl flex flex-col">
-                {/* Header */}
-                <div className="flex items-center justify-between px-6 py-4 border-b">
-                    <h2 className="text-lg font-semibold">{costCenter ? '编辑成本中心' : '新建成本中心'}</h2>
-                    <IconButton icon={X} onClick={onClose} />
+        <DrawerShell
+            open={isOpen}
+            onClose={onClose}
+            width="lg"
+            title={costCenter ? '编辑成本中心' : '新建成本中心'}
+            contentClassName="space-y-5"
+            footer={
+                <div className="flex items-center justify-end gap-3">
+                    <Button onClick={onClose} variant="secondary">取消</Button>
+                    <Button
+                        icon={Save}
+                        onClick={handleSave}
+                        disabled={!formData.code || !formData.name || !formData.departmentId || !formData.enableDate}
+                    >
+                        保存
+                    </Button>
                 </div>
-
-                {/* Content */}
-                <div className="flex-1 overflow-y-auto p-6 space-y-5">
+            }
+        >
                     <div className="grid grid-cols-2 gap-4">
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">成本中心编码 *</label>
+                            <label className="mb-1 block text-sm font-medium text-text-muted">成本中心编码 *</label>
                             <Input
                                 value={formData.code}
                                 onChange={(e) => setFormData({ ...formData, code: e.target.value })}
@@ -454,7 +407,7 @@ const CostCenterEditDrawer = ({ isOpen, onClose, costCenter, onSave }) => {
                             />
                         </div>
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">启用时间 *</label>
+                            <label className="mb-1 block text-sm font-medium text-text-muted">启用时间 *</label>
                             <Input
                                 type="date"
                                 value={formData.enableDate}
@@ -464,7 +417,7 @@ const CostCenterEditDrawer = ({ isOpen, onClose, costCenter, onSave }) => {
                     </div>
 
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">成本中心名称 *</label>
+                        <label className="mb-1 block text-sm font-medium text-text-muted">成本中心名称 *</label>
                         <Input
                             value={formData.name}
                             onChange={(e) => setFormData({ ...formData, name: e.target.value })}
@@ -473,7 +426,7 @@ const CostCenterEditDrawer = ({ isOpen, onClose, costCenter, onSave }) => {
                     </div>
 
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">归属部门 *</label>
+                        <label className="mb-1 block text-sm font-medium text-text-muted">归属部门 *</label>
                         <Select
                             value={formData.departmentId}
                             onChange={(e) => setFormData({ ...formData, departmentId: e.target.value })}
@@ -484,7 +437,7 @@ const CostCenterEditDrawer = ({ isOpen, onClose, costCenter, onSave }) => {
                     </div>
 
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">关联客户分组</label>
+                        <label className="mb-1 block text-sm font-medium text-text-muted">关联客户分组</label>
                         <Select
                             value={formData.customerGroup}
                             onChange={(e) => setFormData({ ...formData, customerGroup: e.target.value })}
@@ -497,7 +450,7 @@ const CostCenterEditDrawer = ({ isOpen, onClose, costCenter, onSave }) => {
                     </div>
 
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">状态</label>
+                        <label className="mb-1 block text-sm font-medium text-text-muted">状态</label>
                         <div className="flex items-center gap-3 mt-2">
                             <Toggle
                                 checked={formData.status === 'active'}
@@ -510,22 +463,22 @@ const CostCenterEditDrawer = ({ isOpen, onClose, costCenter, onSave }) => {
                     </div>
 
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">备注</label>
+                        <label className="mb-1 block text-sm font-medium text-text-muted">备注</label>
                         <textarea
                             value={formData.remark}
                             onChange={(e) => setFormData({ ...formData, remark: e.target.value })}
                             placeholder="输入备注信息"
                             rows={3}
-                            className="w-full border border-gray-300 rounded-lg px-4 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                            className="ui-textarea"
                         />
                     </div>
 
                     {/* 预览 */}
-                    <div className="p-4 bg-gray-50 rounded-lg">
-                        <p className="text-xs text-gray-500 mb-2">预览</p>
+                    <div className="rounded-xl bg-surface-subtle p-4">
+                        <p className="mb-2 text-xs text-text-subtle">预览</p>
                         <div className="space-y-2 text-sm">
                             <div className="flex items-center gap-2">
-                                <Badge variant={formData.status === 'active' ? 'success' : 'default'}>
+                                <Badge tone={formData.status === 'active' ? 'success' : 'neutral'}>
                                     {formData.status === 'active' ? '启用' : '停用'}
                                 </Badge>
                                 <span className="font-medium">{formData.name || '成本中心名称'}</span>
@@ -537,29 +490,13 @@ const CostCenterEditDrawer = ({ isOpen, onClose, costCenter, onSave }) => {
                             </p>
                         </div>
                     </div>
-                </div>
-
-                {/* Footer */}
-                <div className="flex items-center justify-end gap-3 px-6 py-4 border-t bg-gray-50">
-                    <SecondaryButton onClick={onClose}>取消</SecondaryButton>
-                    <PrimaryButton
-                        icon={Save}
-                        onClick={handleSave}
-                        disabled={!formData.code || !formData.name || !formData.departmentId || !formData.enableDate}
-                    >
-                        保存
-                    </PrimaryButton>
-                </div>
-            </div>
-        </div>
+        </DrawerShell>
     );
 };
 
 // --------------- 变更记录弹窗 ---------------
 const ChangeLogModal = ({ isOpen, onClose, logs, costCenterFilter }) => {
     const [filterCode, setFilterCode] = useState('');
-
-    if (!isOpen) return null;
 
     // 如果传入了 costCenterFilter，只显示该成本中心的记录
     const filteredLogs = logs.filter(log => {
@@ -574,36 +511,27 @@ const ChangeLogModal = ({ isOpen, onClose, logs, costCenterFilter }) => {
     }).sort((a, b) => new Date(b.changeTime) - new Date(a.changeTime));
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center">
-            <div className="absolute inset-0 bg-black/30" onClick={onClose} />
-            <div className="relative w-[50vw] min-w-[600px] max-h-[80vh] bg-white rounded-xl shadow-xl flex flex-col">
-                {/* Header */}
-                <div className="flex items-center justify-between px-6 py-4 border-b">
-                    <div className="flex items-center gap-3">
-                        <History className="w-5 h-5 text-blue-600" />
-                        <h2 className="text-lg font-semibold">变更记录</h2>
-                    </div>
-                    <IconButton icon={X} onClick={onClose} />
-                </div>
-
-                {/* Search */}
+        <ModalShell
+            open={isOpen}
+            onClose={onClose}
+            width="xl"
+            title="变更记录"
+            contentClassName="space-y-4"
+            footer={<div className="text-sm text-text-subtle">共 {filteredLogs.length} 条变更记录</div>}
+        >
                 {!costCenterFilter && (
-                    <div className="px-6 py-3 border-b bg-gray-50">
-                        <Input
-                            value={filterCode}
-                            onChange={(e) => setFilterCode(e.target.value)}
-                            placeholder="搜索成本中心编码或名称..."
-                            icon={Search}
-                            className="w-64"
-                        />
-                    </div>
+                    <Input
+                        value={filterCode}
+                        onChange={(e) => setFilterCode(e.target.value)}
+                        placeholder="搜索成本中心编码或名称..."
+                        icon={Search}
+                        className="w-64"
+                    />
                 )}
 
-                {/* Content */}
-                <div className="flex-1 overflow-y-auto p-6">
                     {filteredLogs.length === 0 ? (
-                        <div className="text-center py-12 text-gray-500">
-                            <History className="w-12 h-12 mx-auto mb-4 text-gray-300" />
+                        <div className="py-12 text-center text-text-muted">
+                            <History className="mx-auto mb-4 h-12 w-12 text-slate-300" />
                             <p>暂无变更记录</p>
                         </div>
                     ) : (
@@ -622,9 +550,9 @@ const ChangeLogModal = ({ isOpen, onClose, logs, costCenterFilter }) => {
                                     </div>
                                     <div className="flex-1 min-w-0">
                                         <div className="flex items-center gap-2 mb-1">
-                                            <span className="font-medium text-gray-900">{log.costCenterName}</span>
+                                            <span className="font-medium text-text">{log.costCenterName}</span>
                                             <code className="text-xs bg-gray-200 px-2 py-0.5 rounded">{log.costCenterCode}</code>
-                                            <Badge variant={log.changeType === 'disable' ? 'danger' : 'success'}>
+                                            <Badge tone={log.changeType === 'disable' ? 'danger' : 'success'}>
                                                 {log.changeType === 'disable' ? '停用' : '启用'}
                                             </Badge>
                                         </div>
@@ -653,21 +581,14 @@ const ChangeLogModal = ({ isOpen, onClose, logs, costCenterFilter }) => {
                             ))}
                         </div>
                     )}
-                </div>
-
-                {/* Footer */}
-                <div className="px-6 py-4 border-t bg-gray-50 text-sm text-gray-500">
-                    共 {filteredLogs.length} 条变更记录
-                </div>
-            </div>
-        </div>
+        </ModalShell>
     );
 };
 
 // --------------- 主组件 ---------------
 export default function CostCenterPage() {
     const [costCenters, setCostCenters] = useState(initialCostCenters);
-    const [changeLogs, setChangeLogs] = useState(initialChangeLogs);
+    const [changeLogs] = useState(initialChangeLogs);
     const [searchText, setSearchText] = useState('');
     const [filterStatus, setFilterStatus] = useState('');
     const [filterDept, setFilterDept] = useState('');
@@ -709,37 +630,6 @@ export default function CostCenterPage() {
         setIsDrawerOpen(true);
     };
 
-    const handleToggleStatus = (itemId) => {
-        const item = costCenters.find(c => c.id === itemId);
-        if (!item) return;
-
-        const oldStatus = item.status;
-        const newStatus = oldStatus === 'active' ? 'inactive' : 'active';
-
-        // 更新成本中心状态
-        setCostCenters(prev => prev.map(c =>
-            c.id === itemId ? { ...c, status: newStatus } : c
-        ));
-
-        // 记录变更日志
-        const newLog = {
-            id: `${Date.now()}`,
-            costCenterId: item.id,
-            costCenterCode: item.code,
-            costCenterName: item.name,
-            changeType: newStatus === 'inactive' ? 'disable' : 'enable',
-            oldStatus: oldStatus,
-            newStatus: newStatus,
-            changeTime: new Date().toLocaleString('zh-CN', {
-                year: 'numeric', month: '2-digit', day: '2-digit',
-                hour: '2-digit', minute: '2-digit', second: '2-digit'
-            }).replace(/\//g, '-'),
-            operator: 'Admin',
-            reason: '',
-        };
-        setChangeLogs(prev => [newLog, ...prev]);
-    };
-
     // 打开特定成本中心的变更记录
     const handleViewChangeLog = (itemId) => {
         setChangeLogFilter(itemId);
@@ -776,14 +666,14 @@ export default function CostCenterPage() {
             {/* 页面头部 */}
             <div className="flex items-center justify-between">
                 <div>
-                    <h1 className="text-2xl font-bold text-gray-900">成本中心管理</h1>
-                    <p className="text-sm text-gray-500 mt-1">管理企业成本中心，关联部门和客户分组</p>
+                    <h1 className="ui-page-title">成本中心管理</h1>
+                    <p className="mt-1 text-sm text-text-muted">管理企业成本中心，关联部门和客户分组</p>
                 </div>
                 <div className="flex items-center gap-3">
-                    <SecondaryButton icon={History} onClick={handleViewAllChangeLogs}>变更记录</SecondaryButton>
-                    <SecondaryButton icon={Upload}>导入</SecondaryButton>
-                    <SecondaryButton icon={Download}>导出</SecondaryButton>
-                    <PrimaryButton icon={Plus} onClick={handleAdd}>新建成本中心</PrimaryButton>
+                    <Button variant="secondary" icon={History} onClick={handleViewAllChangeLogs}>变更记录</Button>
+                    <Button variant="secondary" icon={Upload}>导入</Button>
+                    <Button variant="secondary" icon={Download}>导出</Button>
+                    <Button icon={Plus} onClick={handleAdd}>新建成本中心</Button>
                 </div>
             </div>
 
@@ -836,7 +726,7 @@ export default function CostCenterPage() {
             </div>
 
             {/* 搜索和筛选 */}
-            <Card className="p-4">
+            <Card padding="sm">
                 <div className="flex items-center gap-4 flex-wrap">
                     <Input
                         value={searchText}
@@ -875,7 +765,7 @@ export default function CostCenterPage() {
                     {(filterStatus || filterDept || filterCustomer) && (
                         <button
                             onClick={() => { setFilterStatus(''); setFilterDept(''); setFilterCustomer(''); }}
-                            className="text-sm text-blue-600 hover:underline"
+                            className="text-sm text-brand-700 hover:underline"
                         >
                             清除筛选
                         </button>
@@ -884,28 +774,45 @@ export default function CostCenterPage() {
             </Card>
 
             {/* 数据表格 */}
-            <Card className="overflow-hidden">
-                <div className="overflow-x-auto">
+            <TableShell
+                minWidth="1200px"
+                pagination={
+                    filteredData.length > 0 ? (
+                        <div className="flex items-center justify-between border-t border-border bg-surface-subtle px-4 py-3">
+                            <p className="text-sm text-text-muted">共 {filteredData.length} 条记录</p>
+                            <div className="text-sm text-text-muted">显示 1 - {filteredData.length} 条</div>
+                        </div>
+                    ) : null
+                }
+                emptyState={
+                    filteredData.length === 0 ? (
+                        <div className="py-12 text-center text-text-muted">
+                            <Building2 className="mx-auto mb-4 h-12 w-12 text-slate-300" />
+                            <p>暂无成本中心数据</p>
+                        </div>
+                    ) : null
+                }
+            >
                     <table className="w-full text-sm min-w-[1200px]">
                         <thead>
-                            <tr className="bg-gray-50 border-b">
-                                <th className="px-4 py-3 text-left font-medium text-gray-600 whitespace-nowrap">状态</th>
-                                <th className="px-4 py-3 text-left font-medium text-gray-600 whitespace-nowrap">成本中心名称</th>
-                                <th className="px-4 py-3 text-left font-medium text-gray-600 whitespace-nowrap">编码</th>
-                                <th className="px-4 py-3 text-left font-medium text-gray-600 whitespace-nowrap">启用时间</th>
-                                <th className="px-4 py-3 text-left font-medium text-gray-600 whitespace-nowrap">归属部门</th>
-                                <th className="px-4 py-3 text-left font-medium text-gray-600 whitespace-nowrap">关联客户分组</th>
-                                <th className="px-4 py-3 text-left font-medium text-gray-600 whitespace-nowrap">创建人</th>
-                                <th className="px-4 py-3 text-left font-medium text-gray-600 whitespace-nowrap">创建日期</th>
-                                <th className="px-4 py-3 text-left font-medium text-gray-600 whitespace-nowrap">备注</th>
-                                <th className="px-4 py-3 text-left font-medium text-gray-600 whitespace-nowrap">操作</th>
+                            <tr className="border-b bg-surface-subtle">
+                                <th className="whitespace-nowrap px-4 py-3 text-left font-medium text-text-muted">状态</th>
+                                <th className="whitespace-nowrap px-4 py-3 text-left font-medium text-text-muted">成本中心名称</th>
+                                <th className="whitespace-nowrap px-4 py-3 text-left font-medium text-text-muted">编码</th>
+                                <th className="whitespace-nowrap px-4 py-3 text-left font-medium text-text-muted">启用时间</th>
+                                <th className="whitespace-nowrap px-4 py-3 text-left font-medium text-text-muted">归属部门</th>
+                                <th className="whitespace-nowrap px-4 py-3 text-left font-medium text-text-muted">关联客户分组</th>
+                                <th className="whitespace-nowrap px-4 py-3 text-left font-medium text-text-muted">创建人</th>
+                                <th className="whitespace-nowrap px-4 py-3 text-left font-medium text-text-muted">创建日期</th>
+                                <th className="whitespace-nowrap px-4 py-3 text-left font-medium text-text-muted">备注</th>
+                                <th className="whitespace-nowrap px-4 py-3 text-left font-medium text-text-muted">操作</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-gray-100">
                             {filteredData.map(item => (
                                 <tr key={item.id} className="hover:bg-gray-50">
                                     <td className="px-4 py-3">
-                                        <Badge variant={item.status === 'active' ? 'success' : 'default'}>
+                                        <Badge tone={item.status === 'active' ? 'success' : 'neutral'}>
                                             {item.status === 'active' ? '启用' : '停用'}
                                         </Badge>
                                     </td>
@@ -928,7 +835,7 @@ export default function CostCenterPage() {
                                     </td>
                                     <td className="px-4 py-3">
                                         {item.customerGroup !== '-' ? (
-                                            <Badge variant="info">{item.customerGroup}</Badge>
+                                            <Badge tone="primary">{item.customerGroup}</Badge>
                                         ) : (
                                             <span className="text-gray-400">-</span>
                                         )}
@@ -951,27 +858,7 @@ export default function CostCenterPage() {
                             ))}
                         </tbody>
                     </table>
-
-                    {filteredData.length === 0 && (
-                        <div className="text-center py-12 text-gray-500">
-                            <Building2 className="w-12 h-12 mx-auto mb-4 text-gray-300" />
-                            <p>暂无成本中心数据</p>
-                        </div>
-                    )}
-                </div>
-
-                {/* 分页信息 */}
-                {filteredData.length > 0 && (
-                    <div className="px-4 py-3 border-t bg-gray-50 flex items-center justify-between">
-                        <p className="text-sm text-gray-500">
-                            共 {filteredData.length} 条记录
-                        </p>
-                        <div className="text-sm text-gray-500">
-                            显示 1 - {filteredData.length} 条
-                        </div>
-                    </div>
-                )}
-            </Card>
+            </TableShell>
 
             {/* 编辑抽屉 */}
             <CostCenterEditDrawer

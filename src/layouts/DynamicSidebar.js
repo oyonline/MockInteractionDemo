@@ -2,8 +2,7 @@
 // 动态左侧导航 - 根据当前模块显示不同导航
 import React from 'react';
 import { ChevronLeft, Package, TrendingUp, ShoppingCart, Truck, DollarSign, TestTube, Users, Settings, Briefcase, BarChart3, FolderKanban, CalendarDays } from 'lucide-react';
-
-const cn = (...args) => args.filter(Boolean).join(' ');
+import cn from '../utils/cn';
 
 // --------------- 导航配置 ---------------
 const navConfig = {
@@ -285,16 +284,16 @@ export default function DynamicSidebar({ currentPath, onNavigate }) {
     };
     
     return (
-        <aside className="w-64 bg-white border-r border-gray-200 h-screen flex flex-col">
+        <aside className="flex h-full w-64 flex-col border-r border-border bg-surface">
             {/* Logo区 */}
-            <div className="h-16 flex items-center px-4 border-b border-gray-200">
+            <div className="flex h-16 items-center border-b border-border px-4">
                 <div className="flex items-center gap-2">
                     <div className="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center">
                         <span className="text-white font-bold text-sm">E</span>
                     </div>
                     <div>
-                        <h1 className="text-sm font-bold text-gray-800">EPoseidon2.0</h1>
-                        <p className="text-[10px] text-gray-500">企业自研管理系统</p>
+                        <h1 className="text-sm font-bold text-text">EPoseidon2.0</h1>
+                        <p className="text-[10px] text-text-subtle">企业自研管理系统</p>
                     </div>
                 </div>
             </div>
@@ -305,7 +304,7 @@ export default function DynamicSidebar({ currentPath, onNavigate }) {
                 <div className="px-4 mb-4">
                     <button
                         onClick={() => handleNavClick(config.parent || '/home', '工作台')}
-                        className="flex items-center gap-2 px-3 py-2 text-sm text-gray-600 hover:bg-gray-100 rounded-lg transition-colors w-full"
+                        className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-sm text-text-muted transition-colors hover:bg-surface-subtle"
                     >
                         <ChevronLeft className="w-4 h-4" />
                         <span>返回工作台</span>
@@ -314,7 +313,7 @@ export default function DynamicSidebar({ currentPath, onNavigate }) {
                 
                 {/* 导航标题 */}
                 <div className="px-4 mb-3">
-                    <h2 className="text-xs font-semibold text-gray-400 uppercase tracking-wider">
+                    <h2 className="text-xs font-semibold uppercase tracking-wider text-text-subtle">
                             {config.title}
                             {config.badge && (
                                 <span className="ml-2 px-1.5 py-0.5 bg-orange-100 text-orange-600 rounded text-[10px]">
@@ -334,16 +333,16 @@ export default function DynamicSidebar({ currentPath, onNavigate }) {
                                 key={item.path || item.id}
                                 onClick={() => handleNavClick(item.path, item.name)}
                                 className={cn(
-                                    "w-full flex items-center px-3 py-2.5 rounded-lg text-sm transition-colors",
+                                    "flex w-full items-center rounded-xl px-3 py-2.5 text-sm transition-colors",
                                     isActive
-                                        ? "bg-gray-100 text-gray-900 font-medium"
-                                        : "text-gray-600 hover:bg-gray-50"
+                                        ? "bg-surface-subtle text-text font-medium"
+                                        : "text-text-muted hover:bg-surface-subtle"
                                 )}
                             >
                                 {Icon && (
                                     <Icon className={cn(
                                         "w-4 h-4 mr-3",
-                                        isActive ? "text-gray-900" : "text-gray-400"
+                                        isActive ? "text-text" : "text-text-subtle"
                                     )} />
                                 )}
                                 <span className="flex-1 text-left">{item.name}</span>

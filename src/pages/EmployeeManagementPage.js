@@ -27,8 +27,13 @@ import {
     ChevronDown,
     ChevronUp
 } from 'lucide-react';
-
-const cn = (...args) => args.filter(Boolean).join(' ');
+import Badge from '../components/ui/Badge';
+import Button from '../components/ui/Button';
+import Card from '../components/ui/Card';
+import DrawerShell from '../components/ui/DrawerShell';
+import ModalShell from '../components/ui/ModalShell';
+import TableShell from '../components/ui/TableShell';
+import cn from '../utils/cn';
 
 // --------------- 日期范围选择组件 ---------------
 const DateRangeFilter = ({ label, startDate, endDate, onChange }) => {
@@ -40,14 +45,14 @@ const DateRangeFilter = ({ label, startDate, endDate, onChange }) => {
                     type="date"
                     value={startDate}
                     onChange={(e) => onChange(e.target.value, endDate)}
-                    className="flex-1 px-2.5 py-2 bg-white border border-gray-200 rounded-lg text-sm hover:border-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    className="ui-input flex-1"
                 />
                 <span className="text-gray-400">-</span>
                 <input
                     type="date"
                     value={endDate}
                     onChange={(e) => onChange(startDate, e.target.value)}
-                    className="flex-1 px-2.5 py-2 bg-white border border-gray-200 rounded-lg text-sm hover:border-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    className="ui-input flex-1"
                 />
             </div>
         </div>
@@ -580,27 +585,6 @@ const educationColors = {
     '大专': 'bg-gray-100 text-gray-700 border-gray-200'
 };
 
-// 状态颜色配置
-const statusColors = {
-    'new': 'bg-gray-100 text-gray-600 border-gray-200',
-    'interviewing': 'bg-blue-100 text-blue-700 border-blue-200',
-    'offered': 'bg-orange-100 text-orange-700 border-orange-200',
-    'hired': 'bg-green-100 text-green-700 border-green-200',
-    'rejected': 'bg-red-100 text-red-700 border-red-200'
-};
-
-const interviewResultColors = {
-    '通过': 'bg-green-100 text-green-700',
-    '不通过': 'bg-red-100 text-red-700',
-    '待定': 'bg-yellow-100 text-yellow-700'
-};
-
-const offerStatusColors = {
-    'pending': 'bg-yellow-100 text-yellow-700',
-    'accepted': 'bg-green-100 text-green-700',
-    'rejected': 'bg-red-100 text-red-700'
-};
-
 const offerStatusLabels = {
     'pending': '待确认',
     'accepted': '已接受',
@@ -615,6 +599,26 @@ const sourceColors = {
     '51Job': 'bg-orange-100 text-orange-700 border-orange-200',
     '-': 'bg-gray-100 text-gray-500 border-gray-200'
 };
+
+const getStatusTone = (status) => ({
+    new: 'neutral',
+    interviewing: 'primary',
+    offered: 'warning',
+    hired: 'success',
+    rejected: 'danger'
+}[status] || 'neutral');
+
+const getInterviewResultTone = (result) => ({
+    '通过': 'success',
+    '不通过': 'danger',
+    '待定': 'warning'
+}[result] || 'neutral');
+
+const getOfferStatusTone = (status) => ({
+    pending: 'warning',
+    accepted: 'success',
+    rejected: 'danger'
+}[status] || 'neutral');
 
 // ============== 子组件 ==============
 
@@ -633,22 +637,22 @@ const SelectFilter = ({ label, value, options, onChange, placeholder }) => {
             <div className="relative">
                 <button
                     onClick={() => setIsOpen(!isOpen)}
-                    className="w-full flex items-center justify-between px-3 py-2 bg-white border border-gray-200 rounded-lg text-sm hover:border-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    className="flex w-full items-center justify-between rounded-xl border border-border bg-surface px-3 py-2 text-sm transition-colors hover:border-brand-300 focus:outline-none focus:ring-2 focus:ring-brand-500"
                 >
-                    <span className={value ? 'text-gray-900' : 'text-gray-400'}>
+                    <span className={value ? 'text-text' : 'text-text-subtle'}>
                         {value || placeholder}
                     </span>
                     <span className="flex items-center gap-1">
                         {value && (
                             <X 
-                                className="w-3.5 h-3.5 text-gray-400 hover:text-gray-600"
+                                className="h-3.5 w-3.5 text-text-subtle transition-colors hover:text-text"
                                 onClick={(e) => {
                                     e.stopPropagation();
                                     onChange('');
                                 }}
                             />
                         )}
-                        <span className="text-gray-400">▼</span>
+                        <ChevronDown className={cn('h-4 w-4 text-text-subtle transition-transform', isOpen && 'rotate-180')} />
                     </span>
                 </button>
                 
@@ -658,14 +662,14 @@ const SelectFilter = ({ label, value, options, onChange, placeholder }) => {
                             className="fixed inset-0 z-40"
                             onClick={() => setIsOpen(false)}
                         />
-                        <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-50 max-h-60 overflow-auto">
-                            <div className="p-2 border-b border-gray-100">
+                        <div className="absolute left-0 right-0 top-full z-50 mt-2 max-h-60 overflow-auto rounded-2xl border border-border bg-surface shadow-elevated">
+                            <div className="border-b border-border-subtle p-2">
                                 <input
                                     type="text"
                                     placeholder="搜索..."
                                     value={searchQuery}
                                     onChange={(e) => setSearchQuery(e.target.value)}
-                                    className="w-full px-3 py-1.5 text-sm border border-gray-200 rounded focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                    className="ui-input py-1.5"
                                     onClick={(e) => e.stopPropagation()}
                                 />
                             </div>
@@ -676,7 +680,7 @@ const SelectFilter = ({ label, value, options, onChange, placeholder }) => {
                                         setIsOpen(false);
                                         setSearchQuery('');
                                     }}
-                                    className="w-full px-3 py-2 text-left text-sm text-gray-500 hover:bg-gray-50"
+                                    className="w-full px-3 py-2 text-left text-sm text-text-muted transition-colors hover:bg-surface-subtle"
                                 >
                                     全部
                                 </button>
@@ -689,8 +693,8 @@ const SelectFilter = ({ label, value, options, onChange, placeholder }) => {
                                             setSearchQuery('');
                                         }}
                                         className={cn(
-                                            'w-full px-3 py-2 text-left text-sm hover:bg-gray-50',
-                                            value === opt ? 'bg-indigo-50 text-indigo-600' : 'text-gray-700'
+                                            'w-full px-3 py-2 text-left text-sm transition-colors hover:bg-surface-subtle',
+                                            value === opt ? 'bg-brand-50 text-brand-700' : 'text-text'
                                         )}
                                     >
                                         {opt}
@@ -722,112 +726,101 @@ const ScheduleInterviewModal = ({ employee, onClose, onSubmit }) => {
     };
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center">
-            <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={onClose} />
-            <div className="relative bg-white rounded-xl shadow-2xl w-[480px] max-h-[90vh] overflow-auto">
-                <div className="sticky top-0 bg-white border-b px-6 py-4 flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
-                            <CalendarPlus className="w-5 h-5 text-blue-600" />
-                        </div>
-                        <div>
-                            <h3 className="text-lg font-semibold text-gray-900">安排面试</h3>
-                            <p className="text-sm text-gray-500">候选人：{employee?.name}</p>
-                        </div>
-                    </div>
-                    <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-lg">
-                        <X className="w-5 h-5 text-gray-500" />
-                    </button>
-                </div>
-                
-                <div className="p-6 space-y-4">
-                    <div className="grid grid-cols-2 gap-4">
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1.5">面试类型</label>
-                            <select
-                                value={form.type}
-                                onChange={(e) => setForm({ ...form, type: e.target.value })}
-                                className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                            >
-                                <option>电话面试</option>
-                                <option>视频面试</option>
-                                <option>现场面试</option>
-                                <option>HR面试</option>
-                                <option>总监面试</option>
-                            </select>
-                        </div>
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1.5">面试轮次</label>
-                            <input
-                                type="number"
-                                value={form.round}
-                                onChange={(e) => setForm({ ...form, round: parseInt(e.target.value) })}
-                                className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                min={1}
-                            />
-                        </div>
-                    </div>
-                    
-                    <div className="grid grid-cols-2 gap-4">
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1.5">面试日期</label>
-                            <input
-                                type="date"
-                                value={form.date}
-                                onChange={(e) => setForm({ ...form, date: e.target.value })}
-                                className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                            />
-                        </div>
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1.5">面试时间</label>
-                            <input
-                                type="time"
-                                value={form.time}
-                                onChange={(e) => setForm({ ...form, time: e.target.value })}
-                                className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                            />
-                        </div>
-                    </div>
-                    
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1.5">面试官</label>
-                        <input
-                            type="text"
-                            value={form.interviewer}
-                            onChange={(e) => setForm({ ...form, interviewer: e.target.value })}
-                            placeholder="请输入面试官姓名"
-                            className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        />
-                    </div>
-                    
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1.5">备注</label>
-                        <textarea
-                            value={form.notes}
-                            onChange={(e) => setForm({ ...form, notes: e.target.value })}
-                            placeholder="请输入备注信息..."
-                            rows={3}
-                            className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
-                        />
-                    </div>
-                </div>
-                
-                <div className="sticky bottom-0 bg-gray-50 px-6 py-4 flex justify-end gap-3 border-t">
-                    <button
-                        onClick={onClose}
-                        className="px-4 py-2 text-sm text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
-                    >
+        <ModalShell
+            open={Boolean(employee)}
+            onClose={onClose}
+            title="安排面试"
+            subtitle={`候选人：${employee?.name}`}
+            width="md"
+            footer={
+                <div className="flex justify-end gap-3">
+                    <Button variant="secondary" onClick={onClose}>
                         取消
-                    </button>
-                    <button
-                        onClick={handleSubmit}
-                        className="px-4 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-                    >
+                    </Button>
+                    <Button onClick={handleSubmit} icon={CalendarPlus}>
                         确认安排
-                    </button>
+                    </Button>
+                </div>
+            }
+        >
+            <div className="mb-5 flex items-center gap-3 rounded-2xl bg-brand-50 px-4 py-3 text-sm text-brand-700">
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-brand-100">
+                    <CalendarPlus className="h-5 w-5" />
+                </div>
+                <span>统一使用蓝色主操作，方便后续所有招聘弹窗复用。</span>
+            </div>
+            <div className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                    <div>
+                        <label className="mb-1.5 block text-sm font-medium text-text">面试类型</label>
+                        <select
+                            value={form.type}
+                            onChange={(e) => setForm({ ...form, type: e.target.value })}
+                            className="ui-select"
+                        >
+                            <option>电话面试</option>
+                            <option>视频面试</option>
+                            <option>现场面试</option>
+                            <option>HR面试</option>
+                            <option>总监面试</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label className="mb-1.5 block text-sm font-medium text-text">面试轮次</label>
+                        <input
+                            type="number"
+                            value={form.round}
+                            onChange={(e) => setForm({ ...form, round: parseInt(e.target.value) })}
+                            className="ui-input"
+                            min={1}
+                        />
+                    </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                    <div>
+                        <label className="mb-1.5 block text-sm font-medium text-text">面试日期</label>
+                        <input
+                            type="date"
+                            value={form.date}
+                            onChange={(e) => setForm({ ...form, date: e.target.value })}
+                            className="ui-input"
+                        />
+                    </div>
+                    <div>
+                        <label className="mb-1.5 block text-sm font-medium text-text">面试时间</label>
+                        <input
+                            type="time"
+                            value={form.time}
+                            onChange={(e) => setForm({ ...form, time: e.target.value })}
+                            className="ui-input"
+                        />
+                    </div>
+                </div>
+
+                <div>
+                    <label className="mb-1.5 block text-sm font-medium text-text">面试官</label>
+                    <input
+                        type="text"
+                        value={form.interviewer}
+                        onChange={(e) => setForm({ ...form, interviewer: e.target.value })}
+                        placeholder="请输入面试官姓名"
+                        className="ui-input"
+                    />
+                </div>
+
+                <div>
+                    <label className="mb-1.5 block text-sm font-medium text-text">备注</label>
+                    <textarea
+                        value={form.notes}
+                        onChange={(e) => setForm({ ...form, notes: e.target.value })}
+                        placeholder="请输入备注信息..."
+                        rows={3}
+                        className="ui-textarea resize-none"
+                    />
                 </div>
             </div>
-        </div>
+        </ModalShell>
     );
 };
 
@@ -849,122 +842,111 @@ const SendOfferModal = ({ employee, onClose, onSubmit }) => {
     };
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center">
-            <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={onClose} />
-            <div className="relative bg-white rounded-xl shadow-2xl w-[480px] max-h-[90vh] overflow-auto">
-                <div className="sticky top-0 bg-white border-b px-6 py-4 flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
-                            <Send className="w-5 h-5 text-green-600" />
-                        </div>
-                        <div>
-                            <h3 className="text-lg font-semibold text-gray-900">发送 Offer</h3>
-                            <p className="text-sm text-gray-500">候选人：{employee?.name}</p>
-                        </div>
-                    </div>
-                    <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-lg">
-                        <X className="w-5 h-5 text-gray-500" />
-                    </button>
-                </div>
-                
-                <div className="p-6 space-y-4">
-                    <div className="grid grid-cols-2 gap-4">
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1.5">职位</label>
-                            <input
-                                type="text"
-                                value={form.position}
-                                onChange={(e) => setForm({ ...form, position: e.target.value })}
-                                className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
-                            />
-                        </div>
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1.5">部门</label>
-                            <input
-                                type="text"
-                                value={form.department}
-                                onChange={(e) => setForm({ ...form, department: e.target.value })}
-                                className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
-                            />
-                        </div>
-                    </div>
-                    
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1.5">基本工资（元/月）</label>
-                        <input
-                            type="number"
-                            value={form.baseSalary}
-                            onChange={(e) => setForm({ ...form, baseSalary: e.target.value })}
-                            placeholder="请输入基本工资"
-                            className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
-                        />
-                    </div>
-                    
-                    <div className="grid grid-cols-2 gap-4">
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1.5">年终奖</label>
-                            <input
-                                type="text"
-                                value={form.bonus}
-                                onChange={(e) => setForm({ ...form, bonus: e.target.value })}
-                                placeholder="如：3个月"
-                                className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
-                            />
-                        </div>
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1.5">期权/股权</label>
-                            <input
-                                type="text"
-                                value={form.stock}
-                                onChange={(e) => setForm({ ...form, stock: e.target.value })}
-                                placeholder="如：5000股"
-                                className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
-                            />
-                        </div>
-                    </div>
-                    
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1.5">试用期</label>
-                        <select
-                            value={form.probation}
-                            onChange={(e) => setForm({ ...form, probation: e.target.value })}
-                            className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
-                        >
-                            <option>1个月</option>
-                            <option>2个月</option>
-                            <option>3个月</option>
-                            <option>6个月</option>
-                        </select>
-                    </div>
-                    
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1.5">备注</label>
-                        <textarea
-                            value={form.notes}
-                            onChange={(e) => setForm({ ...form, notes: e.target.value })}
-                            placeholder="请输入备注信息..."
-                            rows={3}
-                            className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-green-500 resize-none"
-                        />
-                    </div>
-                </div>
-                
-                <div className="sticky bottom-0 bg-gray-50 px-6 py-4 flex justify-end gap-3 border-t">
-                    <button
-                        onClick={onClose}
-                        className="px-4 py-2 text-sm text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
-                    >
+        <ModalShell
+            open={Boolean(employee)}
+            onClose={onClose}
+            title="发送 Offer"
+            subtitle={`候选人：${employee?.name}`}
+            width="md"
+            footer={
+                <div className="flex justify-end gap-3">
+                    <Button variant="secondary" onClick={onClose}>
                         取消
-                    </button>
-                    <button
-                        onClick={handleSubmit}
-                        className="px-4 py-2 text-sm bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
-                    >
+                    </Button>
+                    <Button onClick={handleSubmit} icon={Send}>
                         发送 Offer
-                    </button>
+                    </Button>
+                </div>
+            }
+        >
+            <div className="mb-5 flex items-center gap-3 rounded-2xl bg-success-50 px-4 py-3 text-sm text-success-700">
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-success-100">
+                    <Send className="h-5 w-5" />
+                </div>
+                <span>Offer 表单沿用统一输入控件，后续补薪资审批也能直接复用。</span>
+            </div>
+            <div className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                    <div>
+                        <label className="mb-1.5 block text-sm font-medium text-text">职位</label>
+                        <input
+                            type="text"
+                            value={form.position}
+                            onChange={(e) => setForm({ ...form, position: e.target.value })}
+                            className="ui-input"
+                        />
+                    </div>
+                    <div>
+                        <label className="mb-1.5 block text-sm font-medium text-text">部门</label>
+                        <input
+                            type="text"
+                            value={form.department}
+                            onChange={(e) => setForm({ ...form, department: e.target.value })}
+                            className="ui-input"
+                        />
+                    </div>
+                </div>
+
+                <div>
+                    <label className="mb-1.5 block text-sm font-medium text-text">基本工资（元/月）</label>
+                    <input
+                        type="number"
+                        value={form.baseSalary}
+                        onChange={(e) => setForm({ ...form, baseSalary: e.target.value })}
+                        placeholder="请输入基本工资"
+                        className="ui-input"
+                    />
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                    <div>
+                        <label className="mb-1.5 block text-sm font-medium text-text">年终奖</label>
+                        <input
+                            type="text"
+                            value={form.bonus}
+                            onChange={(e) => setForm({ ...form, bonus: e.target.value })}
+                            placeholder="如：3个月"
+                            className="ui-input"
+                        />
+                    </div>
+                    <div>
+                        <label className="mb-1.5 block text-sm font-medium text-text">期权/股权</label>
+                        <input
+                            type="text"
+                            value={form.stock}
+                            onChange={(e) => setForm({ ...form, stock: e.target.value })}
+                            placeholder="如：5000股"
+                            className="ui-input"
+                        />
+                    </div>
+                </div>
+
+                <div>
+                    <label className="mb-1.5 block text-sm font-medium text-text">试用期</label>
+                    <select
+                        value={form.probation}
+                        onChange={(e) => setForm({ ...form, probation: e.target.value })}
+                        className="ui-select"
+                    >
+                        <option>1个月</option>
+                        <option>2个月</option>
+                        <option>3个月</option>
+                        <option>6个月</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label className="mb-1.5 block text-sm font-medium text-text">备注</label>
+                    <textarea
+                        value={form.notes}
+                        onChange={(e) => setForm({ ...form, notes: e.target.value })}
+                        placeholder="请输入备注信息..."
+                        rows={3}
+                        className="ui-textarea resize-none"
+                    />
                 </div>
             </div>
-        </div>
+        </ModalShell>
     );
 };
 
@@ -983,90 +965,79 @@ const InterviewEvaluationModal = ({ interview, onClose, onSubmit }) => {
     };
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center">
-            <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={onClose} />
-            <div className="relative bg-white rounded-xl shadow-2xl w-[480px] max-h-[90vh] overflow-auto">
-                <div className="sticky top-0 bg-white border-b px-6 py-4 flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
-                            <MessageSquare className="w-5 h-5 text-purple-600" />
-                        </div>
-                        <div>
-                            <h3 className="text-lg font-semibold text-gray-900">面试评价</h3>
-                            <p className="text-sm text-gray-500">第{interview?.round}轮 {interview?.type}</p>
-                        </div>
-                    </div>
-                    <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-lg">
-                        <X className="w-5 h-5 text-gray-500" />
-                    </button>
-                </div>
-                
-                <div className="p-6 space-y-4">
-                    <div className="grid grid-cols-2 gap-4">
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1.5">面试结果</label>
-                            <select
-                                value={form.result}
-                                onChange={(e) => setForm({ ...form, result: e.target.value })}
-                                className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
-                            >
-                                <option>通过</option>
-                                <option>不通过</option>
-                                <option>待定</option>
-                            </select>
-                        </div>
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1.5">综合评分</label>
-                            <input
-                                type="number"
-                                value={form.score}
-                                onChange={(e) => setForm({ ...form, score: parseInt(e.target.value) })}
-                                min={0}
-                                max={100}
-                                className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
-                            />
-                        </div>
-                    </div>
-                    
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1.5">评价内容</label>
-                        <textarea
-                            value={form.evaluation}
-                            onChange={(e) => setForm({ ...form, evaluation: e.target.value })}
-                            placeholder="请输入面试评价..."
-                            rows={4}
-                            className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 resize-none"
-                        />
-                    </div>
-                    
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1.5">备注</label>
-                        <textarea
-                            value={form.notes}
-                            onChange={(e) => setForm({ ...form, notes: e.target.value })}
-                            placeholder="请输入备注信息..."
-                            rows={2}
-                            className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 resize-none"
-                        />
-                    </div>
-                </div>
-                
-                <div className="sticky bottom-0 bg-gray-50 px-6 py-4 flex justify-end gap-3 border-t">
-                    <button
-                        onClick={onClose}
-                        className="px-4 py-2 text-sm text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
-                    >
+        <ModalShell
+            open={Boolean(interview)}
+            onClose={onClose}
+            title="面试评价"
+            subtitle={`第${interview?.round}轮 ${interview?.type}`}
+            width="md"
+            footer={
+                <div className="flex justify-end gap-3">
+                    <Button variant="secondary" onClick={onClose}>
                         取消
-                    </button>
-                    <button
-                        onClick={handleSubmit}
-                        className="px-4 py-2 text-sm bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
-                    >
+                    </Button>
+                    <Button onClick={handleSubmit} icon={MessageSquare}>
                         保存评价
-                    </button>
+                    </Button>
+                </div>
+            }
+        >
+            <div className="mb-5 flex items-center gap-3 rounded-2xl bg-brand-50 px-4 py-3 text-sm text-brand-700">
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-brand-100">
+                    <MessageSquare className="h-5 w-5" />
+                </div>
+                <span>面试结果和分数统一通过公共弹窗收敛，避免颜色和间距继续发散。</span>
+            </div>
+            <div className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                    <div>
+                        <label className="mb-1.5 block text-sm font-medium text-text">面试结果</label>
+                        <select
+                            value={form.result}
+                            onChange={(e) => setForm({ ...form, result: e.target.value })}
+                            className="ui-select"
+                        >
+                            <option>通过</option>
+                            <option>不通过</option>
+                            <option>待定</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label className="mb-1.5 block text-sm font-medium text-text">综合评分</label>
+                        <input
+                            type="number"
+                            value={form.score}
+                            onChange={(e) => setForm({ ...form, score: parseInt(e.target.value) })}
+                            min={0}
+                            max={100}
+                            className="ui-input"
+                        />
+                    </div>
+                </div>
+
+                <div>
+                    <label className="mb-1.5 block text-sm font-medium text-text">评价内容</label>
+                    <textarea
+                        value={form.evaluation}
+                        onChange={(e) => setForm({ ...form, evaluation: e.target.value })}
+                        placeholder="请输入面试评价..."
+                        rows={4}
+                        className="ui-textarea resize-none"
+                    />
+                </div>
+
+                <div>
+                    <label className="mb-1.5 block text-sm font-medium text-text">备注</label>
+                    <textarea
+                        value={form.notes}
+                        onChange={(e) => setForm({ ...form, notes: e.target.value })}
+                        placeholder="请输入备注信息..."
+                        rows={2}
+                        className="ui-textarea resize-none"
+                    />
                 </div>
             </div>
-        </div>
+        </ModalShell>
     );
 };
 
@@ -1085,55 +1056,45 @@ const EmployeeDetailDrawer = ({ employee, onClose, onScheduleInterview, onSendOf
     };
 
     return (
-        <div className="fixed inset-0 z-50 flex justify-end">
-            <div 
-                className="absolute inset-0 bg-black/30 backdrop-blur-sm"
-                onClick={onClose}
-            />
-            <div className="relative w-[50vw] min-w-[600px] h-full bg-white shadow-2xl overflow-hidden animate-in slide-in-from-right flex flex-col">
-                {/* Header */}
-                <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between z-10">
-                    <div className="flex items-center gap-4">
-                        <h2 className="text-lg font-bold text-gray-900">人才档案详情</h2>
-                        <span className={cn(
-                            'px-2.5 py-1 rounded-full text-xs font-medium border',
-                            statusColors[employee.status]
-                        )}>
+        <>
+            <DrawerShell
+                open={Boolean(employee)}
+                onClose={onClose}
+                title="人才档案详情"
+                subtitle={`${employee.name} · ${employee.position}`}
+                width="xl"
+                contentClassName="p-0"
+                headerActions={
+                    <>
+                        <Badge tone={getStatusTone(employee.status)}>
                             {employee.statusLabel}
-                        </span>
-                    </div>
-                    <div className="flex items-center gap-2">
+                        </Badge>
                         {employee.status !== 'hired' && employee.status !== 'rejected' && (
                             <>
-                                <button
+                                <Button
                                     onClick={() => onScheduleInterview(employee)}
-                                    className="flex items-center gap-1.5 px-3 py-1.5 text-sm bg-blue-50 text-blue-600 hover:bg-blue-100 rounded-lg transition-colors"
+                                    variant="secondary"
+                                    size="sm"
+                                    icon={CalendarPlus}
                                 >
-                                    <CalendarPlus className="w-4 h-4" />
                                     安排面试
-                                </button>
+                                </Button>
                                 {employee.interviews?.length > 0 && (
-                                    <button
+                                    <Button
                                         onClick={() => onSendOffer(employee)}
-                                        className="flex items-center gap-1.5 px-3 py-1.5 text-sm bg-green-50 text-green-600 hover:bg-green-100 rounded-lg transition-colors"
+                                        size="sm"
+                                        icon={Send}
                                     >
-                                        <Send className="w-4 h-4" />
                                         发送 Offer
-                                    </button>
+                                    </Button>
                                 )}
                             </>
                         )}
-                        <button
-                            onClick={onClose}
-                            className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-                        >
-                            <X className="w-5 h-5 text-gray-500" />
-                        </button>
-                    </div>
-                </div>
-
+                    </>
+                }
+            >
                 {/* 标签页导航 */}
-                <div className="flex border-b border-gray-200 px-6">
+                <div className="flex border-b border-border px-6">
                     {[
                         { key: 'basic', label: '基本信息', icon: User },
                         { key: 'interviews', label: `面试记录 (${employee.interviews?.length || 0})`, icon: History },
@@ -1145,8 +1106,8 @@ const EmployeeDetailDrawer = ({ employee, onClose, onScheduleInterview, onSendOf
                             className={cn(
                                 'flex items-center gap-2 px-4 py-3 text-sm font-medium border-b-2 transition-colors',
                                 activeTab === tab.key
-                                    ? 'border-indigo-500 text-indigo-600'
-                                    : 'border-transparent text-gray-500 hover:text-gray-700'
+                                    ? 'border-brand-500 text-brand-700'
+                                    : 'border-transparent text-text-muted hover:text-text'
                             )}
                         >
                             <tab.icon className="w-4 h-4" />
@@ -1161,7 +1122,7 @@ const EmployeeDetailDrawer = ({ employee, onClose, onScheduleInterview, onSendOf
                     {activeTab === 'basic' && (
                         <div className="space-y-6">
                             {/* 基本信息卡片 */}
-                            <div className="bg-gradient-to-br from-indigo-500 to-purple-600 rounded-2xl p-6 text-white">
+                            <div className="rounded-[24px] bg-gradient-to-br from-brand-600 to-slate-900 p-6 text-white shadow-elevated">
                                 <div className="flex items-center gap-4">
                                     <img
                                         src={employee.photo}
@@ -1172,10 +1133,13 @@ const EmployeeDetailDrawer = ({ employee, onClose, onScheduleInterview, onSendOf
                                         <h3 className="text-2xl font-bold">{employee.name}</h3>
                                         <p className="text-white/80 text-sm mt-1">期望职位：{employee.position}</p>
                                         <div className="flex items-center gap-2 mt-2">
-                                            <span className="px-2 py-0.5 bg-white/20 rounded text-xs">
+                                            <Badge tone={getStatusTone(employee.status)} className="border-white/20 bg-white/15 text-white">
+                                                {employee.statusLabel}
+                                            </Badge>
+                                            <span className="rounded bg-white/20 px-2 py-0.5 text-xs">
                                                 {employee.education}
                                             </span>
-                                            <span className="px-2 py-0.5 bg-white/20 rounded text-xs">
+                                            <span className="rounded bg-white/20 px-2 py-0.5 text-xs">
                                                 {employee.school}
                                             </span>
                                         </div>
@@ -1184,22 +1148,22 @@ const EmployeeDetailDrawer = ({ employee, onClose, onScheduleInterview, onSendOf
                             </div>
 
                             {/* 联系信息 */}
-                            <div className="bg-gray-50 rounded-xl p-4 space-y-3">
-                                <h4 className="text-sm font-semibold text-gray-700 flex items-center gap-2">
+                            <Card padding="md" className="space-y-3 bg-surface-subtle">
+                                <h4 className="flex items-center gap-2 text-sm font-semibold text-text">
                                     <Phone className="w-4 h-4" />
                                     联系信息
                                 </h4>
                                 <div className="grid grid-cols-2 gap-4 text-sm">
                                     <div>
                                         <p className="text-gray-500 text-xs mb-1">联系电话</p>
-                                        <p className="text-gray-900">{employee.phone}</p>
-                                    </div>
-                                    <div>
-                                        <p className="text-gray-500 text-xs mb-1">电子邮箱</p>
-                                        <a href={`mailto:${employee.email}`} className="text-blue-600 hover:underline">
-                                            {employee.email}
-                                        </a>
-                                    </div>
+                                            <p className="text-gray-900">{employee.phone}</p>
+                                        </div>
+                                        <div>
+                                            <p className="text-gray-500 text-xs mb-1">电子邮箱</p>
+                                            <a href={`mailto:${employee.email}`} className="text-brand-700 hover:underline">
+                                                {employee.email}
+                                            </a>
+                                        </div>
                                     <div className="col-span-2">
                                         <p className="text-gray-500 text-xs mb-1">家庭住址</p>
                                         <p className="text-gray-900 flex items-center gap-1">
@@ -1208,11 +1172,11 @@ const EmployeeDetailDrawer = ({ employee, onClose, onScheduleInterview, onSendOf
                                         </p>
                                     </div>
                                 </div>
-                            </div>
+                            </Card>
 
                             {/* 个人信息 */}
-                            <div className="bg-gray-50 rounded-xl p-4 space-y-3">
-                                <h4 className="text-sm font-semibold text-gray-700 flex items-center gap-2">
+                            <Card padding="md" className="space-y-3 bg-surface-subtle">
+                                <h4 className="flex items-center gap-2 text-sm font-semibold text-text">
                                     <User className="w-4 h-4" />
                                     个人信息
                                 </h4>
@@ -1234,11 +1198,11 @@ const EmployeeDetailDrawer = ({ employee, onClose, onScheduleInterview, onSendOf
                                         <p className="text-gray-900">{employee.entryDate}</p>
                                     </div>
                                 </div>
-                            </div>
+                            </Card>
 
                             {/* 教育背景 */}
-                            <div className="bg-gray-50 rounded-xl p-4 space-y-3">
-                                <h4 className="text-sm font-semibold text-gray-700 flex items-center gap-2">
+                            <Card padding="md" className="space-y-3 bg-surface-subtle">
+                                <h4 className="flex items-center gap-2 text-sm font-semibold text-text">
                                     <GraduationCap className="w-4 h-4" />
                                     教育背景
                                 </h4>
@@ -1261,11 +1225,11 @@ const EmployeeDetailDrawer = ({ employee, onClose, onScheduleInterview, onSendOf
                                         <p className="text-gray-900">{employee.graduateDate}</p>
                                     </div>
                                 </div>
-                            </div>
+                            </Card>
 
                             {/* 个人标签 & 亮点 */}
-                            <div className="bg-gray-50 rounded-xl p-4 space-y-3">
-                                <h4 className="text-sm font-semibold text-gray-700 flex items-center gap-2">
+                            <Card padding="md" className="space-y-3 bg-surface-subtle">
+                                <h4 className="flex items-center gap-2 text-sm font-semibold text-text">
                                     <Tag className="w-4 h-4" />
                                     个人标签 & 亮点
                                 </h4>
@@ -1285,7 +1249,7 @@ const EmployeeDetailDrawer = ({ employee, onClose, onScheduleInterview, onSendOf
                                 <p className="text-sm text-gray-600 mt-2 bg-white p-3 rounded-lg border border-gray-100">
                                     {employee.highlights}
                                 </p>
-                            </div>
+                            </Card>
                         </div>
                     )}
 
@@ -1298,28 +1262,29 @@ const EmployeeDetailDrawer = ({ employee, onClose, onScheduleInterview, onSendOf
                                         <History className="w-8 h-8 text-gray-400" />
                                     </div>
                                     <p className="text-gray-500">暂无面试记录</p>
-                                    <button
+                                    <Button
                                         onClick={() => onScheduleInterview(employee)}
-                                        className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-lg text-sm hover:bg-blue-700"
+                                        icon={CalendarPlus}
+                                        className="mt-4"
                                     >
                                         安排面试
-                                    </button>
+                                    </Button>
                                 </div>
                             ) : (
-                                employee.interviews?.map((interview, index) => (
+                                employee.interviews?.map((interview) => (
                                     <div
                                         key={interview.id}
-                                        className="bg-white border border-gray-200 rounded-xl overflow-hidden"
+                                        className="overflow-hidden rounded-2xl border border-border bg-surface"
                                     >
                                         <div
-                                            className="px-4 py-3 bg-gray-50 flex items-center justify-between cursor-pointer"
+                                            className="flex cursor-pointer items-center justify-between bg-surface-subtle px-4 py-3"
                                             onClick={() => setExpandedInterview(
                                                 expandedInterview === interview.id ? null : interview.id
                                             )}
                                         >
                                             <div className="flex items-center gap-3">
-                                                <div className="w-8 h-8 bg-indigo-100 rounded-lg flex items-center justify-center">
-                                                    <span className="text-sm font-bold text-indigo-600">{interview.round}</span>
+                                                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-brand-100">
+                                                    <span className="text-sm font-bold text-brand-700">{interview.round}</span>
                                                 </div>
                                                 <div>
                                                     <p className="text-sm font-medium text-gray-900">
@@ -1331,12 +1296,9 @@ const EmployeeDetailDrawer = ({ employee, onClose, onScheduleInterview, onSendOf
                                                 </div>
                                             </div>
                                             <div className="flex items-center gap-2">
-                                                <span className={cn(
-                                                    'px-2 py-0.5 rounded-full text-xs font-medium',
-                                                    interviewResultColors[interview.result]
-                                                )}>
+                                                <Badge tone={getInterviewResultTone(interview.result)}>
                                                     {interview.result}
-                                                </span>
+                                                </Badge>
                                                 {interview.score && (
                                                     <span className="flex items-center gap-1 text-xs text-amber-600">
                                                         <Star className="w-3 h-3 fill-current" />
@@ -1381,13 +1343,14 @@ const EmployeeDetailDrawer = ({ employee, onClose, onScheduleInterview, onSendOf
                                                 )}
                                                 
                                                 <div className="flex justify-end gap-2 mt-3">
-                                                    <button
+                                                    <Button
                                                         onClick={() => setEvaluationModal(interview)}
-                                                        className="flex items-center gap-1 px-3 py-1.5 text-sm text-purple-600 hover:bg-purple-50 rounded-lg"
+                                                        variant="ghost"
+                                                        size="sm"
+                                                        icon={MessageSquare}
                                                     >
-                                                        <MessageSquare className="w-3.5 h-3.5" />
                                                         {interview.evaluation ? '修改评价' : '添加评价'}
-                                                    </button>
+                                                    </Button>
                                                 </div>
                                             </div>
                                         )}
@@ -1407,19 +1370,20 @@ const EmployeeDetailDrawer = ({ employee, onClose, onScheduleInterview, onSendOf
                                     </div>
                                     <p className="text-gray-500">暂无Offer记录</p>
                                     {employee.interviews?.length > 0 && (
-                                        <button
+                                        <Button
                                             onClick={() => onSendOffer(employee)}
-                                            className="mt-4 px-4 py-2 bg-green-600 text-white rounded-lg text-sm hover:bg-green-700"
+                                            icon={Send}
+                                            className="mt-4"
                                         >
                                             发送 Offer
-                                        </button>
+                                        </Button>
                                     )}
                                 </div>
                             ) : (
-                                employee.offers?.map((offer, index) => (
+                                employee.offers?.map((offer) => (
                                     <div
                                         key={offer.id}
-                                        className="bg-white border border-gray-200 rounded-xl p-4"
+                                        className="rounded-2xl border border-border bg-surface p-4"
                                     >
                                         <div className="flex items-start justify-between mb-4">
                                             <div className="flex items-center gap-3">
@@ -1435,12 +1399,9 @@ const EmployeeDetailDrawer = ({ employee, onClose, onScheduleInterview, onSendOf
                                                     </p>
                                                 </div>
                                             </div>
-                                            <span className={cn(
-                                                'px-2.5 py-1 rounded-full text-xs font-medium border',
-                                                offerStatusColors[offer.status]
-                                            )}>
+                                            <Badge tone={getOfferStatusTone(offer.status)}>
                                                 {offerStatusLabels[offer.status]}
-                                            </span>
+                                            </Badge>
                                         </div>
                                         
                                         <div className="grid grid-cols-2 gap-3 mb-4 text-sm">
@@ -1485,7 +1446,7 @@ const EmployeeDetailDrawer = ({ employee, onClose, onScheduleInterview, onSendOf
                         </div>
                     )}
                 </div>
-            </div>
+            </DrawerShell>
 
             {/* 面试评价弹窗 */}
             {evaluationModal && (
@@ -1495,7 +1456,7 @@ const EmployeeDetailDrawer = ({ employee, onClose, onScheduleInterview, onSendOf
                     onSubmit={handleSaveEvaluation}
                 />
             )}
-        </div>
+        </>
     );
 };
 
@@ -1671,130 +1632,132 @@ export default function EmployeeManagementPage() {
     };
 
     return (
-        <div className="h-full flex flex-col bg-gray-50">
-            <div className="flex-1 p-6 overflow-auto">
-                {/* 筛选区域 */}
-                <div className="bg-white rounded-xl border border-gray-200 p-4 mb-4">
-                    <div className="grid grid-cols-6 gap-4">
-                        {/* 第一行：姓名、应聘部门、应聘岗位、最高学历 */}
-                        <SelectFilter
-                            label="姓名"
-                            value={filters.name}
-                            options={names}
-                            onChange={(val) => {
-                                setFilters(prev => ({ ...prev, name: val }));
+        <div className="flex min-h-0 flex-col gap-4">
+            {/* 筛选区域 */}
+            <Card padding="md">
+                <div className="grid grid-cols-6 gap-4">
+                    {/* 第一行：姓名、应聘部门、应聘岗位、最高学历 */}
+                    <SelectFilter
+                        label="姓名"
+                        value={filters.name}
+                        options={names}
+                        onChange={(val) => {
+                            setFilters(prev => ({ ...prev, name: val }));
+                            setCurrentPage(1);
+                        }}
+                        placeholder="请选择姓名"
+                    />
+                    <SelectFilter
+                        label="应聘部门"
+                        value={filters.department}
+                        options={departments}
+                        onChange={(val) => {
+                            setFilters(prev => ({ ...prev, department: val }));
+                            setCurrentPage(1);
+                        }}
+                        placeholder="请选择部门"
+                    />
+                    <SelectFilter
+                        label="应聘岗位"
+                        value={filters.position}
+                        options={positions}
+                        onChange={(val) => {
+                            setFilters(prev => ({ ...prev, position: val }));
+                            setCurrentPage(1);
+                        }}
+                        placeholder="请选择岗位"
+                    />
+                    <SelectFilter
+                        label="最高学历"
+                        value={filters.education}
+                        options={educations}
+                        onChange={(val) => {
+                            setFilters(prev => ({ ...prev, education: val }));
+                            setCurrentPage(1);
+                        }}
+                        placeholder="请选择学历"
+                    />
+                    <SelectFilter
+                        label="人才来源"
+                        value={filters.source}
+                        options={sources}
+                        onChange={(val) => {
+                            setFilters(prev => ({ ...prev, source: val }));
+                            setCurrentPage(1);
+                        }}
+                        placeholder="请选择来源"
+                    />
+                    <SelectFilter
+                        label="毕业院校"
+                        value={filters.school}
+                        options={schools}
+                        onChange={(val) => {
+                            setFilters(prev => ({ ...prev, school: val }));
+                            setCurrentPage(1);
+                        }}
+                        placeholder="请选择院校"
+                    />
+                </div>
+                
+                {/* 第二行：日期范围筛选 */}
+                <div className="mt-4 grid grid-cols-6 gap-4">
+                    <div className="col-span-2">
+                        <DateRangeFilter
+                            label="出生日期"
+                            startDate={filters.birthDateStart}
+                            endDate={filters.birthDateEnd}
+                            onChange={(start, end) => {
+                                setFilters(prev => ({
+                                    ...prev,
+                                    birthDateStart: start,
+                                    birthDateEnd: end
+                                }));
                                 setCurrentPage(1);
                             }}
-                            placeholder="请选择姓名"
-                        />
-                        <SelectFilter
-                            label="应聘部门"
-                            value={filters.department}
-                            options={departments}
-                            onChange={(val) => {
-                                setFilters(prev => ({ ...prev, department: val }));
-                                setCurrentPage(1);
-                            }}
-                            placeholder="请选择部门"
-                        />
-                        <SelectFilter
-                            label="应聘岗位"
-                            value={filters.position}
-                            options={positions}
-                            onChange={(val) => {
-                                setFilters(prev => ({ ...prev, position: val }));
-                                setCurrentPage(1);
-                            }}
-                            placeholder="请选择岗位"
-                        />
-                        <SelectFilter
-                            label="最高学历"
-                            value={filters.education}
-                            options={educations}
-                            onChange={(val) => {
-                                setFilters(prev => ({ ...prev, education: val }));
-                                setCurrentPage(1);
-                            }}
-                            placeholder="请选择学历"
-                        />
-                        <SelectFilter
-                            label="人才来源"
-                            value={filters.source}
-                            options={sources}
-                            onChange={(val) => {
-                                setFilters(prev => ({ ...prev, source: val }));
-                                setCurrentPage(1);
-                            }}
-                            placeholder="请选择来源"
-                        />
-                        <SelectFilter
-                            label="毕业院校"
-                            value={filters.school}
-                            options={schools}
-                            onChange={(val) => {
-                                setFilters(prev => ({ ...prev, school: val }));
-                                setCurrentPage(1);
-                            }}
-                            placeholder="请选择院校"
                         />
                     </div>
-                    
-                    {/* 第二行：日期范围筛选 */}
-                    <div className="grid grid-cols-6 gap-4 mt-4">
-                        <div className="col-span-2">
-                            <DateRangeFilter
-                                label="出生日期"
-                                startDate={filters.birthDateStart}
-                                endDate={filters.birthDateEnd}
-                                onChange={(start, end) => {
-                                    setFilters(prev => ({
-                                        ...prev,
-                                        birthDateStart: start,
-                                        birthDateEnd: end
-                                    }));
-                                    setCurrentPage(1);
-                                }}
-                            />
-                        </div>
-                        <div className="col-span-2">
-                            <DateRangeFilter
-                                label="入库时间"
-                                startDate={filters.entryDateStart}
-                                endDate={filters.entryDateEnd}
-                                onChange={(start, end) => {
-                                    setFilters(prev => ({
-                                        ...prev,
-                                        entryDateStart: start,
-                                        entryDateEnd: end
-                                    }));
-                                    setCurrentPage(1);
-                                }}
-                            />
-                        </div>
-                        {/* 清空按钮放在第二行右侧 */}
-                        <div className="col-span-2 flex items-end justify-end">
-                            <button
-                                onClick={handleReset}
-                                className="flex items-center gap-2 px-4 py-2 text-sm text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
-                            >
-                                <X className="w-4 h-4" />
-                                清空筛选
-                            </button>
-                        </div>
+                    <div className="col-span-2">
+                        <DateRangeFilter
+                            label="入库时间"
+                            startDate={filters.entryDateStart}
+                            endDate={filters.entryDateEnd}
+                            onChange={(start, end) => {
+                                setFilters(prev => ({
+                                    ...prev,
+                                    entryDateStart: start,
+                                    entryDateEnd: end
+                                }));
+                                setCurrentPage(1);
+                            }}
+                        />
+                    </div>
+                    {/* 清空按钮放在第二行右侧 */}
+                    <div className="col-span-2 flex items-end justify-end">
+                        <Button
+                            onClick={handleReset}
+                            variant="ghost"
+                            size="sm"
+                            icon={X}
+                        >
+                            清空筛选
+                        </Button>
                     </div>
                 </div>
+            </Card>
 
-                {/* 数据表格 */}
-                <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
-                    <div className="px-4 py-3 border-b border-gray-200 flex items-center justify-between">
+            {/* 数据表格 */}
+            <TableShell
+                minWidth="1380px"
+                toolbar={(
+                    <div className="flex items-center justify-between gap-4">
                         <div className="flex items-center gap-2">
-                            <span className="text-sm text-gray-500">
-                                共 <span className="font-medium text-gray-900">{totalItems}</span> 条记录
+                            <span className="text-sm text-text-muted">
+                                共 <span className="font-medium text-text">{totalItems}</span> 条记录
                             </span>
                         </div>
                         <div className="flex items-center gap-2">
                             <div className="relative">
-                                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-text-subtle" />
                                 <input
                                     type="text"
                                     placeholder="搜索人才..."
@@ -1803,171 +1766,61 @@ export default function EmployeeManagementPage() {
                                         setSearchQuery(e.target.value);
                                         setCurrentPage(1);
                                     }}
-                                    className="pl-9 pr-4 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 w-48"
+                                    className="ui-input w-48 pl-9"
                                 />
                             </div>
-                            <button className="flex items-center gap-2 px-3 py-2 text-sm text-gray-600 hover:bg-gray-100 rounded-lg transition-colors">
-                                <Filter className="w-4 h-4" />
+                            <Button variant="secondary" size="sm" icon={Filter}>
                                 筛选
-                            </button>
-                            <button className="flex items-center gap-2 px-3 py-2 text-sm text-gray-600 hover:bg-gray-100 rounded-lg transition-colors">
-                                <Group className="w-4 h-4" />
+                            </Button>
+                            <Button variant="secondary" size="sm" icon={Group}>
                                 分组
-                            </button>
-                            <button 
+                            </Button>
+                            <Button
                                 onClick={() => handleSort('name')}
-                                className={cn(
-                                    'flex items-center gap-2 px-3 py-2 text-sm rounded-lg transition-colors',
-                                    sortConfig.key === 'name' 
-                                        ? 'bg-indigo-50 text-indigo-600' 
-                                        : 'text-gray-600 hover:bg-gray-100'
-                                )}
+                                variant="secondary"
+                                size="sm"
+                                icon={ArrowUpDown}
+                                className={sortConfig.key === 'name' ? 'border-brand-200 bg-brand-50 text-brand-700 hover:bg-brand-100' : ''}
                             >
-                                <ArrowUpDown className="w-4 h-4" />
                                 排序
-                            </button>
-                            <button className="flex items-center gap-2 px-3 py-2 text-sm text-gray-600 hover:bg-gray-100 rounded-lg transition-colors">
-                                <Download className="w-4 h-4" />
+                            </Button>
+                            <Button variant="secondary" size="sm" icon={Download}>
                                 导出
-                            </button>
+                            </Button>
                         </div>
                     </div>
-
-                    <div className="overflow-x-auto">
-                        <table className="w-full">
-                            <thead className="bg-gray-50">
-                                <tr>
-                                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500">姓名</th>
-                                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500">出生日期</th>
-                                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500">联系电话</th>
-                                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500">最高学历</th>
-                                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500">电子邮箱</th>
-                                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500">应聘职位</th>
-                                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500">状态</th>
-                                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500">毕业院校</th>
-                                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500">人才来源</th>
-                                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500">入库时间</th>
-                                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500">操作</th>
-                                </tr>
-                            </thead>
-                            <tbody className="divide-y divide-gray-100">
-                                {paginatedData.map(employee => (
-                                    <tr key={employee.id} className="hover:bg-gray-50">
-                                        <td className="px-4 py-3">
-                                            <div className="flex items-center gap-2">
-                                                <img
-                                                    src={employee.photo}
-                                                    alt={employee.name}
-                                                    className="w-8 h-8 rounded-full bg-gray-100"
-                                                />
-                                                <span className="text-sm font-medium text-gray-900">{employee.name}</span>
-                                            </div>
-                                        </td>
-                                        <td className="px-4 py-3 text-sm text-gray-600">{employee.birthDate}</td>
-                                        <td className="px-4 py-3 text-sm text-gray-600">{employee.phone}</td>
-                                        <td className="px-4 py-3">
-                                            <span className={cn(
-                                                'inline-flex px-2 py-0.5 rounded-full text-xs font-medium border',
-                                                educationColors[employee.education]
-                                            )}>
-                                                {employee.education}
-                                            </span>
-                                        </td>
-                                        <td className="px-4 py-3">
-                                            <a 
-                                                href={`mailto:${employee.email}`}
-                                                className="text-sm text-blue-600 hover:underline"
-                                            >
-                                                {employee.email}
-                                            </a>
-                                        </td>
-                                        <td className="px-4 py-3 text-sm text-gray-600">{employee.position}</td>
-                                        <td className="px-4 py-3">
-                                            <span className={cn(
-                                                'inline-flex px-2 py-0.5 rounded-full text-xs font-medium border',
-                                                statusColors[employee.status]
-                                            )}>
-                                                {employee.statusLabel}
-                                            </span>
-                                        </td>
-                                        <td className="px-4 py-3 text-sm text-gray-600">{employee.school}</td>
-                                        <td className="px-4 py-3">
-                                            <span className={cn(
-                                                'inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium border',
-                                                sourceColors[employee.source] || sourceColors['-']
-                                            )}>
-                                                {employee.source}
-                                            </span>
-                                        </td>
-                                        <td className="px-4 py-3 text-sm text-gray-600">{employee.entryDate}</td>
-                                        <td className="px-4 py-3">
-                                            <div className="flex items-center gap-1">
-                                                <button
-                                                    onClick={() => setSelectedEmployee(employee)}
-                                                    className="flex items-center gap-1 px-2 py-1 text-xs text-indigo-600 hover:bg-indigo-50 rounded transition-colors"
-                                                >
-                                                    <Eye className="w-3.5 h-3.5" />
-                                                    详情
-                                                </button>
-                                                {employee.status !== 'hired' && employee.status !== 'rejected' && (
-                                                    <>
-                                                        <button
-                                                            onClick={() => setScheduleModal(employee)}
-                                                            className="flex items-center gap-1 px-2 py-1 text-xs text-blue-600 hover:bg-blue-50 rounded transition-colors"
-                                                        >
-                                                            <CalendarPlus className="w-3.5 h-3.5" />
-                                                            面试
-                                                        </button>
-                                                        {employee.interviews?.length > 0 && (
-                                                            <button
-                                                                onClick={() => setOfferModal(employee)}
-                                                                className="flex items-center gap-1 px-2 py-1 text-xs text-green-600 hover:bg-green-50 rounded transition-colors"
-                                                            >
-                                                                <Send className="w-3.5 h-3.5" />
-                                                                Offer
-                                                            </button>
-                                                        )}
-                                                    </>
-                                                )}
-                                            </div>
-                                        </td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
-                    </div>
-
-                    {/* 分页 */}
-                    <div className="px-4 py-3 border-t border-gray-200 flex items-center justify-between">
+                )}
+                pagination={(
+                    <div className="flex items-center justify-between border-t border-border bg-surface-subtle px-4 py-4">
                         <div className="flex items-center gap-4">
-                            <span className="text-sm text-gray-500">
+                            <span className="text-sm text-text-muted">
                                 第 {currentPage} / {totalPages} 页
                             </span>
                             <div className="flex items-center gap-2">
-                                <span className="text-sm text-gray-500">每页</span>
+                                <span className="text-sm text-text-muted">每页</span>
                                 <select
                                     value={pageSize}
                                     onChange={(e) => {
                                         setPageSize(Number(e.target.value));
                                         setCurrentPage(1);
                                     }}
-                                    className="px-2 py-1 text-sm border border-gray-200 rounded focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                    className="ui-select w-20 py-1.5"
                                 >
                                     <option value={10}>10</option>
                                     <option value={20}>20</option>
                                     <option value={50}>50</option>
                                 </select>
-                                <span className="text-sm text-gray-500">条</span>
+                                <span className="text-sm text-text-muted">条</span>
                             </div>
                         </div>
                         <div className="flex items-center gap-2">
-                            <button
-                                onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                            <Button
+                                onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
                                 disabled={currentPage === 1}
-                                className="p-2 rounded-lg border border-gray-200 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-                            >
-                                <ChevronLeft className="w-4 h-4" />
-                            </button>
+                                variant="secondary"
+                                size="sm"
+                                icon={ChevronLeft}
+                            />
                             {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
                                 let pageNum;
                                 if (totalPages <= 5) {
@@ -1980,31 +1833,133 @@ export default function EmployeeManagementPage() {
                                     pageNum = currentPage - 2 + i;
                                 }
                                 return (
-                                    <button
+                                    <Button
                                         key={pageNum}
                                         onClick={() => setCurrentPage(pageNum)}
-                                        className={cn(
-                                            'min-w-[32px] h-8 px-2 rounded-lg text-sm font-medium transition-colors',
-                                            currentPage === pageNum
-                                                ? 'bg-indigo-600 text-white'
-                                                : 'border border-gray-200 hover:bg-gray-50 text-gray-700'
-                                        )}
+                                        variant={currentPage === pageNum ? 'primary' : 'secondary'}
+                                        size="sm"
+                                        className="min-w-[36px] px-0"
                                     >
                                         {pageNum}
-                                    </button>
+                                    </Button>
                                 );
                             })}
-                            <button
-                                onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                            <Button
+                                onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
                                 disabled={currentPage === totalPages}
-                                className="p-2 rounded-lg border border-gray-200 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-                            >
-                                <ChevronRight className="w-4 h-4" />
-                            </button>
+                                variant="secondary"
+                                size="sm"
+                                icon={ChevronRight}
+                            />
                         </div>
                     </div>
-                </div>
-            </div>
+                )}
+            >
+                <table className="w-full">
+                    <thead className="bg-surface-subtle">
+                        <tr>
+                            <th className="px-4 py-3 text-left text-xs font-medium text-gray-500">姓名</th>
+                            <th className="px-4 py-3 text-left text-xs font-medium text-gray-500">出生日期</th>
+                            <th className="px-4 py-3 text-left text-xs font-medium text-gray-500">联系电话</th>
+                            <th className="px-4 py-3 text-left text-xs font-medium text-gray-500">最高学历</th>
+                            <th className="px-4 py-3 text-left text-xs font-medium text-gray-500">电子邮箱</th>
+                            <th className="px-4 py-3 text-left text-xs font-medium text-gray-500">应聘职位</th>
+                            <th className="px-4 py-3 text-left text-xs font-medium text-gray-500">状态</th>
+                            <th className="px-4 py-3 text-left text-xs font-medium text-gray-500">毕业院校</th>
+                            <th className="px-4 py-3 text-left text-xs font-medium text-gray-500">人才来源</th>
+                            <th className="px-4 py-3 text-left text-xs font-medium text-gray-500">入库时间</th>
+                            <th className="px-4 py-3 text-left text-xs font-medium text-gray-500">操作</th>
+                        </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-100">
+                        {paginatedData.map(employee => (
+                            <tr key={employee.id} className="hover:bg-gray-50">
+                                <td className="px-4 py-3">
+                                    <div className="flex items-center gap-2">
+                                        <img
+                                            src={employee.photo}
+                                            alt={employee.name}
+                                            className="w-8 h-8 rounded-full bg-gray-100"
+                                        />
+                                        <span className="text-sm font-medium text-gray-900">{employee.name}</span>
+                                    </div>
+                                </td>
+                                <td className="px-4 py-3 text-sm text-gray-600">{employee.birthDate}</td>
+                                <td className="px-4 py-3 text-sm text-gray-600">{employee.phone}</td>
+                                <td className="px-4 py-3">
+                                    <span className={cn(
+                                        'inline-flex px-2 py-0.5 rounded-full text-xs font-medium border',
+                                        educationColors[employee.education]
+                                    )}>
+                                        {employee.education}
+                                    </span>
+                                </td>
+                                <td className="px-4 py-3">
+                                    <a 
+                                        href={`mailto:${employee.email}`}
+                                        className="text-sm text-brand-700 hover:underline"
+                                    >
+                                        {employee.email}
+                                    </a>
+                                </td>
+                                <td className="px-4 py-3 text-sm text-gray-600">{employee.position}</td>
+                                <td className="px-4 py-3">
+                                    <Badge tone={getStatusTone(employee.status)}>
+                                        {employee.statusLabel}
+                                    </Badge>
+                                </td>
+                                <td className="px-4 py-3 text-sm text-gray-600">{employee.school}</td>
+                                <td className="px-4 py-3">
+                                    <span className={cn(
+                                        'inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium border',
+                                        sourceColors[employee.source] || sourceColors['-']
+                                    )}>
+                                        {employee.source}
+                                    </span>
+                                </td>
+                                <td className="px-4 py-3 text-sm text-gray-600">{employee.entryDate}</td>
+                                <td className="px-4 py-3">
+                                    <div className="flex items-center gap-1">
+                                        <Button
+                                            onClick={() => setSelectedEmployee(employee)}
+                                            variant="ghost"
+                                            size="sm"
+                                            icon={Eye}
+                                            className="px-2 text-brand-700 hover:bg-brand-50"
+                                        >
+                                            详情
+                                        </Button>
+                                        {employee.status !== 'hired' && employee.status !== 'rejected' && (
+                                            <>
+                                                <Button
+                                                    onClick={() => setScheduleModal(employee)}
+                                                    variant="ghost"
+                                                    size="sm"
+                                                    icon={CalendarPlus}
+                                                    className="px-2 text-brand-700 hover:bg-brand-50"
+                                                >
+                                                    面试
+                                                </Button>
+                                                {employee.interviews?.length > 0 && (
+                                                    <Button
+                                                        onClick={() => setOfferModal(employee)}
+                                                        variant="ghost"
+                                                        size="sm"
+                                                        icon={Send}
+                                                        className="px-2 text-success-700 hover:bg-success-50"
+                                                    >
+                                                        Offer
+                                                    </Button>
+                                                )}
+                                            </>
+                                        )}
+                                    </div>
+                                </td>
+                            </tr>
+                        ))}
+                    </tbody>
+                </table>
+            </TableShell>
 
             {/* 详情抽屉 */}
             {selectedEmployee && (

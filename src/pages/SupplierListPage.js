@@ -1,8 +1,14 @@
 // src/pages/SupplierListPage.js
 import React, { useState, useMemo } from 'react';
-import { X, Search, Plus, Edit2, Eye, Phone, Mail, MapPin, Star, TrendingUp, Award, ArrowRight } from 'lucide-react';
+import { Search, Plus, Edit2, Eye, Phone, Mail, MapPin, Star, TrendingUp, Award, ArrowRight } from 'lucide-react';
+import TablePagination from '../components/TablePagination';
+import Badge from '../components/ui/Badge';
+import Button from '../components/ui/Button';
+import Card from '../components/ui/Card';
+import ModalShell from '../components/ui/ModalShell';
+import TableShell from '../components/ui/TableShell';
 
-const SupplierListPage = ({ data: externalData, onOpenDetail, onOpenPerformance }) => {
+const SupplierListPage = ({ data: externalData, onOpenDetail }) => {
   const [filters, setFilters] = useState({
     keyword: '',
     type: '',
@@ -187,14 +193,13 @@ const SupplierListPage = ({ data: externalData, onOpenDetail, onOpenPerformance 
     return colors[rating] || 'bg-gray-100 text-gray-500';
   };
 
-  const getStatusColor = (status) => {
-    const colors = {
-      '启用': 'bg-green-100 text-green-700',
-      '停用': 'bg-gray-100 text-gray-500',
-      '待审核': 'bg-orange-100 text-orange-700'
-    };
-    return colors[status] || 'bg-gray-100 text-gray-500';
+  const getStatusTone = (status) => {
+    if (status === '启用') return 'success';
+    if (status === '待审核') return 'warning';
+    return 'neutral';
   };
+
+  const getTypeTone = () => 'primary';
 
   const formatAmount = (amount) => {
     if (amount >= 10000) return `¥${(amount / 10000).toFixed(2)}万`;
@@ -218,18 +223,6 @@ const SupplierListPage = ({ data: externalData, onOpenDetail, onOpenPerformance 
     }
   };
 
-  // 发起新评估
-  const handleCreatePerformance = (supplier) => {
-    if (onOpenPerformance) {
-      onOpenPerformance({
-        id: `supplier-performance-${supplier.id}-${Date.now()}`,
-        name: `绩效评估: ${supplier.shortName}`,
-        path: '/procurement/supplier/performance/new',
-        data: supplier
-      });
-    }
-  };
-
   const handleCloseModal = () => {
     setShowCreateModal(false);
     setEditingSupplier(null);
@@ -244,78 +237,70 @@ const SupplierListPage = ({ data: externalData, onOpenDetail, onOpenPerformance 
   }, [supplierData]);
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex min-h-0 flex-col gap-4">
       {/* 统计卡片 */}
       <div className="grid grid-cols-4 gap-4 mb-4">
-        <div className="bg-white rounded-lg shadow-sm p-4">
+        <Card padding="sm">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-500">供应商总数</p>
-              <p className="text-2xl font-bold text-gray-800">{supplierData.length}</p>
+              <p className="text-sm text-text-muted">供应商总数</p>
+              <p className="text-2xl font-bold text-text">{supplierData.length}</p>
             </div>
-            <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
-              <Star className="w-5 h-5 text-blue-600" />
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-brand-100">
+              <Star className="w-5 h-5 text-brand-700" />
             </div>
           </div>
-          <p className="text-xs text-gray-400 mt-2">启用: {stats.activeCount} 家</p>
-        </div>
-        <div className="bg-white rounded-lg shadow-sm p-4">
+          <p className="mt-2 text-xs text-text-subtle">启用: {stats.activeCount} 家</p>
+        </Card>
+        <Card padding="sm">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-500">A级供应商</p>
+              <p className="text-sm text-text-muted">A级供应商</p>
               <p className="text-2xl font-bold text-green-600">{stats.aRatingCount}</p>
             </div>
-            <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-green-100">
               <TrendingUp className="w-5 h-5 text-green-600" />
             </div>
           </div>
-          <p className="text-xs text-gray-400 mt-2">占比: {((stats.aRatingCount / supplierData.length) * 100).toFixed(1)}%</p>
-        </div>
-        <div className="bg-white rounded-lg shadow-sm p-4">
+          <p className="mt-2 text-xs text-text-subtle">占比: {((stats.aRatingCount / supplierData.length) * 100).toFixed(1)}%</p>
+        </Card>
+        <Card padding="sm">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-500">关联SKU</p>
+              <p className="text-sm text-text-muted">关联SKU</p>
               <p className="text-2xl font-bold text-purple-600">{stats.totalSKU}</p>
             </div>
-            <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-purple-100">
               <MapPin className="w-5 h-5 text-purple-600" />
             </div>
           </div>
-          <p className="text-xs text-gray-400 mt-2">平均: {Math.round(stats.totalSKU / supplierData.length)} SKU/供应商</p>
-        </div>
-        <div className="bg-white rounded-lg shadow-sm p-4">
+          <p className="mt-2 text-xs text-text-subtle">平均: {Math.round(stats.totalSKU / supplierData.length)} SKU/供应商</p>
+        </Card>
+        <Card padding="sm">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-500">近期采购额</p>
+              <p className="text-sm text-text-muted">近期采购额</p>
               <p className="text-2xl font-bold text-orange-600">{formatAmount(stats.totalAmount)}</p>
             </div>
-            <div className="w-10 h-10 bg-orange-100 rounded-lg flex items-center justify-center">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-orange-100">
               <Phone className="w-5 h-5 text-orange-600" />
             </div>
           </div>
-          <p className="text-xs text-gray-400 mt-2">本季度累计</p>
-        </div>
+          <p className="mt-2 text-xs text-text-subtle">本季度累计</p>
+        </Card>
       </div>
 
       {/* 筛选区域 */}
-      <div className="bg-white rounded-lg shadow-sm p-4 mb-4">
+      <Card padding="sm" className="mb-4">
         <div className="flex items-center justify-between mb-4">
-          <h3 className="text-lg font-semibold">供应商管理</h3>
+          <h3 className="text-lg font-semibold text-text">供应商管理</h3>
           <div className="flex gap-2">
-            <button
-              onClick={() => {}}
-              className="flex items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-lg text-sm hover:bg-purple-700 transition-colors"
-            >
-              <Award className="w-4 h-4" />
+            <Button onClick={() => {}} variant="secondary" icon={Award}>
               发起评估
-            </button>
-            <button
-              onClick={() => setShowCreateModal(true)}
-              className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg text-sm hover:bg-blue-700 transition-colors"
-            >
-              <Plus className="w-4 h-4" />
+            </Button>
+            <Button onClick={() => setShowCreateModal(true)} icon={Plus}>
               新增供应商
-            </button>
+            </Button>
           </div>
         </div>
         <div className="flex flex-wrap gap-3">
@@ -326,51 +311,70 @@ const SupplierListPage = ({ data: externalData, onOpenDetail, onOpenPerformance 
               placeholder="供应商名称/编码/简称"
               value={filters.keyword}
               onChange={(e) => { setFilters({ ...filters, keyword: e.target.value }); setCurrentPage(1); }}
-              className="w-full pl-10 pr-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="ui-input pl-10"
             />
           </div>
           <select value={filters.type} onChange={(e) => { setFilters({ ...filters, type: e.target.value }); setCurrentPage(1); }}
-            className="px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+            className="ui-select max-w-[160px]">
             <option value="">全部类型</option>
             {typeOptions.map(type => <option key={type} value={type}>{type}</option>)}
           </select>
           <select value={filters.category} onChange={(e) => { setFilters({ ...filters, category: e.target.value }); setCurrentPage(1); }}
-            className="px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+            className="ui-select max-w-[160px]">
             <option value="">全部品类</option>
             {categoryOptions.map(cat => <option key={cat} value={cat}>{cat}</option>)}
           </select>
           <select value={filters.status} onChange={(e) => { setFilters({ ...filters, status: e.target.value }); setCurrentPage(1); }}
-            className="px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+            className="ui-select max-w-[160px]">
             <option value="">全部状态</option>
             {statusOptions.map(status => <option key={status} value={status}>{status}</option>)}
           </select>
           <select value={filters.rating} onChange={(e) => { setFilters({ ...filters, rating: e.target.value }); setCurrentPage(1); }}
-            className="px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+            className="ui-select max-w-[160px]">
             <option value="">全部评级</option>
             {ratingOptions.map(rating => <option key={rating} value={rating}>{rating}级</option>)}
           </select>
-          <button onClick={resetFilters} className="px-4 py-2 border rounded-lg text-sm text-gray-600 hover:bg-gray-50 transition-colors">重置</button>
+          <Button onClick={resetFilters} variant="secondary">重置</Button>
         </div>
-      </div>
+      </Card>
 
       {/* 表格区域 */}
-      <div className="flex-1 bg-white rounded-lg shadow-sm flex flex-col overflow-hidden">
-        <div className="flex-1 overflow-auto">
+      <TableShell
+        className="flex-1"
+        minWidth="1300px"
+        pagination={
+          <TablePagination
+            currentPage={currentPage}
+            totalPages={totalPages}
+            total={filteredData.length}
+            itemName="家供应商"
+            onPageChange={setCurrentPage}
+          />
+        }
+        emptyState={
+          paginatedData.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-16 text-text-subtle">
+              <Search className="mb-4 h-12 w-12" />
+              <p>暂无符合条件的供应商</p>
+            </div>
+          ) : null
+        }
+      >
           <table className="w-full text-sm min-w-[1300px]">
-            <thead className="bg-gray-50 sticky top-0">
+            <thead className="sticky top-0 bg-surface-subtle">
               <tr className="border-b">
-                <th className="px-4 py-3 text-left font-medium text-gray-600 whitespace-nowrap">供应商编码</th>
-                <th className="px-4 py-3 text-left font-medium text-gray-600 whitespace-nowrap">供应商名称</th>
-                <th className="px-4 py-3 text-left font-medium text-gray-600 whitespace-nowrap">类型</th>
-                <th className="px-4 py-3 text-left font-medium text-gray-600 whitespace-nowrap">品类</th>
-                <th className="px-4 py-3 text-left font-medium text-gray-600 whitespace-nowrap">联系人</th>
-                <th className="px-4 py-3 text-left font-medium text-gray-600 whitespace-nowrap">联系方式</th>
-                <th className="px-4 py-3 text-left font-medium text-gray-600 whitespace-nowrap">状态</th>
-                <th className="px-4 py-3 text-left font-medium text-gray-600 whitespace-nowrap">评级</th>
-                <th className="px-4 py-3 text-left font-medium text-gray-600 whitespace-nowrap">关联SKU</th>
-                <th className="px-4 py-3 text-left font-medium text-gray-600 whitespace-nowrap">近期采购额</th>
-                <th className="px-4 py-3 text-left font-medium text-gray-600 whitespace-nowrap">合作日期</th>
-                <th className="px-4 py-3 text-left font-medium text-gray-600 whitespace-nowrap">操作</th>
+                <th className="whitespace-nowrap px-4 py-3 text-left font-medium text-text-muted">供应商编码</th>
+                <th className="whitespace-nowrap px-4 py-3 text-left font-medium text-text-muted">供应商名称</th>
+                <th className="whitespace-nowrap px-4 py-3 text-left font-medium text-text-muted">类型</th>
+                <th className="whitespace-nowrap px-4 py-3 text-left font-medium text-text-muted">品类</th>
+                <th className="whitespace-nowrap px-4 py-3 text-left font-medium text-text-muted">联系人</th>
+                <th className="whitespace-nowrap px-4 py-3 text-left font-medium text-text-muted">联系方式</th>
+                <th className="whitespace-nowrap px-4 py-3 text-left font-medium text-text-muted">状态</th>
+                <th className="whitespace-nowrap px-4 py-3 text-left font-medium text-text-muted">评级</th>
+                <th className="whitespace-nowrap px-4 py-3 text-left font-medium text-text-muted">关联SKU</th>
+                <th className="whitespace-nowrap px-4 py-3 text-left font-medium text-text-muted">近期采购额</th>
+                <th className="whitespace-nowrap px-4 py-3 text-left font-medium text-text-muted">合作日期</th>
+                <th className="whitespace-nowrap px-4 py-3 text-left font-medium text-text-muted">操作</th>
               </tr>
             </thead>
             <tbody>
@@ -379,12 +383,12 @@ const SupplierListPage = ({ data: externalData, onOpenDetail, onOpenPerformance 
                   <td className="px-4 py-3 font-mono text-xs text-blue-600">{supplier.code}</td>
                   <td className="px-4 py-3">
                     <div>
-                      <div className="font-medium text-gray-800">{supplier.shortName}</div>
+                      <div className="font-medium text-text">{supplier.shortName}</div>
                       <div className="text-xs text-gray-400 truncate max-w-[200px]" title={supplier.name}>{supplier.name}</div>
                     </div>
                   </td>
                   <td className="px-4 py-3">
-                    <span className="px-2 py-1 bg-blue-50 text-blue-600 rounded text-xs">{supplier.type}</span>
+                    <Badge tone={getTypeTone(supplier.type)}>{supplier.type}</Badge>
                   </td>
                   <td className="px-4 py-3 text-gray-600">{supplier.category}</td>
                   <td className="px-4 py-3">{supplier.contact}</td>
@@ -400,7 +404,7 @@ const SupplierListPage = ({ data: externalData, onOpenDetail, onOpenPerformance 
                     </div>
                   </td>
                   <td className="px-4 py-3">
-                    <span className={`px-2 py-1 rounded text-xs ${getStatusColor(supplier.status)}`}>{supplier.status}</span>
+                    <Badge tone={getStatusTone(supplier.status)}>{supplier.status}</Badge>
                   </td>
                   <td className="px-4 py-3">
                     <div className="relative inline-block"
@@ -426,9 +430,9 @@ const SupplierListPage = ({ data: externalData, onOpenDetail, onOpenPerformance 
                                     {perf.latest.grade}级
                                   </span>
                                 </div>
-                                <div className="bg-indigo-50 rounded-lg p-3 mb-3 relative z-10">
+                                <div className="relative z-10 mb-3 rounded-lg bg-brand-50 p-3">
                                   <div className="flex items-baseline gap-1 mb-2">
-                                    <span className="text-2xl font-bold text-indigo-600">{perf.latest.score}</span>
+                                    <span className="text-2xl font-bold text-brand-700">{perf.latest.score}</span>
                                     <span className="text-sm text-gray-500">分</span>
                                   </div>
                                   <div className="text-xs text-gray-500 mb-2">{perf.latest.period} · {perf.latest.evaluator}评估</div>
@@ -483,64 +487,40 @@ const SupplierListPage = ({ data: externalData, onOpenDetail, onOpenPerformance 
               ))}
             </tbody>
           </table>
-
-          {paginatedData.length === 0 && (
-            <div className="flex flex-col items-center justify-center py-16 text-gray-400">
-              <Search className="w-12 h-12 mb-4" />
-              <p>暂无符合条件的供应商</p>
-            </div>
-          )}
-        </div>
-
-        {/* 底部分页 */}
-        <div className="p-4 border-t bg-gray-50 flex items-center justify-between">
-          <div className="text-sm text-gray-600">
-            共 <span className="font-semibold text-gray-800">{filteredData.length}</span> 家供应商
-            {filteredData.length !== supplierData.length && (
-              <span className="text-gray-400 ml-2">(已筛选，总计 {supplierData.length} 家)</span>
-            )}
-          </div>
-          {totalPages > 1 && (
-            <div className="flex items-center gap-2">
-              <button onClick={() => setCurrentPage(p => Math.max(1, p - 1))} disabled={currentPage === 1}
-                className="px-3 py-1 border rounded text-sm disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-100">上一页</button>
-              <span className="text-sm text-gray-600">{currentPage} / {totalPages}</span>
-              <button onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))} disabled={currentPage === totalPages}
-                className="px-3 py-1 border rounded text-sm disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-100">下一页</button>
-            </div>
-          )}
-        </div>
-      </div>
+      </TableShell>
 
       {/* 新增/编辑模态框 - 简化版 */}
-      {showCreateModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center">
-          <div className="absolute inset-0 bg-black bg-opacity-30" onClick={handleCloseModal} />
-          <div className="relative bg-white rounded-lg shadow-xl w-[800px] max-h-[90vh] overflow-hidden">
-            <div className="flex items-center justify-between p-6 border-b">
-              <h3 className="text-lg font-semibold">{editingSupplier ? '编辑供应商' : '新增供应商'}</h3>
-              <button onClick={handleCloseModal} className="p-1 hover:bg-gray-100 rounded transition-colors"><X className="w-5 h-5" /></button>
-            </div>
-            <div className="p-6 overflow-y-auto max-h-[calc(90vh-140px)]">
+      <ModalShell
+        open={showCreateModal}
+        onClose={handleCloseModal}
+        title={editingSupplier ? '编辑供应商' : '新增供应商'}
+        width="xl"
+        footer={
+          <div className="flex justify-end gap-3">
+            <Button onClick={handleCloseModal} variant="secondary">取消</Button>
+            <Button>{editingSupplier ? '保存修改' : '确认新增'}</Button>
+          </div>
+        }
+      >
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">供应商编码 <span className="text-red-500">*</span></label>
                   <input type="text" defaultValue={editingSupplier?.code || ''} disabled={!!editingSupplier}
-                    className="w-full px-3 py-2 border rounded-lg disabled:bg-gray-100 disabled:text-gray-500" placeholder="系统自动生成" />
+                    className="ui-input disabled:bg-surface-subtle disabled:text-text-subtle" placeholder="系统自动生成" />
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">供应商简称 <span className="text-red-500">*</span></label>
                   <input type="text" defaultValue={editingSupplier?.shortName || ''}
-                    className="w-full px-3 py-2 border rounded-lg" placeholder="请输入简称（10字以内）" />
+                    className="ui-input" placeholder="请输入简称（10字以内）" />
                 </div>
                 <div className="col-span-2">
                   <label className="block text-sm font-medium text-gray-700 mb-2">供应商全称 <span className="text-red-500">*</span></label>
                   <input type="text" defaultValue={editingSupplier?.name || ''}
-                    className="w-full px-3 py-2 border rounded-lg" placeholder="请输入完整公司名称" />
+                    className="ui-input" placeholder="请输入完整公司名称" />
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">供应商类型 <span className="text-red-500">*</span></label>
-                  <select defaultValue={editingSupplier?.type || ''} className="w-full px-3 py-2 border rounded-lg">
+                  <select defaultValue={editingSupplier?.type || ''} className="ui-select">
                     <option value="">请选择类型</option>
                     {typeOptions.map(type => <option key={type} value={type}>{type}</option>)}
                   </select>
@@ -548,26 +528,26 @@ const SupplierListPage = ({ data: externalData, onOpenDetail, onOpenPerformance 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">主营品类 <span className="text-red-500">*</span></label>
                   <input type="text" defaultValue={editingSupplier?.category || ''}
-                    className="w-full px-3 py-2 border rounded-lg" placeholder="请输入主营品类" />
+                    className="ui-input" placeholder="请输入主营品类" />
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">联系人 <span className="text-red-500">*</span></label>
                   <input type="text" defaultValue={editingSupplier?.contact || ''}
-                    className="w-full px-3 py-2 border rounded-lg" placeholder="请输入联系人姓名" />
+                    className="ui-input" placeholder="请输入联系人姓名" />
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">联系电话 <span className="text-red-500">*</span></label>
                   <input type="tel" defaultValue={editingSupplier?.phone || ''}
-                    className="w-full px-3 py-2 border rounded-lg" placeholder="请输入联系电话" />
+                    className="ui-input" placeholder="请输入联系电话" />
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">邮箱</label>
                   <input type="email" defaultValue={editingSupplier?.email || ''}
-                    className="w-full px-3 py-2 border rounded-lg" placeholder="请输入邮箱地址" />
+                    className="ui-input" placeholder="请输入邮箱地址" />
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">结算方式</label>
-                  <select defaultValue={editingSupplier?.paymentTerms || ''} className="w-full px-3 py-2 border rounded-lg">
+                  <select defaultValue={editingSupplier?.paymentTerms || ''} className="ui-select">
                     <option value="">请选择结算方式</option>
                     <option value="现结">现结</option>
                     <option value="预付50%">预付50%</option>
@@ -580,19 +560,19 @@ const SupplierListPage = ({ data: externalData, onOpenDetail, onOpenPerformance 
                 <div className="col-span-2">
                   <label className="block text-sm font-medium text-gray-700 mb-2">详细地址</label>
                   <input type="text" defaultValue={editingSupplier?.address || ''}
-                    className="w-full px-3 py-2 border rounded-lg" placeholder="请输入详细地址" />
+                    className="ui-input" placeholder="请输入详细地址" />
                 </div>
                 {editingSupplier && (
                   <>
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">状态</label>
-                      <select defaultValue={editingSupplier?.status || '启用'} className="w-full px-3 py-2 border rounded-lg">
+                      <select defaultValue={editingSupplier?.status || '启用'} className="ui-select">
                         {statusOptions.map(status => <option key={status} value={status}>{status}</option>)}
                       </select>
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">评级</label>
-                      <select defaultValue={editingSupplier?.rating || 'B'} className="w-full px-3 py-2 border rounded-lg">
+                      <select defaultValue={editingSupplier?.rating || 'B'} className="ui-select">
                         <option value="-">待评定</option>
                         {ratingOptions.map(rating => <option key={rating} value={rating}>{rating}级</option>)}
                       </select>
@@ -600,16 +580,7 @@ const SupplierListPage = ({ data: externalData, onOpenDetail, onOpenPerformance 
                   </>
                 )}
               </div>
-            </div>
-            <div className="flex gap-3 p-6 border-t bg-gray-50">
-              <button onClick={handleCloseModal} className="px-4 py-2 border rounded-lg text-sm hover:bg-gray-100 transition-colors">取消</button>
-              <button className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm hover:bg-blue-700 transition-colors">
-                {editingSupplier ? '保存修改' : '确认新增'}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      </ModalShell>
     </div>
   );
 };

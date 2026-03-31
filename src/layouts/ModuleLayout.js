@@ -4,12 +4,5 @@ import React from 'react';
 
 // --------------- 主组件 ---------------
 export default function ModuleLayout({ children }) {
-    return (
-        <div className="h-full flex flex-col bg-gray-50/50">
-            {/* 页面内容 */}
-            <div className="flex-1 overflow-auto p-6">
-                {children}
-            </div>
-        </div>
-    );
+  return <div className="flex h-full min-h-0 flex-col overflow-auto bg-surface-muted px-6 py-6">{children}</div>;
 }

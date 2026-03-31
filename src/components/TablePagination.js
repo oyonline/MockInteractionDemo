@@ -1,6 +1,7 @@
 /** 通用分页 UI：与 SupplierListPage 底部分页条样式一致，用于列表页「共 N 条」+ 上一页/下一页。 */
 
 import React from 'react';
+import Button from './ui/Button';
 
 /**
  * @param {number} currentPage - 当前页（从 1 开始）
@@ -13,29 +14,21 @@ function TablePagination({ currentPage, totalPages, total, onPageChange, itemNam
   if (totalPages < 1) totalPages = 1;
 
   return (
-    <div className="p-4 border-t bg-gray-50 flex items-center justify-between">
-      <div className="text-sm text-gray-600">
-        共 <span className="font-semibold text-gray-800">{total}</span> {itemName}
+    <div className="flex items-center justify-between border-t border-border bg-surface-subtle px-4 py-4">
+      <div className="text-sm text-text-muted">
+        共 <span className="font-semibold text-text">{total}</span> {itemName}
       </div>
       {totalPages > 1 && (
         <div className="flex items-center gap-2">
-          <button
-            onClick={() => onPageChange(Math.max(1, currentPage - 1))}
-            disabled={currentPage === 1}
-            className="px-3 py-1 border rounded text-sm disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-100"
-          >
+          <Button variant="secondary" size="sm" onClick={() => onPageChange(Math.max(1, currentPage - 1))} disabled={currentPage === 1}>
             上一页
-          </button>
-          <span className="text-sm text-gray-600">
+          </Button>
+          <span className="text-sm text-text-muted">
             {currentPage} / {totalPages}
           </span>
-          <button
-            onClick={() => onPageChange(Math.min(totalPages, currentPage + 1))}
-            disabled={currentPage === totalPages}
-            className="px-3 py-1 border rounded text-sm disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-100"
-          >
+          <Button variant="secondary" size="sm" onClick={() => onPageChange(Math.min(totalPages, currentPage + 1))} disabled={currentPage === totalPages}>
             下一页
-          </button>
+          </Button>
         </div>
       )}
     </div>
