@@ -4,7 +4,6 @@ import React, { useState, useEffect } from 'react';
 import {
     ArrowLeft,
     Calendar,
-    User,
     Eye,
     Download,
     FileText,
@@ -18,27 +17,27 @@ import {
     Share2,
     Printer
 } from 'lucide-react';
-
-const cn = (...args) => args.filter(Boolean).join(' ');
+import Badge from '../components/ui/Badge';
+import Button from '../components/ui/Button';
+import Card from '../components/ui/Card';
+import RichTextContent from '../components/ui/RichTextContent';
+import cn from '../utils/cn';
 
 // --------------- 类型配置 ---------------
 const typeConfig = {
     urgent: { 
         label: '紧急', 
-        color: 'bg-red-100 text-red-700 border-red-200',
-        bgColor: 'bg-red-50',
+        tone: 'danger',
         icon: AlertCircle 
     },
     warning: { 
         label: '通知', 
-        color: 'bg-amber-100 text-amber-700 border-amber-200',
-        bgColor: 'bg-amber-50',
+        tone: 'warning',
         icon: Bell 
     },
     normal: { 
         label: '公告', 
-        color: 'bg-blue-100 text-blue-700 border-blue-200',
-        bgColor: 'bg-blue-50',
+        tone: 'primary',
         icon: Megaphone 
     }
 };
@@ -130,51 +129,52 @@ export default function AnnouncementDetailPage({ record, onClose }) {
     const TypeIcon = typeInfo.icon;
 
     return (
-        <div className="h-full flex flex-col bg-gray-50">
+        <div className="flex min-h-0 flex-col bg-surface-muted">
             {/* 顶部操作栏 */}
-            <div className="bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between sticky top-0 z-10">
+            <div className="sticky top-0 z-10 flex items-center justify-between border-b border-border bg-surface px-6 py-4">
                 <div className="flex items-center gap-4">
-                    <button
+                    <Button
                         onClick={onClose}
-                        className="flex items-center gap-2 px-3 py-2 text-sm text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
+                        variant="secondary"
+                        size="sm"
+                        icon={ArrowLeft}
                     >
-                        <ArrowLeft className="w-4 h-4" />
                         返回
-                    </button>
-                    <div className="h-6 w-px bg-gray-200" />
-                    <span className={cn('inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium border', typeInfo.color)}>
+                    </Button>
+                    <div className="h-6 w-px bg-border" />
+                    <Badge tone={typeInfo.tone} className="gap-1">
                         <TypeIcon className="w-3.5 h-3.5" />
                         {typeInfo.label}
-                    </span>
-                    <h1 className="text-lg font-bold text-gray-900 line-clamp-1 max-w-[500px]">
+                    </Badge>
+                    <h1 className="max-w-[500px] line-clamp-1 text-lg font-bold text-text">
                         {record.title}
                     </h1>
                 </div>
                 <div className="flex items-center gap-2">
                     <button
                         onClick={handlePrint}
-                        className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
+                        className="rounded-xl p-2 text-text-subtle transition-colors hover:bg-surface-subtle hover:text-text"
                         title="打印"
                     >
                         <Printer className="w-4 h-4" />
                     </button>
                     <button
                         onClick={handleShare}
-                        className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
+                        className="rounded-xl p-2 text-text-subtle transition-colors hover:bg-surface-subtle hover:text-text"
                         title="分享"
                     >
                         <Share2 className="w-4 h-4" />
                     </button>
                     {!isRead ? (
-                        <button
+                        <Button
                             onClick={handleMarkAsRead}
-                            className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700 transition-colors"
+                            icon={CheckCircle2}
+                            size="sm"
                         >
-                            <CheckCircle2 className="w-4 h-4" />
                             标记已读
-                        </button>
+                        </Button>
                     ) : (
-                        <span className="flex items-center gap-2 px-4 py-2 bg-green-100 text-green-700 text-sm font-medium rounded-lg">
+                        <span className="flex items-center gap-2 rounded-xl bg-success-50 px-4 py-2 text-sm font-medium text-success-700">
                             <CheckCircle2 className="w-4 h-4" />
                             已读
                         </span>
@@ -184,8 +184,8 @@ export default function AnnouncementDetailPage({ record, onClose }) {
 
             {/* 已读确认提示 */}
             {showReadConfirm && (
-                <div className="fixed top-20 right-6 z-50 animate-in slide-in-from-top-2">
-                    <div className="bg-green-600 text-white px-4 py-3 rounded-lg shadow-lg flex items-center gap-2">
+                <div className="animate-fade-in-up fixed right-6 top-20 z-toast">
+                    <div className="flex items-center gap-2 rounded-2xl bg-success-600 px-4 py-3 text-white shadow-elevated">
                         <CheckCircle2 className="w-5 h-5" />
                         <span className="text-sm font-medium">已标记为已读</span>
                     </div>
@@ -193,10 +193,10 @@ export default function AnnouncementDetailPage({ record, onClose }) {
             )}
 
             {/* 内容区域 */}
-            <div className="flex-1 overflow-y-auto">
+            <div className="min-h-0 flex-1 overflow-y-auto">
                 <div className="max-w-4xl mx-auto py-8 px-6">
                     {/* 公告头部信息 */}
-                    <div className="bg-white rounded-xl border border-gray-200 p-6 mb-6">
+                    <Card padding="lg" className="mb-6">
                         {/* 封面图 */}
                         {record.coverImage && (
                             <div className="mb-6 rounded-xl overflow-hidden">
@@ -209,20 +209,20 @@ export default function AnnouncementDetailPage({ record, onClose }) {
                         )}
 
                         {/* 标题 */}
-                        <h1 className="text-2xl font-bold text-gray-900 mb-4">
+                        <h1 className="mb-4 text-2xl font-bold text-text">
                             {record.title}
                         </h1>
 
                         {/* 元信息 */}
-                        <div className="flex flex-wrap items-center gap-6 text-sm text-gray-500 pb-6 border-b border-gray-100">
+                        <div className="flex flex-wrap items-center gap-6 border-b border-border-subtle pb-6 text-sm text-text-muted">
                             <div className="flex items-center gap-2">
-                                <div className="w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center">
-                                    <span className="text-indigo-600 font-medium text-sm">
+                                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-brand-100">
+                                    <span className="text-sm font-medium text-brand-700">
                                         {record.author.charAt(0)}
                                     </span>
                                 </div>
                                 <div>
-                                    <p className="font-medium text-gray-900">{record.author}</p>
+                                    <p className="font-medium text-text">{record.author}</p>
                                     <p className="text-xs">{record.department}</p>
                                 </div>
                             </div>
@@ -241,78 +241,58 @@ export default function AnnouncementDetailPage({ record, onClose }) {
                         </div>
 
                         {/* 富文本内容 */}
-                        <div 
-                            className="max-w-none mt-6 text-gray-700 leading-relaxed"
-                            dangerouslySetInnerHTML={{ __html: record.content }}
-                        />
-
-                        {/* 自定义富文本样式 */}
-                        <style>{`
-                            .max-w-none h3 {
-                                font-size: 1.125rem;
-                                font-weight: 600;
-                                color: #111827;
-                                margin-top: 1.5rem;
-                                margin-bottom: 0.75rem;
-                            }
-                            .max-w-none p {
-                                margin-bottom: 0.75rem;
-                                line-height: 1.8;
-                            }
-                            .max-w-none strong {
-                                font-weight: 600;
-                                color: #111827;
-                            }
-                        `}</style>
-                    </div>
+                        <RichTextContent html={record.content} />
+                    </Card>
 
                     {/* 附件区域 */}
                     {record.attachments && record.attachments.length > 0 && (
-                        <div className="bg-white rounded-xl border border-gray-200 p-6 mb-6">
-                            <h3 className="text-base font-bold text-gray-900 mb-4 flex items-center gap-2">
-                                <FileText className="w-5 h-5 text-gray-400" />
+                        <Card padding="lg" className="mb-6">
+                            <h3 className="mb-4 flex items-center gap-2 text-base font-bold text-text">
+                                <FileText className="w-5 h-5 text-text-subtle" />
                                 附件 ({record.attachments.length})
                             </h3>
                             <div className="space-y-3">
                                 {record.attachments.map((file, index) => (
                                     <div
                                         key={index}
-                                        className="flex items-center gap-4 p-4 bg-gray-50 rounded-xl hover:bg-gray-100 transition-colors group"
+                                        className="group flex items-center gap-4 rounded-xl bg-surface-subtle p-4 transition-colors hover:bg-slate-100"
                                     >
                                         <div className="flex-shrink-0">
                                             {getFileIcon(file.name)}
                                         </div>
                                         <div className="flex-1 min-w-0">
-                                            <p className="text-sm font-medium text-gray-900 truncate">
+                                            <p className="truncate text-sm font-medium text-text">
                                                 {file.name}
                                             </p>
-                                            <p className="text-xs text-gray-500 mt-0.5">
+                                            <p className="mt-0.5 text-xs text-text-muted">
                                                 {formatFileSize(file.size)}
                                             </p>
                                         </div>
-                                        <button
+                                        <Button
                                             onClick={() => handleDownload(file.name)}
-                                            className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-indigo-600 hover:text-indigo-700 hover:bg-indigo-50 rounded-lg transition-colors opacity-0 group-hover:opacity-100"
+                                            variant="ghost"
+                                            size="sm"
+                                            icon={Download}
+                                            className="opacity-0 group-hover:opacity-100"
                                         >
-                                            <Download className="w-4 h-4" />
                                             下载
-                                        </button>
+                                        </Button>
                                     </div>
                                 ))}
                             </div>
-                        </div>
+                        </Card>
                     )}
 
                     {/* 底部阅读确认区 */}
-                    <div className="bg-white rounded-xl border border-gray-200 p-6">
+                    <Card padding="lg">
                         <div className="flex items-center justify-between">
                             <div className="flex items-center gap-4">
-                                <div className="w-12 h-12 rounded-full bg-indigo-100 flex items-center justify-center">
-                                    <Megaphone className="w-6 h-6 text-indigo-600" />
+                                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-brand-100">
+                                    <Megaphone className="w-6 h-6 text-brand-700" />
                                 </div>
                                 <div>
-                                    <p className="font-medium text-gray-900">阅读确认</p>
-                                    <p className="text-sm text-gray-500">
+                                    <p className="font-medium text-text">阅读确认</p>
+                                    <p className="text-sm text-text-muted">
                                         {isRead 
                                             ? '您已于 ' + new Date().toLocaleString() + ' 阅读该公告'
                                             : '请阅读以上内容后点击确认已读'
@@ -321,15 +301,15 @@ export default function AnnouncementDetailPage({ record, onClose }) {
                                 </div>
                             </div>
                             {!isRead ? (
-                                <button
+                                <Button
                                     onClick={handleMarkAsRead}
-                                    className="flex items-center gap-2 px-6 py-3 bg-indigo-600 text-white font-medium rounded-xl hover:bg-indigo-700 transition-colors shadow-sm"
+                                    icon={CheckCircle2}
+                                    className="px-6"
                                 >
-                                    <CheckCircle2 className="w-5 h-5" />
                                     确认已读
-                                </button>
+                                </Button>
                             ) : (
-                                <div className="flex items-center gap-2 px-6 py-3 bg-green-100 text-green-700 font-medium rounded-xl">
+                                <div className="flex items-center gap-2 rounded-xl bg-success-50 px-6 py-3 font-medium text-success-700">
                                     <CheckCircle2 className="w-5 h-5" />
                                     已确认阅读
                                 </div>
@@ -338,21 +318,21 @@ export default function AnnouncementDetailPage({ record, onClose }) {
 
                         {/* 阅读进度条 */}
                         <div className="mt-6">
-                            <div className="flex items-center justify-between text-sm text-gray-500 mb-2">
+                            <div className="mb-2 flex items-center justify-between text-sm text-text-muted">
                                 <span>全员阅读进度</span>
                                 <span>{Math.round((record.readCount / record.views) * 100)}%</span>
                             </div>
-                            <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
+                            <div className="h-2 overflow-hidden rounded-full bg-surface-subtle">
                                 <div 
-                                    className="h-full bg-indigo-600 rounded-full transition-all duration-500"
+                                    className="h-full rounded-full bg-brand-600 transition-all duration-500"
                                     style={{ width: `${Math.round((record.readCount / record.views) * 100)}%` }}
                                 />
                             </div>
-                            <p className="text-xs text-gray-400 mt-2">
+                            <p className="mt-2 text-xs text-text-subtle">
                                 {record.readCount} 人已读 / {record.views} 人阅读
                             </p>
                         </div>
-                    </div>
+                    </Card>
                 </div>
             </div>
         </div>

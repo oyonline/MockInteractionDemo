@@ -270,7 +270,7 @@ export default function OrganizationManagementPageSimple() {
 
       {/* 右侧抽屉（纯原生 div 实现） */}
       <div
-        className={`fixed top-0 right-0 h-full w-full sm:w-[420px] bg-white shadow-xl border-l border-gray-200 transition-transform duration-300 z-50 ${
+        className={`fixed top-0 right-0 h-full w-[50vw] min-w-[600px] bg-white shadow-xl border-l border-gray-200 transition-transform duration-300 z-50 ${
           drawerOpen ? 'translate-x-0' : 'translate-x-full'
         }`}
         aria-hidden={!drawerOpen}

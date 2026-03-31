@@ -553,7 +553,7 @@ const AttributeEditDrawer = ({ isOpen, onClose, attribute, onSave }) => {
     return (
         <div className="fixed inset-0 z-50 flex justify-end">
             <div className="absolute inset-0 bg-black/30" onClick={onClose} />
-            <div className="relative w-[640px] bg-white h-full shadow-xl flex flex-col">
+            <div className="relative w-[50vw] min-w-[600px] bg-white h-full shadow-xl flex flex-col">
                 {/* Header */}
                 <div className="flex items-center justify-between px-6 py-4 border-b">
                     <h2 className="text-lg font-semibold">{attribute ? '编辑属性' : '新建属性'}</h2>
@@ -692,7 +692,7 @@ const AttributeDetail = ({ attribute, onEdit, onClose }) => {
     return (
         <div className="fixed inset-0 z-50 flex justify-end">
             <div className="absolute inset-0 bg-black/30" onClick={onClose} />
-            <div className="relative w-[560px] bg-white h-full shadow-xl flex flex-col">
+            <div className="relative w-[50vw] min-w-[600px] bg-white h-full shadow-xl flex flex-col">
                 {/* Header */}
                 <div className="flex items-center justify-between px-6 py-4 border-b">
                     <div className="flex items-center gap-3">

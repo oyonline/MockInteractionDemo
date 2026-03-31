@@ -3,6 +3,8 @@
 import React, { useState, useCallback, useEffect } from 'react';
 import { RotateCcw, Save } from 'lucide-react';
 import { settingsBasic } from '../../services/settings';
+import Button from '../../components/ui/Button';
+import Card from '../../components/ui/Card';
 
 const GROUP_ORDER = ['通用', '物流', '销售', '财务'];
 
@@ -47,50 +49,39 @@ const SettingsBasicPage = () => {
   }, {});
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex min-h-0 flex-col gap-4">
       {/* 顶部标题卡片 */}
-      <div className="bg-white rounded-lg shadow-sm p-6 mb-4">
+      <Card padding="lg">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-xl font-semibold text-gray-800">基础配置</h1>
-            <p className="text-sm text-gray-500 mt-1">站点、时区、币种、物流与财务等全局配置，修改后需保存生效。</p>
+            <h1 className="ui-page-title text-xl">基础配置</h1>
+            <p className="mt-1 text-sm text-text-muted">站点、时区、币种、物流与财务等全局配置，修改后需保存生效。</p>
             {dirty && (
-              <p className="text-amber-600 text-sm mt-2">有未保存的更改</p>
+              <p className="mt-2 text-sm text-warning-700">有未保存的更改</p>
             )}
           </div>
           <div className="flex items-center gap-2">
-            <button
-              type="button"
-              onClick={handleReset}
-              className="inline-flex items-center gap-2 px-4 py-2 border border-gray-300 text-gray-700 text-sm font-medium rounded-lg hover:bg-gray-50"
-            >
-              <RotateCcw className="w-4 h-4" />
+            <Button type="button" variant="secondary" icon={RotateCcw} onClick={handleReset}>
               恢复默认
-            </button>
-            <button
-              type="button"
-              onClick={handleSave}
-              disabled={!dirty}
-              className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              <Save className="w-4 h-4" />
+            </Button>
+            <Button type="button" icon={Save} onClick={handleSave} disabled={!dirty}>
               保存
-            </button>
+            </Button>
           </div>
         </div>
-      </div>
+      </Card>
 
       {/* 按分组卡片 */}
-      <div className="space-y-4 flex-1 min-h-0 overflow-auto">
+      <div className="flex min-h-0 flex-1 flex-col gap-4">
         {GROUP_ORDER.filter((g) => byGroup[g]?.length).map((group) => (
-          <div key={group} className="bg-white rounded-lg shadow-sm p-6">
-            <h2 className="text-base font-semibold text-gray-800 border-b border-gray-100 pb-2 mb-4">{group}</h2>
+          <Card key={group} padding="lg">
+            <h2 className="ui-section-title mb-4 border-b border-border-subtle pb-2 text-base">{group}</h2>
             <div className="space-y-4">
               {byGroup[group].map((item) => (
                 <div key={item.key} className="flex flex-wrap items-start gap-4">
                   <div className="min-w-[200px] flex-shrink-0">
-                    <div className="font-medium text-gray-800">{item.label}</div>
-                    {item.desc && <div className="text-xs text-gray-500 mt-0.5">{item.desc}</div>}
+                    <div className="font-medium text-text">{item.label}</div>
+                    {item.desc && <div className="mt-0.5 text-xs text-text-subtle">{item.desc}</div>}
                   </div>
                   <div className="flex-1 min-w-0">
                     {item.type === 'text' && (
@@ -98,7 +89,7 @@ const SettingsBasicPage = () => {
                         type="text"
                         value={item.value ?? ''}
                         onChange={(e) => updateValue(item.key, e.target.value)}
-                        className="w-full max-w-md border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
+                        className="ui-input max-w-md"
                       />
                     )}
                     {item.type === 'number' && (
@@ -106,14 +97,14 @@ const SettingsBasicPage = () => {
                         type="number"
                         value={item.value ?? 0}
                         onChange={(e) => updateValue(item.key, Number(e.target.value) || 0)}
-                        className="w-full max-w-[160px] border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
+                        className="ui-input max-w-[160px]"
                       />
                     )}
                     {item.type === 'select' && (
                       <select
                         value={item.value ?? ''}
                         onChange={(e) => updateValue(item.key, e.target.value)}
-                        className="border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 min-w-[180px]"
+                        className="ui-select min-w-[180px]"
                       >
                         {(item.options || []).map((opt) => (
                           <option key={opt.value} value={opt.value}>{opt.label}</option>
@@ -126,16 +117,16 @@ const SettingsBasicPage = () => {
                           type="checkbox"
                           checked={!!item.value}
                           onChange={(e) => updateValue(item.key, e.target.checked)}
-                          className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                          className="h-4 w-4 rounded border-border text-brand-600 focus:ring-brand-500"
                         />
-                        <span className="text-sm text-gray-700">{item.value ? '开启' : '关闭'}</span>
+                        <span className="text-sm text-text-muted">{item.value ? '开启' : '关闭'}</span>
                       </label>
                     )}
                   </div>
                 </div>
               ))}
             </div>
-          </div>
+          </Card>
         ))}
       </div>
     </div>

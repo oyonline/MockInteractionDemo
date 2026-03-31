@@ -101,6 +101,9 @@ import AnnouncementsPage from './pages/AnnouncementsPage';
 import EmployeeManagementPage from './pages/EmployeeManagementPage';
 import ActiveEmployeeListPage from './pages/hr/ActiveEmployeeListPage';
 import FormerEmployeeListPage from './pages/hr/FormerEmployeeListPage';
+import HrOrganizationPage from './pages/hr/HrOrganizationPage';
+import PerformanceManagementPage from './pages/hr/PerformanceManagementPage';
+import RecruitmentManagementPage from './pages/hr/RecruitmentManagementPage';
 import AnnouncementDetailPage from './pages/AnnouncementDetailPage';
 import ModuleLayout from './layouts/ModuleLayout';
 import DynamicSidebar from './layouts/DynamicSidebar';
@@ -155,7 +158,7 @@ const Header = ({ tabs, activeTabId, onTabClick, onTabClose, currentPath, onNavi
     const overflowTabs = showOverflow ? sortedTabs.slice(MAX_VISIBLE_TABS - 1) : [];
 
     return (
-        <header className="h-14 bg-white border-b border-gray-200 flex items-center px-4 flex-shrink-0">
+        <header className="flex h-14 flex-shrink-0 items-center border-b border-border bg-surface px-4">
             {/* 左侧：Logo/标题（首页显示，子模块隐藏） */}
             {isHome && (
                 <div className="flex items-center gap-3 flex-shrink-0 mr-6">
@@ -178,8 +181,8 @@ const Header = ({ tabs, activeTabId, onTabClick, onTabClose, currentPath, onNavi
                                 key={tab.id}
                                 className={`group flex items-center gap-2 px-3 py-1.5 rounded-lg cursor-pointer transition-colors min-w-0 max-w-[160px] flex-shrink-0 ${
                                     activeTabId === tab.id
-                                        ? 'bg-indigo-50 text-indigo-600 font-medium'
-                                        : 'text-gray-600 hover:bg-gray-100'
+                                        ? 'bg-brand-50 text-brand-700 font-medium'
+                                        : 'text-text-muted hover:bg-surface-subtle'
                                 }`}
                                 onClick={() => onTabClick(tab.id)}
                             >
@@ -206,8 +209,8 @@ const Header = ({ tabs, activeTabId, onTabClick, onTabClose, currentPath, onNavi
                             onClick={() => setMoreOpen(prev => !prev)}
                             className={`flex items-center gap-1 px-2 py-1.5 rounded-lg text-sm transition-colors ${
                                 overflowTabs.some(t => t.id === activeTabId)
-                                    ? 'bg-indigo-50 text-indigo-600 font-medium'
-                                    : 'text-gray-600 hover:bg-gray-100'
+                                    ? 'bg-brand-50 text-brand-700 font-medium'
+                                    : 'text-text-muted hover:bg-surface-subtle'
                             }`}
                         >
                             <span>更多</span>
@@ -220,14 +223,14 @@ const Header = ({ tabs, activeTabId, onTabClick, onTabClose, currentPath, onNavi
                                     onClick={() => setMoreOpen(false)}
                                     aria-hidden="true"
                                 />
-                                <div className="absolute right-0 top-full mt-1 py-1 bg-white border border-gray-200 rounded-lg shadow-xl z-[101] min-w-[200px] max-h-72 overflow-y-auto">
+                                <div className="absolute right-0 top-full z-[101] mt-1 max-h-72 min-w-[200px] overflow-y-auto rounded-2xl border border-border bg-surface py-1 shadow-elevated">
                                     {overflowTabs.map(tab => (
                                         <div
                                             key={tab.id}
                                             role="button"
                                             tabIndex={0}
-                                            className={`flex items-center justify-between gap-2 px-3 py-2 cursor-pointer text-sm hover:bg-gray-50 ${
-                                                activeTabId === tab.id ? 'bg-indigo-50 text-indigo-600' : 'text-gray-700'
+                                                className={`flex items-center justify-between gap-2 px-3 py-2 cursor-pointer text-sm hover:bg-surface-subtle ${
+                                                activeTabId === tab.id ? 'bg-brand-50 text-brand-700' : 'text-text-muted'
                                             }`}
                                             onClick={() => {
                                                 onTabClick(tab.id);
@@ -263,14 +266,14 @@ const Header = ({ tabs, activeTabId, onTabClick, onTabClose, currentPath, onNavi
             </div>
             
             {/* 右侧：功能按钮 */}
-            <div className="flex items-center gap-1 flex-shrink-0 ml-4 pl-4 border-l border-gray-200">
+            <div className="ml-4 flex flex-shrink-0 items-center gap-1 border-l border-border pl-4">
                 {/* 搜索 */}
-                <button className="p-2 text-gray-500 hover:bg-gray-100 rounded-lg transition-colors" title="搜索">
+                <button className="rounded-xl p-2 text-text-subtle transition-colors hover:bg-surface-subtle" title="搜索">
                     <Search className="w-4 h-4" />
                 </button>
                 
                 {/* 通知 */}
-                <button className="p-2 text-gray-500 hover:bg-gray-100 rounded-lg transition-colors relative" title="消息通知">
+                <button className="relative rounded-xl p-2 text-text-subtle transition-colors hover:bg-surface-subtle" title="消息通知">
                     <Bell className="w-4 h-4" />
                     <span className="absolute top-1.5 right-1.5 w-1.5 h-1.5 bg-red-500 rounded-full" />
                 </button>
@@ -278,10 +281,10 @@ const Header = ({ tabs, activeTabId, onTabClick, onTabClose, currentPath, onNavi
                 {/* 用户菜单 */}
                 <div className="relative">
                     <button 
-                        className="flex items-center gap-2 p-1.5 hover:bg-gray-100 rounded-lg transition-colors ml-1"
+                        className="ml-1 flex items-center gap-2 rounded-xl p-1.5 transition-colors hover:bg-surface-subtle"
                         onClick={() => setUserMenuOpen(prev => !prev)}
                     >
-                        <div className="w-7 h-7 bg-indigo-100 rounded-full flex items-center justify-center text-indigo-600 font-medium text-sm">
+                        <div className="flex h-7 w-7 items-center justify-center rounded-full bg-brand-100 text-sm font-medium text-brand-700">
                             张
                         </div>
                     </button>
@@ -293,21 +296,21 @@ const Header = ({ tabs, activeTabId, onTabClick, onTabClose, currentPath, onNavi
                                 onClick={() => setUserMenuOpen(false)}
                                 aria-hidden="true"
                             />
-                            <div className="absolute right-0 top-full mt-1 py-1 bg-white border border-gray-200 rounded-lg shadow-xl z-[101] min-w-[160px]">
-                                <div className="px-3 py-2 border-b border-gray-100">
-                                    <p className="text-sm font-medium text-gray-800">张三</p>
-                                    <p className="text-xs text-gray-500">系统管理员</p>
+                            <div className="absolute right-0 top-full z-[101] mt-1 min-w-[160px] rounded-2xl border border-border bg-surface py-1 shadow-elevated">
+                                <div className="border-b border-border-subtle px-3 py-2">
+                                    <p className="text-sm font-medium text-text">张三</p>
+                                    <p className="text-xs text-text-subtle">系统管理员</p>
                                 </div>
-                                <button className="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50">
+                                <button className="flex w-full items-center gap-2 px-3 py-2 text-sm text-text-muted hover:bg-surface-subtle">
                                     <User className="w-4 h-4" />
                                     <span>个人中心</span>
                                 </button>
-                                <button className="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50">
+                                <button className="flex w-full items-center gap-2 px-3 py-2 text-sm text-text-muted hover:bg-surface-subtle">
                                     <Settings className="w-4 h-4" />
                                     <span>账号设置</span>
                                 </button>
-                                <div className="border-t border-gray-100 mt-1 pt-1">
-                                    <button className="w-full flex items-center gap-2 px-3 py-2 text-sm text-red-600 hover:bg-red-50">
+                                <div className="mt-1 border-t border-border-subtle pt-1">
+                                    <button className="flex w-full items-center gap-2 px-3 py-2 text-sm text-danger-600 hover:bg-danger-50">
                                         <LogOut className="w-4 h-4" />
                                         <span>退出登录</span>
                                     </button>
@@ -398,6 +401,9 @@ function App() {
             '/hr/employees': '企业人才库',
             '/hr/active-employees': '在职员工列表',
             '/hr/former-employees': '离职员工列表',
+            '/hr/organization': '组织架构管理',
+            '/hr/performance': '绩效管理',
+            '/hr/recruitment': '招聘管理',
             '/procurement/supplier': '供应商管理',
             '/logistics': '物流与报关',
             '/finance/expense-fact': '费用事实',
@@ -942,6 +948,24 @@ function App() {
                         <FormerEmployeeListPage />
                     </ModuleLayout>
                 );
+            case '/hr/organization':
+                return (
+                    <ModuleLayout>
+                        <HrOrganizationPage />
+                    </ModuleLayout>
+                );
+            case '/hr/performance':
+                return (
+                    <ModuleLayout>
+                        <PerformanceManagementPage />
+                    </ModuleLayout>
+                );
+            case '/hr/recruitment':
+                return (
+                    <ModuleLayout>
+                        <RecruitmentManagementPage />
+                    </ModuleLayout>
+                );
             // 供应链采购模块
             case '/procurement/supplier':
                 return (
@@ -1133,7 +1157,7 @@ function App() {
     const activeTab = tabs.find(t => t.id === activeTabId);
 
     return (
-        <div className="flex h-screen bg-gray-100">
+        <div className="flex h-screen bg-surface-muted">
             {/* 动态左侧导航 */}
             <DynamicSidebar 
                 currentPath={activeTab?.path ?? '/home'} 
@@ -1141,7 +1165,7 @@ function App() {
             />
 
             {/* 主内容区 */}
-            <div className="flex-1 flex flex-col min-h-0 min-w-0 overflow-hidden">
+            <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
                 {/* 顶部导航栏（Logo + 标签 + 功能） */}
                 <Header
                     tabs={tabs}
@@ -1153,7 +1177,7 @@ function App() {
                 />
 
                 {/* 主内容：始终按当前激活的标签渲染 */}
-                <main className="flex-1 min-h-0 overflow-auto p-6">
+                <main className="flex-1 min-h-0 min-w-0 overflow-hidden bg-surface-muted">
                     {renderTabContent(activeTab)}
                 </main>
             </div>

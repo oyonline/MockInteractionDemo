@@ -467,7 +467,7 @@ const VirtualComboPage = () => {
             className="absolute inset-0 bg-black bg-opacity-30"
             onClick={() => setDrawerOpen(false)}
           />
-          <div className="relative bg-white w-full max-w-3xl h-full shadow-2xl flex flex-col overflow-hidden">
+          <div className="relative bg-white w-[50vw] min-w-[600px] h-full shadow-2xl flex flex-col overflow-hidden">
             {/* 抽屉头部 */}
             <div className="flex items-center justify-between p-6 border-b flex-shrink-0">
               <div className="min-w-0 flex-1">

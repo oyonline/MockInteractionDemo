@@ -7,8 +7,10 @@ import {
     BookOpen, Gift, ChevronRight, Megaphone, AlertCircle, FolderKanban,
     BarChart3, Briefcase, ClipboardList
 } from 'lucide-react';
-
-const cn = (...args) => args.filter(Boolean).join(' ');
+import Button from '../components/ui/Button';
+import Card from '../components/ui/Card';
+import Badge from '../components/ui/Badge';
+import cn from '../utils/cn';
 
 // --------------- 一级入口配置 ---------------
 const mainEntries = [
@@ -42,7 +44,7 @@ const announcements = [
 // --------------- 外部系统入口 ---------------
 const externalSystems = [
     { name: '金蝶', url: '#', color: 'bg-red-500' },
-    { name: '领星', url: '#', color: 'bg-blue-600' },
+    { name: '领星', url: '#', color: 'bg-brand-600' },
     { name: '速猫', url: '#', color: 'bg-orange-500' },
     { name: '旺店通', url: '#', color: 'bg-green-500' },
     { name: '菜鸟WMS', url: '#', color: 'bg-cyan-500' },
@@ -61,33 +63,6 @@ const todos = [
     { id: 3, title: '新员工入职权限申请', type: 'todo', from: 'HR 王五', time: '1天前' },
     { id: 4, title: '物流商合同到期提醒', type: 'todo', from: '系统', time: '2天前' },
 ];
-
-// --------------- UI组件 ---------------
-const Card = ({ children, className, onClick, hoverable }) => (
-    <div 
-        onClick={onClick}
-        className={cn(
-            'bg-white rounded-2xl border border-gray-100 shadow-sm',
-            hoverable && 'cursor-pointer hover:shadow-md hover:border-gray-200 transition-all',
-            className
-        )}
-    >
-        {children}
-    </div>
-);
-
-const Badge = ({ children, variant }) => {
-    const variants = {
-        urgent: 'bg-red-100 text-red-700 border-red-200',
-        warning: 'bg-amber-100 text-amber-700 border-amber-200',
-        normal: 'bg-gray-100 text-gray-600 border-gray-200',
-    };
-    return (
-        <span className={cn('px-2 py-0.5 rounded-full text-xs font-medium border', variants[variant])}>
-            {children}
-        </span>
-    );
-};
 
 // --------------- 主组件 ---------------
 export default function HomePage({ onNavigate, onOpenAnnouncement, onOpenAnnouncementsList }) {
@@ -112,24 +87,24 @@ export default function HomePage({ onNavigate, onOpenAnnouncement, onOpenAnnounc
     };
 
     return (
-        <div className="min-h-full bg-gray-50/50 p-8">
+        <div className="min-h-full bg-surface-muted p-8">
             <div className="max-w-[1920px] mx-auto">
                 {/* 欢迎语 */}
                 <div className="mb-8">
-                    <h1 className="text-2xl font-bold text-gray-900">欢迎使用 EPoseidon2.0</h1>
-                    <p className="text-gray-500 mt-1">企业自研管理系统 · 工作台</p>
+                    <h1 className="ui-page-title">欢迎使用 EPoseidon2.0</h1>
+                    <p className="mt-1 text-text-muted">企业自研管理系统 · 工作台</p>
                 </div>
 
                 {/* 一级入口网格 */}
-                <div className="grid grid-cols-6 gap-4 mb-8">
+                <div className="mb-8 grid gap-4 xl:grid-cols-6 2xl:grid-cols-7">
                     {mainEntries.map((entry) => {
                         const Icon = entry.icon;
                         return (
                             <Card 
                                 key={entry.id}
-                                hoverable
+                                interactive
                                 onClick={() => handleEntryClick(entry)}
-                                className="p-4 group"
+                                className="group p-4"
                             >
                                 <div className="flex items-start justify-between mb-3">
                                     <div className={cn("w-10 h-10 rounded-xl flex items-center justify-center transition-transform group-hover:scale-110", entry.color)}>
@@ -137,62 +112,59 @@ export default function HomePage({ onNavigate, onOpenAnnouncement, onOpenAnnounc
                                     </div>
                                     <ChevronRight className="w-4 h-4 text-gray-300 group-hover:text-gray-500 transition-colors" />
                                 </div>
-                                <h3 className="text-base font-bold text-gray-900 mb-0.5">{entry.name}</h3>
-                                <p className="text-xs text-gray-500">{entry.desc}</p>
+                                <h3 className="mb-0.5 text-base font-bold text-text">{entry.name}</h3>
+                                <p className="text-xs text-text-muted">{entry.desc}</p>
                             </Card>
                         );
                     })}
                 </div>
 
                 {/* 下方区域：三列布局 */}
-                <div className="grid grid-cols-3 gap-6">
+                <div className="grid gap-6 xl:grid-cols-3">
                     {/* 左侧：公司公告 */}
-                    <Card className="p-5">
+                    <Card padding="md">
                         <div className="flex items-center justify-between mb-4">
                             <div className="flex items-center gap-2">
-                                <Megaphone className="w-5 h-5 text-gray-400" />
-                                <h3 className="font-bold text-gray-900">公司公告</h3>
+                                <Megaphone className="w-5 h-5 text-text-subtle" />
+                                <h3 className="font-bold text-text">公司公告</h3>
                             </div>
-                            <span className="text-xs text-gray-400">共 {announcements.length} 条</span>
+                            <span className="text-xs text-text-subtle">共 {announcements.length} 条</span>
                         </div>
                         <div className="space-y-3">
                             {announcements.map(item => (
                                 <div 
                                     key={item.id} 
                                     onClick={() => handleAnnouncementClick(item)}
-                                    className="p-3 bg-gray-50 rounded-xl hover:bg-gray-100 cursor-pointer transition-colors group"
+                                    className="group cursor-pointer rounded-xl bg-surface-subtle p-3 transition-colors hover:bg-slate-100"
                                 >
                                     <div className="flex items-start gap-2">
                                         {item.type === 'urgent' && <AlertCircle className="w-4 h-4 text-red-500 flex-shrink-0 mt-0.5" />}
                                         <div className="flex-1 min-w-0">
-                                            <p className="text-sm font-medium text-gray-900 truncate group-hover:text-blue-600 transition-colors">
+                                            <p className="truncate text-sm font-medium text-text transition-colors group-hover:text-brand-700">
                                                 {item.title}
                                             </p>
                                             <div className="flex items-center gap-2 mt-1.5">
-                                                <Badge variant={item.type}>
+                                                <Badge tone={item.type === 'urgent' ? 'danger' : item.type === 'warning' ? 'warning' : 'neutral'}>
                                                     {item.type === 'urgent' ? '紧急' : item.type === 'warning' ? '通知' : '公告'}
                                                 </Badge>
-                                                <span className="text-xs text-gray-400">{item.date}</span>
+                                                <span className="text-xs text-text-subtle">{item.date}</span>
                                             </div>
                                         </div>
                                     </div>
                                 </div>
                             ))}
                         </div>
-                        <button 
-                            onClick={handleViewMoreAnnouncements}
-                            className="w-full mt-4 py-2 text-sm text-gray-500 hover:text-gray-700 hover:bg-gray-50 rounded-lg transition-colors"
-                        >
+                        <Button variant="ghost" size="sm" onClick={handleViewMoreAnnouncements} fullWidth className="mt-4">
                             查看更多
-                        </button>
+                        </Button>
                     </Card>
 
                     {/* 中间：待办事项 & 审批提醒 */}
-                    <Card className="p-5">
+                    <Card padding="md">
                         <div className="flex items-center gap-2 mb-4">
-                            <CheckSquare className="w-5 h-5 text-gray-400" />
-                            <h3 className="font-bold text-gray-900">待办 & 审批</h3>
-                            <span className="ml-auto px-2 py-0.5 bg-red-100 text-red-600 rounded-full text-xs font-medium">
+                            <CheckSquare className="w-5 h-5 text-text-subtle" />
+                            <h3 className="font-bold text-text">待办 & 审批</h3>
+                            <span className="ml-auto rounded-full bg-danger-100 px-2 py-0.5 text-xs font-medium text-danger-600">
                                 {todos.length}
                             </span>
                         </div>
@@ -200,7 +172,7 @@ export default function HomePage({ onNavigate, onOpenAnnouncement, onOpenAnnounc
                             {todos.map(item => (
                                 <div 
                                     key={item.id} 
-                                    className="flex items-start gap-3 p-3 bg-gray-50 rounded-xl hover:bg-gray-100 cursor-pointer transition-colors"
+                                    className="flex cursor-pointer items-start gap-3 rounded-xl bg-surface-subtle p-3 transition-colors hover:bg-slate-100"
                                 >
                                     <div className={cn(
                                         "w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0",
@@ -213,34 +185,34 @@ export default function HomePage({ onNavigate, onOpenAnnouncement, onOpenAnnounc
                                         )}
                                     </div>
                                     <div className="flex-1 min-w-0">
-                                        <p className="text-sm font-medium text-gray-900 line-clamp-2">{item.title}</p>
+                                        <p className="line-clamp-2 text-sm font-medium text-text">{item.title}</p>
                                         <div className="flex items-center gap-2 mt-1">
-                                            <span className="text-xs text-gray-500">{item.from}</span>
-                                            <span className="text-xs text-gray-400">·</span>
-                                            <span className="text-xs text-gray-400">{item.time}</span>
+                                            <span className="text-xs text-text-muted">{item.from}</span>
+                                            <span className="text-xs text-text-subtle">·</span>
+                                            <span className="text-xs text-text-subtle">{item.time}</span>
                                         </div>
                                     </div>
                                 </div>
                             ))}
                         </div>
                         {todos.length === 0 && (
-                            <div className="text-center py-8 text-gray-400">
+                            <div className="py-8 text-center text-text-subtle">
                                 <CheckSquare className="w-12 h-12 mx-auto mb-2 opacity-30" />
                                 <p className="text-sm">暂无待办事项</p>
                             </div>
                         )}
-                        <button className="w-full mt-4 py-2 text-sm text-gray-500 hover:text-gray-700 hover:bg-gray-50 rounded-lg transition-colors">
+                        <Button variant="ghost" size="sm" fullWidth className="mt-4">
                             查看全部
-                        </button>
+                        </Button>
                     </Card>
 
                     {/* 右侧：外部系统 & 员工体验 */}
                     <div className="space-y-5">
                         {/* 外部系统 */}
-                        <Card className="p-5">
+                        <Card padding="md">
                             <div className="flex items-center gap-2 mb-4">
-                                <ExternalLink className="w-5 h-5 text-gray-400" />
-                                <h3 className="font-bold text-gray-900">外部系统</h3>
+                                <ExternalLink className="w-5 h-5 text-text-subtle" />
+                                <h3 className="font-bold text-text">外部系统</h3>
                             </div>
                             <div className="grid grid-cols-3 gap-3">
                                 {externalSystems.map(sys => (
@@ -249,22 +221,22 @@ export default function HomePage({ onNavigate, onOpenAnnouncement, onOpenAnnounc
                                         href={sys.url}
                                         target="_blank"
                                         rel="noopener noreferrer"
-                                        className="flex flex-col items-center gap-2 p-3 rounded-xl hover:bg-gray-50 transition-colors group"
+                                        className="group flex flex-col items-center gap-2 rounded-xl p-3 transition-colors hover:bg-surface-subtle"
                                     >
                                         <div className={cn("w-10 h-10 rounded-xl flex items-center justify-center text-white text-xs font-bold", sys.color)}>
                                             {sys.name.slice(0, 2)}
                                         </div>
-                                        <span className="text-xs text-gray-600 group-hover:text-gray-900">{sys.name}</span>
+                                        <span className="text-xs text-text-muted group-hover:text-text">{sys.name}</span>
                                     </a>
                                 ))}
                             </div>
                         </Card>
 
                         {/* 员工体验 */}
-                        <Card className="p-5">
+                        <Card padding="md">
                             <div className="flex items-center gap-2 mb-4">
-                                <Gift className="w-5 h-5 text-gray-400" />
-                                <h3 className="font-bold text-gray-900">员工体验</h3>
+                                <Gift className="w-5 h-5 text-text-subtle" />
+                                <h3 className="font-bold text-text">员工体验</h3>
                             </div>
                             <div className="space-y-3">
                                 {employeeExperiences.map(exp => {
@@ -272,14 +244,14 @@ export default function HomePage({ onNavigate, onOpenAnnouncement, onOpenAnnounc
                                     return (
                                         <div 
                                             key={exp.name}
-                                            className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl hover:bg-gray-100 cursor-pointer transition-colors group"
+                                            className="group flex cursor-pointer items-center gap-3 rounded-xl bg-surface-subtle p-3 transition-colors hover:bg-slate-100"
                                         >
                                             <div className={cn("w-10 h-10 rounded-xl flex items-center justify-center", exp.color)}>
                                                 <Icon className="w-5 h-5 text-white" />
                                             </div>
                                             <div className="flex-1">
-                                                <p className="text-sm font-medium text-gray-900">{exp.name}</p>
-                                                <p className="text-xs text-gray-500">{exp.desc}</p>
+                                                <p className="text-sm font-medium text-text">{exp.name}</p>
+                                                <p className="text-xs text-text-muted">{exp.desc}</p>
                                             </div>
                                             <ChevronRight className="w-4 h-4 text-gray-300 group-hover:text-gray-500" />
                                         </div>

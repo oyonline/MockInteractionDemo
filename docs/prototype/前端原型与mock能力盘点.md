@@ -1,4 +1,4 @@
-# 前端仓库「纯前端原型 + Mock 数据」能力盘点
+# 前端原型与 Mock 能力盘点
 
 > 说明：本仓库为 **React（CRA）** 技术栈，非 Vue/Vite。以下按实际技术栈与结构盘点。
 
@@ -19,56 +19,72 @@
 
 - **无 Naive UI / Ant Design / Material UI 等第三方 UI 库**，页面全部为**原生 HTML + Tailwind CSS** 手写。
 - **图标**：`lucide-react` 统一提供（如 `Search`、`Plus`、`Edit2`、`X` 等）。
-- **自封装组件**：**无独立 `components/` 目录**。各页面内自用的小块（如 `NavItem`、`TabBar`、`TablePagination`）均写在对应页面文件内，未抽成可复用组件。
+- **自封装组件**：当前分为两层：
+  - `src/components/ActionBar.js`：表格行操作栏（含 Portal 下拉菜单）
+  - `src/components/TablePagination.js`：通用分页组件
+  - `src/components/ui/Button.js`：统一主按钮/次按钮/危险按钮/幽灵按钮
+  - `src/components/ui/Card.js`：统一卡片容器
+  - `src/components/ui/Badge.js`：统一状态标签
+  - `src/components/ui/DrawerShell.js`：统一右侧抽屉壳子
+  - `src/components/ui/ModalShell.js`：统一弹窗壳子
+  - `src/components/ui/TableShell.js`：统一表格容器
+  - `src/components/ui/RichTextContent.js`：统一富文本内容样式
 
 ### 3) 路由方案
 
-- **未使用 vue-router**。路由为 **App 内基于 path 的 switch + 多标签页** 实现：
-  - **路由定义位置**：`src/App.js` 内 `navigationConfig`（含系统设置 7 个子项）与 `renderTabContent(tab)` 的 `switch (tab.path)`。
-  - **系统设置模块路由**：在 `navigationConfig` 中，`id: 'settings'` 下 children 定义：
-    - `/settings/basic` 基础配置
-    - `/settings/dict` 数据字典
-    - `/settings/enum` 枚举与规则
-    - `/settings/sync` 接口同步
-    - `/settings/params` 参数设置
-    - `/settings/scheduler` 定时任务
-    - `/settings/log` 系统日志  
-  上述 path 在 `renderTabContent` 中**均未单独 case**，统一走 `default` → `PlaceholderPage`。
+- **未使用 react-router**。路由为 **App 内基于 path 的 switch + 多标签页** 实现：
+  - **路由定义位置**：`src/App.js` 内 `renderTabContent(tab)` 的 `switch (tab.path)`
+  - **导航配置**：`src/layouts/DynamicSidebar.js` 的 `navConfig`
 
 ### 4) 状态管理
 
-- **无 pinia/vuex**。全局状态仅为 **App.js 内 React useState**：侧栏展开项、侧栏显隐、标签列表、当前激活标签等，无独立 store 目录或跨页面状态库。
+- **无 Redux/Zustand/Mobx**。全局状态仅为 **App.js 内 React useState**：
+  - 标签列表 `tabs`
+  - 当前激活标签 `activeTabId`
+  - 侧栏显隐（首页不显示侧栏）
 
 ### 5) 代码规范与样式工具
 
 | 工具 | 是否使用 | 配置文件/说明 |
 |------|----------|----------------|
-| **ESLint** | 是 | `package.json` 内 `eslintConfig: { extends: ["react-app", "react-app/jest"] }`，无独立 `.eslintrc*` |
+| **ESLint** | 是 | `package.json` 内 `eslintConfig: { extends: ["react-app", "react-app/jest"] }` |
 | **Prettier** | 否 | 无 `.prettierrc*` / prettier 依赖 |
-| **UnoCSS** | 否 | 无 `uno.config*` |
-| **Tailwind CSS** | 是 | `tailwind.config.js`（content: `./src/**/*.{js,jsx,ts,tsx}`），配合 `postcss.config.js`（tailwindcss + autoprefixer） |
+| **Tailwind CSS** | 是 | `tailwind.config.js` + `postcss.config.js` |
 
 ---
 
-## B. Layout 与页面容器结构（仅补内容区）
+## B. Layout 与页面容器结构
 
 ### 1) 左侧导航 + 顶部 Header 的布局组件路径
 
-- **单一文件**：`src/App.js`。  
-- 布局全部在该文件中：左侧 `aside`（导航 + Logo + 底部用户信息）、右侧区域（顶部 header + 标签栏 TabBar + 主内容区）。**无独立 Layout 组件文件**。
+- **布局文件**：`src/layouts/DynamicSidebar.js`（动态侧栏）、`src/layouts/ModuleLayout.js`（模块布局）
+- **主应用**：`src/App.js` 整合布局、标签栏、主内容区
 
 ### 2) 内容区容器的 class / 样式约定
 
-- **主内容容器**：`<main className="flex-1 min-h-0 overflow-auto p-6">`  
-  - 占满剩余高度（`flex-1 min-h-0`）、可滚动（`overflow-auto`）、内边距 `p-6`。
-- 页面内部常见写法：`flex flex-col h-full` 或 `flex flex-col min-h-0`，表格区域多为 `flex-1 min-h-0 overflow-auto`，以保证在 Layout 内不撑破高度。
+- **应用壳层**：`App.js` 负责整屏高度，主区域使用 `flex h-screen`
+- **主内容容器**：`<main className="flex-1 min-h-0 min-w-0 overflow-hidden bg-surface-muted">`
+- **模块容器**：`ModuleLayout` 负责内容区背景、滚动和内边距，使用 `flex h-full min-h-0 flex-col overflow-auto bg-surface-muted px-6 py-6`
+- **页面根节点约定**：列表页/详情页根节点统一使用 `flex min-h-0 flex-col`，不在页面内再次声明 `h-screen`
 
 ### 3) 负责渲染右侧内容区的组件/插槽
 
-- **等价于 router-view 的渲染点**：`App.js` 中  
-  `{renderTabContent(activeTab)}`  
-  位于 `<main className="flex-1 min-h-0 overflow-auto p-6">` 内。  
-- 根据当前激活标签的 `tab.path` 在 `renderTabContent` 的 switch 中返回对应页面组件；未匹配的 path（含全部 7 个系统设置页）走 `default`，渲染 `<PlaceholderPage pageName={tab.name} path={tab.path} />`。
+- **等价于 router-view 的渲染点**：`App.js` 中 `{renderTabContent(activeTab)}`
+- 根据当前激活标签的 `tab.path` 在 `renderTabContent` 的 switch 中返回对应页面组件
+
+### 4) 样式规范一期约定
+
+- **Token 来源**：统一收口在 `tailwind.config.js` + `src/index.css`
+- **语义色**：`brand / success / warning / danger / surface / border / text`
+- **基础表单类**：`.ui-input`、`.ui-select`、`.ui-textarea`
+- **页面标题类**：`.ui-page-title`、`.ui-section-title`
+- **内容样式类**：`.ui-richtext`
+- **统一 className 工具**：`src/utils/cn.js`
+- **禁止继续新增**：
+  - 页面级 `h-screen`
+  - 页面内自建 `const cn = (...args) => ...`
+  - 页面内嵌 `<style>`
+  - 首批样板页继续裸写 `bg-blue-600` / `bg-indigo-600` 作为主按钮色
 
 ---
 
@@ -76,26 +92,26 @@
 
 ### 1) 推荐的标准列表页文件路径
 
-**`src/pages/SupplierListPage.js`**  
-（具备：筛选区 + 表格 + 分页 + 新增/编辑弹窗 + 可选详情通过 `onOpenDetail` 开新标签，且结构清晰、mock 内聚）
+**`src/pages/SupplierListPage.js`**
+- 具备：筛选区 + 表格 + 分页 + 新增/编辑弹窗 + 统计卡片
+- 结构清晰、mock 内聚、可作为模板复制
 
-### 2) 页面由哪些部分组成（摘要）
+### 2) 页面组成部分
 
 | 区块 | 实现方式 |
 |------|----------|
-| **统计卡片** | 页面内 `grid grid-cols-4` 的 4 个卡片，展示供应商总数、关联 SKU、近期订单金额、A 级数量等 |
-| **筛选/查询** | 内联表单项：关键词、类型、状态、评级、类目等，无独立 SearchForm 组件 |
-| **表格** | 原生 `<table>` + Tailwind，支持操作列（查看/编辑等） |
-| **分页** | 页面内 `currentPage`/`pageSize` + 上一页/下一页/页码，无全局 Pagination 组件 |
-| **新增/编辑** | 单一 Modal（`showCreateModal` + `editingSupplier`），表单字段在同一 Modal 内 |
-| **详情** | 通过 `onOpenDetail(tabInfo)` 由 App 打开新标签页，详情页可另文件（本页未实现详情页组件，仅传 data） |
+| **统计卡片** | 优先复用 `Card`，使用响应式 grid 展示关键指标 |
+| **筛选/查询** | 内联表单项 + `.ui-input/.ui-select`，外层优先使用 `Card` |
+| **表格** | `TableShell` + 原生 `<table>`，横向滚动只发生在表格容器内 |
+| **分页** | 使用 `TablePagination` 组件 |
+| **新增/编辑** | 优先使用 `ModalShell` |
+| **详情** | 通过 `onOpenDetail` 回调打开新标签页 |
 
-其他可参考的列表型页面：`ExpenseCategoryPage.js`（树+表格+分页）、`ProductAttributePage.js`（属性管理，表格+分组+弹窗）、`BrandManagementPage.js`（支持注入数据，否则用本地 mock）。
+### 3) 其他参考页面
 
-### 3) 表格列配置/列设置组件
-
-- **不存在** `TableColumnSetting` 或列设置/列显隐类组件。  
-- 表格列均为各页面内手写 `<th>`/`<td>`，无统一列 schema 或列配置驱动。
+- `UserManagementPage.js`：带分页的列表页
+- `ExpenseCategoryPage.js`：树+表格组合
+- `ProductAttributePage.js`：分组配置型页面
 
 ---
 
@@ -103,65 +119,69 @@
 
 ### 1) Mock 数据体系
 
-- **无** mockjs、msw、或独立 mock 目录/本地 json 请求。
-- **现状**：Mock 数据**按页面内联**在各自页面文件中，例如：
-  - `SupplierListPage.js`：`supplierData` 数组
-  - `ExpenseCategoryPage.js`：`initialExpenseCategories`、树数据等
-  - `OrganizationManagementPage.js`、`CategoryTemplatePage.js`、`SalesForecastPage.js`、`ExpenseFactPage.js`、`ExpenseApprovalListPage.simple.js`、`BrandManagementPage.js`、`SkuIterationPage.js` 等：均在文件顶部或组件内定义 mock 数组/生成函数
-- **结论**：无统一 mock 入口或开关，纯前端原型可直接沿用「页面内 mock」，后续若要统一可抽离到 `src/mock/` 或通过一层 service 切换。
+- **组织方式**：按模块放在 `src/mock/[模块]/` 目录下
+  - `src/mock/settings/`：系统设置相关 mock
+  - `src/mock/logistics/`：物流相关 mock
+  - `src/mock/system/`：系统权限相关 mock
+- **统一入口**：`src/mock/index.js` 聚合导出
 
 ### 2) Service / Request 层
 
-- **无** 独立 `request`、`axios` 或 `api/`/`services/` 封装。
-- **无** 全局 HTTP 客户端或接口模块。  
-- **纯原型复用建议**：保持页面内用内存数据即可；若希望「先走 mock、后接真实接口」，可新增 `src/services/`（如 `getXxxList()` 先 return 本地 mock，再改为请求），页面只调 service，不直接写死数组。
+- **Service 目录**：`src/services/`
+  - `settings.js`：系统设置相关 service
+  - `logistics.js`：物流服务
+  - `system.js`：系统服务
+  - `index.js`：统一入口
 
-### 3) localStorage 封装或 hooks
+### 3) localStorage 封装
 
-- **无** `useStorage`、`useLocalStorage` 或统一 localStorage 封装。  
-- 未在仓库内搜到 localStorage 使用。若需「原型内持久化」（如列表筛选条件、表格列显隐），可新增 `src/hooks/useLocalStorage.js` 或 `src/utils/storage.js`。
+- **工具文件**：`src/utils/storage.js`（封装方法）
+- **Key 定义**：`src/utils/storageKeys.js`（常量定义）
+- **Hook**：`src/hooks/useLocalStorage.js`（状态同步）
 
 ---
 
 ## E. 系统设置 7 个页面现状
 
-| 序号 | 页面名称 | 路由 path | 文件路径 | 当前实现状态 |
-|------|----------|-----------|----------|--------------|
-| 1 | 基础配置 | `/settings/basic` | 无独立页面，由 App 渲染 | **占位**：`PlaceholderPage`（页面开发中） |
-| 2 | 数据字典 | `/settings/dict` | 无独立页面 | **占位**：`PlaceholderPage` |
-| 3 | 枚举与规则 | `/settings/enum` | 无独立页面 | **占位**：`PlaceholderPage` |
-| 4 | 接口同步 | `/settings/sync` | 无独立页面 | **占位**：`PlaceholderPage` |
-| 5 | 参数设置 | `/settings/params` | 无独立页面 | **占位**：`PlaceholderPage` |
-| 6 | 定时任务 | `/settings/scheduler` | 无独立页面 | **占位**：`PlaceholderPage` |
-| 7 | 系统日志 | `/settings/log` | 无独立页面 | **占位**：`PlaceholderPage` |
+| 序号 | 页面名称 | 路由 path | 文件路径 | 状态 |
+|------|----------|-----------|----------|------|
+| 1 | 基础配置 | `/settings/basic` | `src/pages/settings/SettingsBasicPage.js` | ✅ 可用 |
+| 2 | 数据字典 | `/settings/dict` | `src/pages/settings/SettingsDictPage.js` | ✅ 可用 |
+| 3 | 枚举与规则 | `/settings/enum` | `src/pages/settings/SettingsEnumRulePage.js` | ✅ 可用 |
+| 4 | 接口同步 | `/settings/sync` | `src/pages/settings/SettingsApiSyncPage.js` | ✅ 可用 |
+| 5 | 参数设置 | `/settings/params` | `src/pages/settings/SettingsParamsPage.js` | ✅ 可用 |
+| 6 | 定时任务 | `/settings/scheduler` | `src/pages/settings/SettingsSchedulerPage.js` | ✅ 可用 |
+| 7 | 系统日志 | `/settings/log` | `src/pages/settings/SettingsLogPage.js` | ✅ 可用 |
 
-- **占位组件**：`src/pages/PlaceholderPage.js`，接收 `pageName`、`path`，展示「页面开发中」及当前路径。  
-- 上述 7 个 path 在 `App.js` 的 `renderTabContent` 中均未单独 case，因此全部走 `default` → `PlaceholderPage`。
-
----
-
-## F. 建议「复用」的组件清单（含路径）与「建议新增」的通用模块
-
-### 建议复用的组件/模式（路径与原因）
-
-| 类型 | 路径/位置 | 建议复用原因 |
-|------|-----------|--------------|
-| 布局与导航 | `src/App.js`（aside + header + TabBar + main） | 已实现多标签、侧栏折叠、路由映射，系统设置仅需在 `renderTabContent` 中加 case 即可接入新页 |
-| 占位页 | `src/pages/PlaceholderPage.js` | 未实现或开发中的路由可继续用其占位，保持体验一致 |
-| 列表页结构参考 | `src/pages/SupplierListPage.js` | 筛选 + 表格 + 分页 + Modal 增改 + 统计卡片，可作为系统设置列表页（如数据字典、参数设置）的复制模板 |
-| 带树+表格的参考 | `src/pages/ExpenseCategoryPage.js` | 左侧树 + 右侧表格 + 分页 + Mock 数据结构，适合「数据字典/枚举与规则」等层级配置页参考 |
-| 属性/配置型参考 | `src/pages/ProductAttributePage.js` | 分组、类型配置、表格+弹窗、inline mock，适合「枚举与规则」「基础配置」等配置型页参考 |
-| 图标库 | `lucide-react` | 已统一使用，新页面继续用同一套图标即可 |
-
-### 建议新增的通用模块（mock / service / types / storage）
-
-| 模块 | 建议新增原因 |
-|------|--------------|
-| **mock**（如 `src/mock/`） | 将各页内联 mock 抽到按模块或页面的 json/js 中，便于统一开关（如 __USE_MOCK__）和后续替换为接口，减少页面文件体积 |
-| **service**（如 `src/services/`） | 提供一层「获取列表/详情」的 API，当前返回 mock 或本地数据，后续改为请求后端，页面只调 service 不关心数据来源，便于纯原型与联调切换 |
-| **types**（若引入 TS 或 JSDoc） | 当前无类型定义，若后续上 TS 或加强 JSDoc，可增加 `src/types/` 统一字典、枚举、配置项等类型，减少重复与错误 |
-| **storage**（如 `src/utils/storage.js` 或 `src/hooks/useLocalStorage.js`） | 原型阶段若有「记住筛选条件、列显隐、主题」等需求，可统一封装 localStorage，避免各页手写 key 与序列化 |
+**说明**：系统设置 7 个页面已全部实现，使用统一的列表+分页+弹窗模式。
 
 ---
 
-*盘点完成。若后续为系统设置 7 个页面开发原型，建议：在 `renderTabContent` 中为每个 `/settings/*` 增加 case，新建 7 个页面组件（或部分共用一个列表模板），数据层优先使用上述 mock/service 方案，页面布局与样式延续现有 main 内 `p-6` 与 flex 约定。*
+## F. 建议复用与新增清单
+
+### 建议复用的组件
+
+| 类型 | 路径 | 用途 |
+|------|------|------|
+| 分页组件 | `src/components/TablePagination.js` | 统一分页 UI |
+| 操作栏 | `src/components/ActionBar.js` | 表格行操作（Portal 下拉） |
+| 布局 | `src/layouts/ModuleLayout.js` | 模块级布局容器 |
+| 按钮 | `src/components/ui/Button.js` | 统一主交互按钮 |
+| 卡片 | `src/components/ui/Card.js` | 统一卡片/区块容器 |
+| 标签 | `src/components/ui/Badge.js` | 统一状态标签 |
+| 抽屉 | `src/components/ui/DrawerShell.js` | 统一详情抽屉 |
+| 弹窗 | `src/components/ui/ModalShell.js` | 统一表单弹窗 |
+| 表格容器 | `src/components/ui/TableShell.js` | 统一表格壳层 |
+| 富文本 | `src/components/ui/RichTextContent.js` | 统一公告/内容详情样式 |
+| 存储 Hook | `src/hooks/useLocalStorage.js` | 持久化状态 |
+
+### 建议新增页面时的参考
+
+- 列表页：复制 `SupplierListPage.js` 或 `EmployeeManagementPage.js` 的 `Card + TableShell` 结构
+- 树+表格：参考 `ExpenseCategoryPage.js`
+- 配置型页面：参考 `ProductAttributePage.js`
+- 详情页：参考 `AnnouncementDetailPage.js` 的 `Card + RichTextContent` 结构
+
+---
+
+*盘点完成。若后续开发新页面，建议沿用现有模式：Service 层 + Mock 数据 + 统一 UI 原语 + 统一滚动协议。*
