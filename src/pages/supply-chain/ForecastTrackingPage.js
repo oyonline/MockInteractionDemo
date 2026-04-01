@@ -294,31 +294,56 @@ const BuTabWithDropdown = ({ option, isActive, activeView, onBuClick, onViewChan
   );
 };
 
-// 年度对比折线图组件
-const YearlyComparisonChart = ({ data, dataType }) => {
+// 偏差趋势折线图组件（左图 - 受P-1/P-3/P-5控制）
+const DeviationTrendChart = ({ data, dataType }) => {
   return (
     <div className="h-48">
       <ResponsiveContainer width="100%" height="100%">
         <LineChart data={data}>
           <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" />
           <XAxis dataKey="month" tick={{ fontSize: 11 }} />
-          <YAxis tick={{ fontSize: 11 }} tickFormatter={(val) => `${(val / 10000).toFixed(0)}`} />
-          <RechartsTooltip formatter={(value) => formatValue(value, dataType)} />
+          <YAxis
+            yAxisId="left"
+            tick={{ fontSize: 11 }}
+            tickFormatter={(val) => `${(val / 10000).toFixed(0)}`}
+          />
+          <YAxis
+            yAxisId="right"
+            orientation="right"
+            tick={{ fontSize: 11 }}
+            tickFormatter={(val) => `${val.toFixed(0)}%`}
+          />
+          <RechartsTooltip
+            formatter={(value, name) => {
+              if (name === '偏差率') return [`${value}%`, name];
+              return [formatValue(value, dataType), name];
+            }}
+          />
           <Legend wrapperStyle={{ fontSize: 11 }} />
           <Line
+            yAxisId="left"
             type="monotone"
-            dataKey="lastYear"
-            stroke={COLORS.lastYear}
+            dataKey="actual"
+            stroke={COLORS.success}
+            name="实际销售"
+            strokeWidth={2}
+          />
+          <Line
+            yAxisId="left"
+            type="monotone"
+            dataKey="forecast"
+            stroke={COLORS.primary}
             strokeDasharray="5 5"
-            name="去年"
+            name="预测值"
             strokeWidth={2}
             dot={false}
           />
           <Line
+            yAxisId="right"
             type="monotone"
-            dataKey="currentYear"
-            stroke={COLORS.currentYear}
-            name="今年"
+            dataKey="deviationRate"
+            stroke={COLORS.warning}
+            name="偏差率"
             strokeWidth={2}
           />
         </LineChart>
@@ -327,8 +352,8 @@ const YearlyComparisonChart = ({ data, dataType }) => {
   );
 };
 
-// 跨期对比折线图组件
-const CrossPeriodComparisonChart = ({ data, dataType }) => {
+// 未来窗口趋势折线图组件（右图 - 受未来三月/六月控制）
+const FutureWindowTrendChart = ({ data, dataType }) => {
   return (
     <div className="h-48">
       <ResponsiveContainer width="100%" height="100%">
@@ -376,8 +401,8 @@ export default function ForecastTrackingPage() {
 
   // 数据状态
   const [metrics, setMetrics] = useState(null);
-  const [yearlyComparisonData, setYearlyComparisonData] = useState([]);
-  const [crossPeriodData, setCrossPeriodData] = useState([]);
+  const [deviationTrendData, setDeviationTrendData] = useState([]);
+  const [futureWindowTrendData, setFutureWindowTrendData] = useState([]);
   const [loading, setLoading] = useState(false);
 
   // 月份选项
@@ -393,34 +418,33 @@ export default function ForecastTrackingPage() {
       const metricsData = supplyChainService.getForecastMetrics(query);
       setMetrics(metricsData);
 
-      // 年度对比数据（左区域底部图表）
-      const [year] = month.split('-');
-      const yearlyData = supplyChainService.getYearlyComparisonData({
-        year: parseInt(year),
+      // 左图：偏差趋势图数据（受P-1/P-3/P-5影响）
+      const deviationData = supplyChainService.getDeviationTrend({
+        period: pastPeriod,
+        months: 12,
         category,
         bu: activeBu,
         dataType,
+        targetMonth: month,
       });
-      setYearlyComparisonData(yearlyData);
+      setDeviationTrendData(deviationData);
 
-      // 跨期对比数据（右区域底部图表）
-      // 根据右区域的时间范围确定对比期
-      const comparePeriod = futureRange === 3 ? 'p1' : futureRange === 6 ? 'p3' : 'p5';
-      const crossData = supplyChainService.getCrossPeriodComparisonData({
-        currentPeriod: 'current',
-        comparePeriod,
-        range: futureRange,
+      // 右图：未来窗口趋势图数据（受未来三月/六月影响）
+      const futureWindowData = supplyChainService.getFutureWindowTrend({
+        window: futureRange,
+        months: 12,
         category,
         bu: activeBu,
         dataType,
+        targetMonth: month,
       });
-      setCrossPeriodData(crossData);
+      setFutureWindowTrendData(futureWindowData);
 
       setLoading(false);
     };
 
     loadData();
-  }, [month, category, activeBu, dataType, futureRange]);
+  }, [month, category, activeBu, dataType, pastPeriod, futureRange]);
 
   // 获取左区域偏差数据（根据P-1/P-3/P-5选择）
   const getPastDeviationData = () => {
@@ -455,17 +479,32 @@ export default function ForecastTrackingPage() {
     }
   };
 
-  // 获取右区域本期指标
-  const getFutureCurrentData = () => {
-    if (!metrics) return { value: 0, momRate: 0 };
-    return {
-      value: metrics.current.value,
-      momRate: metrics.mom.rate,
-    };
+  // 获取右区域未来窗口指标
+  const getFutureWindowData = () => {
+    if (!metrics) return { value: 0, momRate: 0, label: '' };
+    if (futureRange === 3) {
+      return {
+        value: metrics.future3.forecast,
+        momRate: metrics.future3MoM.rate,
+        label: '未来三月Forecast',
+      };
+    } else if (futureRange === 6) {
+      return {
+        value: metrics.future6.forecast,
+        momRate: metrics.future6MoM.rate,
+        label: '未来六月Forecast',
+      };
+    } else {
+      return {
+        value: metrics.future11?.forecast || 0,
+        momRate: metrics.future11MoM?.rate || 0,
+        label: '未来十一月Forecast',
+      };
+    }
   };
 
   const pastData = getPastDeviationData();
-  const futureData = getFutureCurrentData();
+  const futureData = getFutureWindowData();
 
   // 渲染加载状态
   if (loading && !metrics) {
@@ -551,19 +590,22 @@ export default function ForecastTrackingPage() {
           </div>
 
           {/* Forecast期数（年月） */}
-          <div className="relative">
-            <select
-              className="appearance-none bg-gray-100 border-0 rounded-lg px-4 py-2 pr-10 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-teal-500"
-              value={month}
-              onChange={(e) => setMonth(e.target.value)}
-            >
-              {monthOptions.map((opt) => (
-                <option key={opt.value} value={opt.value}>
-                  {opt.value}
-                </option>
-              ))}
-            </select>
-            <Calendar className="absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-gray-600">Forecast期数（年月）</span>
+            <div className="relative">
+              <select
+                className="appearance-none bg-gray-100 border-0 rounded-lg px-4 py-2 pr-10 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-teal-500"
+                value={month}
+                onChange={(e) => setMonth(e.target.value)}
+              >
+                {monthOptions.map((opt) => (
+                  <option key={opt.value} value={opt.value}>
+                    {opt.label}
+                  </option>
+                ))}
+              </select>
+              <Calendar className="absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+            </div>
           </div>
         </div>
       </div>
@@ -622,15 +664,17 @@ export default function ForecastTrackingPage() {
                   )}
                 </div>
 
-                {/* 底部图表：年度对比 */}
+                {/* 底部图表：偏差趋势（受P-1/P-3/P-5影响） */}
                 <div>
-                  <h3 className="text-xs font-medium text-gray-500 mb-2">年度对比（vs 去年）</h3>
-                  <YearlyComparisonChart data={yearlyComparisonData} dataType={dataType} />
+                  <h3 className="text-xs font-medium text-gray-500 mb-2">
+                    偏差趋势（{pastPeriod.toUpperCase()}版本近12期）
+                  </h3>
+                  <DeviationTrendChart data={deviationTrendData} dataType={dataType} />
                 </div>
               </div>
             </div>
 
-            {/* 右区域：未来（只有环比） */}
+            {/* 右区域：未来（未来窗口forecast汇总 + 环比） */}
             <div className="bg-white rounded-lg border border-gray-200">
               {/* 标题栏 */}
               <div className="px-4 py-3 border-b border-gray-200 flex items-center justify-between">
@@ -640,9 +684,9 @@ export default function ForecastTrackingPage() {
                 </div>
                 <div className="flex items-center gap-1 bg-gray-100 rounded-lg p-0.5">
                   {[
-                    { value: 3, label: '近三月' },
-                    { value: 6, label: '近六月' },
-                    { value: 11, label: '近十一月' },
+                    { value: 3, label: '未来三月' },
+                    { value: 6, label: '未来六月' },
+                    { value: 11, label: '未来十一月' },
                   ].map((range) => (
                     <button
                       key={range.value}
@@ -659,12 +703,12 @@ export default function ForecastTrackingPage() {
                 </div>
               </div>
 
-              {/* 中部指标卡 - 未来只有本期Forecast（环比） */}
+              {/* 中部指标卡 - 未来窗口Forecast汇总 + 环比 */}
               <div className="p-4">
                 <div className="grid grid-cols-1 gap-3 mb-4">
                   {metrics && (
                     <CompactMetricCard
-                      title="本期Forecast"
+                      title={futureData.label}
                       value={futureData.value}
                       momRate={futureData.momRate}
                       dataType={dataType}
@@ -673,12 +717,14 @@ export default function ForecastTrackingPage() {
                   )}
                 </div>
 
-                {/* 底部图表：跨期对比 */}
+                {/* 底部图表：未来窗口趋势（受未来三月/六月/十一月影响） */}
                 <div>
                   <h3 className="text-xs font-medium text-gray-500 mb-2">
-                    跨期对比（近{futureRange === 11 ? '十一' : futureRange === 6 ? '六' : '三'}月）
+                    未来窗口趋势（
+                    {futureRange === 3 ? '三月' : futureRange === 6 ? '六月' : '十一月'}
+                    窗口近12期对比）
                   </h3>
-                  <CrossPeriodComparisonChart data={crossPeriodData} dataType={dataType} />
+                  <FutureWindowTrendChart data={futureWindowTrendData} dataType={dataType} />
                 </div>
               </div>
             </div>

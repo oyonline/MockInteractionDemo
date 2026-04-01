@@ -61,86 +61,101 @@ function calculateYoY(current, lastYearData, type = 'amount') {
 }
 
 // 获取指标卡数据（含环比/同比计算）
+/**
+ * 优化后的口径定义：
+ * - 总体偏差率 = |(本期预测值 - 本期实销值) / 本期实销值| * 100%
+ * - 总体偏差金额/数量 = |本期预测值 - 本期实销值|
+ * - "本期实销值"固定取当前筛选月份的 actual
+ * - "本期预测值"按 P-1/P-3/P-5 取"历史对应版本对当前筛选月份的预测"
+ */
 export function getForecastMetrics(query) {
   const { month = getDefaultMonth(), category = 'all', bu = 'all', dataType = 'amount' } = query;
-  
-  // 当前月份数据
+
+  const [year, mon] = month.split('-').map(Number);
+
+  // 当前筛选月份的数据（用于获取actual）
   const currentData = getMockForecastByMonth(month, { category, bu });
-  
-  // 计算本期总值
-  const currentValue = dataType === 'amount' 
+
+  // 本期实销值（固定取当前筛选月份的actual）
+  const currentActual = dataType === 'amount'
+    ? currentData.reduce((sum, item) => sum + item.actualAmount, 0)
+    : currentData.reduce((sum, item) => sum + item.actualQty, 0);
+
+  // 计算本期Forecast（最新版本对当前月的预测）
+  const currentForecast = dataType === 'amount'
     ? currentData.reduce((sum, item) => sum + item.forecastAmount, 0)
     : currentData.reduce((sum, item) => sum + item.forecastQty, 0);
-  
-  // 上月数据（用于环比）
-  const [year, mon] = month.split('-').map(Number);
-  const prevMonthDate = new Date(year, mon - 2, 1); // month - 2 因为 JS month 是 0-based
+
+  // 上月数据（用于环比计算）
+  const prevMonthDate = new Date(year, mon - 2, 1);
   const prevMonthStr = `${prevMonthDate.getFullYear()}-${String(prevMonthDate.getMonth() + 1).padStart(2, '0')}`;
   const prevMonthData = getMockForecastByMonth(prevMonthStr, { category, bu });
-  
+
   // 去年同期数据（用于同比）
   const lastYearDate = new Date(year - 1, mon - 1, 1);
   const lastYearStr = `${lastYearDate.getFullYear()}-${String(lastYearDate.getMonth() + 1).padStart(2, '0')}`;
   const lastYearData = getMockForecastByMonth(lastYearStr, { category, bu });
-  
-  // 环比
+
+  // 环比（本期forecast vs 上月actual）
   const mom = calculateMoM(
-    { forecastAmount: currentValue, forecastQty: currentValue },
+    { forecastAmount: currentForecast, forecastQty: currentForecast },
     {
       actualAmount: prevMonthData.reduce((sum, item) => sum + item.actualAmount, 0),
       actualQty: prevMonthData.reduce((sum, item) => sum + item.actualQty, 0),
     },
     dataType
   );
-  
+
   // 同比
   const yoy = calculateYoY(
-    { forecastAmount: currentValue, forecastQty: currentValue },
+    { forecastAmount: currentForecast, forecastQty: currentForecast },
     lastYearData,
     dataType
   );
-  
-  // P-1 数据（上月forecast vs 上月actual）
-  const p1Data = prevMonthData;
-  const p1Forecast = dataType === 'amount'
-    ? p1Data.reduce((sum, item) => sum + (item.forecastAmount || 0), 0)
-    : p1Data.reduce((sum, item) => sum + (item.forecastQty || 0), 0);
-  const p1Actual = dataType === 'amount'
-    ? p1Data.reduce((sum, item) => sum + item.actualAmount, 0)
-    : p1Data.reduce((sum, item) => sum + item.actualQty, 0);
-  const p1Deviation = p1Actual - p1Forecast;
-  const p1DeviationRate = p1Forecast !== 0 ? (p1Deviation / p1Forecast * 100).toFixed(2) : 0;
-  
-  // P-3 数据（3月前forecast vs 3月前actual）
-  const p3MonthDate = new Date(year, mon - 4, 1);
-  const p3MonthStr = `${p3MonthDate.getFullYear()}-${String(p3MonthDate.getMonth() + 1).padStart(2, '0')}`;
-  const p3Data = getMockForecastByMonth(p3MonthStr, { category, bu });
-  const p3Forecast = dataType === 'amount'
-    ? p3Data.reduce((sum, item) => sum + (item.forecastAmount || 0), 0)
-    : p3Data.reduce((sum, item) => sum + (item.forecastQty || 0), 0);
-  const p3Actual = dataType === 'amount'
-    ? p3Data.reduce((sum, item) => sum + item.actualAmount, 0)
-    : p3Data.reduce((sum, item) => sum + item.actualQty, 0);
-  const p3Deviation = p3Actual - p3Forecast;
-  const p3DeviationRate = p3Forecast !== 0 ? (p3Deviation / p3Forecast * 100).toFixed(2) : 0;
 
-  // P-5 数据（5月前forecast vs 5月前actual）
-  const p5MonthDate = new Date(year, mon - 6, 1);
-  const p5MonthStr = `${p5MonthDate.getFullYear()}-${String(p5MonthDate.getMonth() + 1).padStart(2, '0')}`;
-  const p5Data = getMockForecastByMonth(p5MonthStr, { category, bu });
+  /**
+   * P-1 数据：上月版本中对此月份(month)的预测 vs 此月份实际
+   * 即：取当前筛选月份数据中的 p1ForecastAmount（这是P-1月对当前月的预测）
+   */
+  const p1Forecast = dataType === 'amount'
+    ? currentData.reduce((sum, item) => sum + (item.p1ForecastAmount || 0), 0)
+    : currentData.reduce((sum, item) => sum + (item.p1ForecastQty || 0), 0);
+  const p1Deviation = currentActual - p1Forecast;
+  const p1DeviationRate = currentActual !== 0 ? Math.abs(p1Deviation / currentActual * 100).toFixed(2) : 0;
+
+  /**
+   * P-3 数据：3月前版本中对此月份(month)的预测 vs 此月份实际
+   */
+  const p3Forecast = dataType === 'amount'
+    ? currentData.reduce((sum, item) => sum + (item.p3ForecastAmount || 0), 0)
+    : currentData.reduce((sum, item) => sum + (item.p3ForecastQty || 0), 0);
+  const p3Deviation = currentActual - p3Forecast;
+  const p3DeviationRate = currentActual !== 0 ? Math.abs(p3Deviation / currentActual * 100).toFixed(2) : 0;
+
+  /**
+   * P-5 数据：5月前版本中对此月份(month)的预测 vs 此月份实际
+   */
   const p5Forecast = dataType === 'amount'
-    ? p5Data.reduce((sum, item) => sum + (item.p5ForecastAmount || item.forecastAmount || 0), 0)
-    : p5Data.reduce((sum, item) => sum + (item.p5ForecastQty || item.forecastQty || 0), 0);
-  const p5Actual = dataType === 'amount'
-    ? p5Data.reduce((sum, item) => sum + item.actualAmount, 0)
-    : p5Data.reduce((sum, item) => sum + item.actualQty, 0);
-  const p5Deviation = p5Actual - p5Forecast;
-  const p5DeviationRate = p5Forecast !== 0 ? (p5Deviation / p5Forecast * 100).toFixed(2) : 0;
+    ? currentData.reduce((sum, item) => sum + (item.p5ForecastAmount || 0), 0)
+    : currentData.reduce((sum, item) => sum + (item.p5ForecastQty || 0), 0);
+  const p5Deviation = currentActual - p5Forecast;
+  const p5DeviationRate = currentActual !== 0 ? Math.abs(p5Deviation / currentActual * 100).toFixed(2) : 0;
+
+  // 未来窗口数据：当前筛选月之后N个月的forecast汇总
+  const future3Window = getFutureWindowData(month, 3, { category, bu, dataType });
+  const future6Window = getFutureWindowData(month, 6, { category, bu, dataType });
+  const future11Window = getFutureWindowData(month, 11, { category, bu, dataType });
+
+  // 上一期forecast版本对同一窗口的预测（用于环比）
+  const prevMonthFuture3 = getFutureWindowData(prevMonthStr, 3, { category, bu, dataType });
+  const prevMonthFuture6 = getFutureWindowData(prevMonthStr, 6, { category, bu, dataType });
+  const prevMonthFuture11 = getFutureWindowData(prevMonthStr, 11, { category, bu, dataType });
 
   return {
     current: {
-      value: currentValue,
-      label: '本期',
+      value: currentForecast,
+      actual: currentActual,
+      label: '本期Forecast',
       month,
     },
     mom: {
@@ -159,7 +174,7 @@ export function getForecastMetrics(query) {
     },
     p1: {
       forecast: p1Forecast,
-      actual: p1Actual,
+      actual: currentActual,
       deviation: p1Deviation,
       deviationRate: Number(p1DeviationRate),
       label: 'P-1',
@@ -167,91 +182,270 @@ export function getForecastMetrics(query) {
     },
     p3: {
       forecast: p3Forecast,
-      actual: p3Actual,
+      actual: currentActual,
       deviation: p3Deviation,
       deviationRate: Number(p3DeviationRate),
       label: 'P-3',
-      month: p3MonthStr,
+      month: `${year}-${String(mon - 3).padStart(2, '0')}`,
     },
     p5: {
       forecast: p5Forecast,
-      actual: p5Actual,
+      actual: currentActual,
       deviation: p5Deviation,
       deviationRate: Number(p5DeviationRate),
       label: 'P-5',
-      month: p5MonthStr,
+      month: `${year}-${String(mon - 5).padStart(2, '0')}`,
+    },
+    // 未来窗口数据
+    future3: {
+      forecast: future3Window.forecast,
+      label: '未来三月',
+      months: future3Window.months,
+    },
+    future6: {
+      forecast: future6Window.forecast,
+      label: '未来六月',
+      months: future6Window.months,
+    },
+    future11: {
+      forecast: future11Window.forecast,
+      label: '未来十一月',
+      months: future11Window.months,
+    },
+    // 环比对比（本期版本 vs 上期版本对未来窗口的预测）
+    future3MoM: {
+      rate: prevMonthFuture3.forecast !== 0
+        ? Number(((future3Window.forecast - prevMonthFuture3.forecast) / prevMonthFuture3.forecast * 100).toFixed(2))
+        : 0,
+      baseValue: prevMonthFuture3.forecast,
+      currentValue: future3Window.forecast,
+    },
+    future6MoM: {
+      rate: prevMonthFuture6.forecast !== 0
+        ? Number(((future6Window.forecast - prevMonthFuture6.forecast) / prevMonthFuture6.forecast * 100).toFixed(2))
+        : 0,
+      baseValue: prevMonthFuture6.forecast,
+      currentValue: future6Window.forecast,
+    },
+    future11MoM: {
+      rate: prevMonthFuture11.forecast !== 0
+        ? Number(((future11Window.forecast - prevMonthFuture11.forecast) / prevMonthFuture11.forecast * 100).toFixed(2))
+        : 0,
+      baseValue: prevMonthFuture11.forecast,
+      currentValue: future11Window.forecast,
     },
   };
 }
 
-// 获取偏差趋势图数据（按P-1/P-3筛选）
-export function getDeviationTrend(query) {
-  const { period = 'p1', months = 6, category = 'all', bu = 'all', dataType = 'amount' } = query;
-  
-  const trendData = getMockTrendData(months, { category, bu });
-  
-  return trendData.map(item => {
-    const month = item.month;
-    const [year, mon] = month.split('-').map(Number);
-    
-    if (period === 'p1') {
-      // P-1: 上月forecast vs 上月actual
-      const prevMonthDate = new Date(year, mon - 2, 1);
-      const prevMonthStr = `${prevMonthDate.getFullYear()}-${String(prevMonthDate.getMonth() + 1).padStart(2, '0')}`;
-      const prevData = trendData.find(d => d.month === prevMonthStr);
-      
-      const forecast = dataType === 'amount' ? (prevData?.p1Amount || 0) : (prevData?.p1Qty || 0);
-      const actual = dataType === 'amount' ? item.actualAmount : item.actualQty;
-      
-      return {
-        month: prevMonthStr,
-        forecast,
-        actual,
-        deviation: actual - forecast,
-        deviationRate: forecast !== 0 ? ((actual - forecast) / forecast * 100).toFixed(2) : 0,
-      };
-    } else {
-      // P-3: 3月前forecast vs 3月前actual
-      const p3MonthDate = new Date(year, mon - 4, 1);
-      const p3MonthStr = `${p3MonthDate.getFullYear()}-${String(p3MonthDate.getMonth() + 1).padStart(2, '0')}`;
-      const p3Data = trendData.find(d => d.month === p3MonthStr);
-      
-      const forecast = dataType === 'amount' ? (p3Data?.p3Amount || 0) : (p3Data?.p3Qty || 0);
-      const actual = dataType === 'amount' ? item.actualAmount : item.actualQty;
-      
-      return {
-        month: p3MonthStr,
-        forecast,
-        actual,
-        deviation: actual - forecast,
-        deviationRate: forecast !== 0 ? ((actual - forecast) / forecast * 100).toFixed(2) : 0,
-      };
+/**
+ * 获取未来N个月窗口的forecast汇总
+ */
+function getFutureWindowData(baseMonth, windowMonths, query) {
+  const { category, bu, dataType } = query;
+  const allData = require('../mock/supply-chain').getMockForecastList();
+
+  const [year, mon] = baseMonth.split('-').map(Number);
+  const months = [];
+
+  // 获取baseMonth之后的N个月
+  for (let i = 1; i <= windowMonths; i++) {
+    const targetMonth = new Date(year, mon - 1 + i, 1);
+    months.push(`${targetMonth.getFullYear()}-${String(targetMonth.getMonth() + 1).padStart(2, '0')}`);
+  }
+
+  let totalForecast = 0;
+
+  months.forEach(month => {
+    let monthData = allData.filter(item => item.month === month);
+
+    if (category && category !== 'all') {
+      monthData = monthData.filter(item => item.category === category);
     }
-  }).filter(item => item.forecast > 0);
+    if (bu && bu !== 'all') {
+      monthData = monthData.filter(item => item.bu === bu);
+    }
+
+    const monthForecast = dataType === 'amount'
+      ? monthData.reduce((sum, item) => sum + item.forecastAmount, 0)
+      : monthData.reduce((sum, item) => sum + item.forecastQty, 0);
+
+    totalForecast += monthForecast;
+  });
+
+  return {
+    forecast: totalForecast,
+    months,
+  };
 }
 
-// 获取增长趋势图数据（按时间范围筛选）
+// 获取偏差趋势图数据（按P-1/P-3/P-5筛选，展示近12期偏差率/偏差值趋势）
+/**
+ * 新口径：展示近12个月的偏差趋势
+ * - 每个月显示：该月actual vs 对应P-X版本对该月的预测
+ * - period: 'p1' | 'p3' | 'p5'
+ * - 返回近12期的偏差率和偏差值
+ */
+export function getDeviationTrend(query) {
+  const { period = 'p1', months = 12, category = 'all', bu = 'all', dataType = 'amount', targetMonth } = query;
+
+  const allData = require('../mock/supply-chain').getMockForecastList();
+
+  // 确定月份列表（从目标月份回溯12期，或默认最近12个月）
+  let endDate;
+  if (targetMonth) {
+    const [year, mon] = targetMonth.split('-').map(Number);
+    endDate = new Date(year, mon - 1, 1);
+  } else {
+    endDate = new Date();
+  }
+
+  const monthList = [];
+  for (let i = months - 1; i >= 0; i--) {
+    const m = new Date(endDate.getFullYear(), endDate.getMonth() - i, 1);
+    monthList.push(`${m.getFullYear()}-${String(m.getMonth() + 1).padStart(2, '0')}`);
+  }
+
+  return monthList.map(month => {
+    let monthData = allData.filter(item => item.month === month);
+
+    if (category && category !== 'all') {
+      monthData = monthData.filter(item => item.category === category);
+    }
+    if (bu && bu !== 'all') {
+      monthData = monthData.filter(item => item.bu === bu);
+    }
+
+    // 获取actual值
+    const actual = dataType === 'amount'
+      ? monthData.reduce((sum, item) => sum + item.actualAmount, 0)
+      : monthData.reduce((sum, item) => sum + item.actualQty, 0);
+
+    // 根据period获取对应版本的forecast（对应当前月份的预测）
+    let forecast = 0;
+    switch (period) {
+      case 'p1':
+        forecast = dataType === 'amount'
+          ? monthData.reduce((sum, item) => sum + (item.p1ForecastAmount || item.forecastAmount), 0)
+          : monthData.reduce((sum, item) => sum + (item.p1ForecastQty || item.forecastQty), 0);
+        break;
+      case 'p3':
+        forecast = dataType === 'amount'
+          ? monthData.reduce((sum, item) => sum + (item.p3ForecastAmount || item.forecastAmount), 0)
+          : monthData.reduce((sum, item) => sum + (item.p3ForecastQty || item.forecastQty), 0);
+        break;
+      case 'p5':
+        forecast = dataType === 'amount'
+          ? monthData.reduce((sum, item) => sum + (item.p5ForecastAmount || item.forecastAmount), 0)
+          : monthData.reduce((sum, item) => sum + (item.p5ForecastQty || item.forecastQty), 0);
+        break;
+      default:
+        forecast = dataType === 'amount'
+          ? monthData.reduce((sum, item) => sum + item.forecastAmount, 0)
+          : monthData.reduce((sum, item) => sum + item.forecastQty, 0);
+    }
+
+    const deviation = actual - forecast;
+    const deviationRate = actual !== 0 ? Number((Math.abs(deviation) / actual * 100).toFixed(2)) : 0;
+
+    return {
+      month,
+      forecast,
+      actual,
+      deviation,
+      deviationRate,
+    };
+  }).filter(item => item.actual > 0);
+}
+
+// 获取增长趋势图数据（已废弃，使用getFutureWindowTrend替代）
 export function getGrowthTrend(query) {
   const { range = 3, category = 'all', bu = 'all', dataType = 'amount' } = query;
-  // range: 3=近三月, 6=近六月, 11=近十一月
-  
-  const trendData = getMockTrendData(range, { category, bu });
-  
-  return trendData.map((item, index, arr) => {
-    if (index === 0) {
-      return { month: item.month, growthRate: 0, value: 0 };
+  // 此方法保留以保持兼容性，实际使用getFutureWindowTrend
+  return getFutureWindowTrend({ ...query, window: range });
+}
+
+/**
+ * 获取未来窗口趋势图数据
+ * 展示未来N个月的forecast汇总趋势
+ * - window: 3 | 6 （未来三月/六月）
+ * - 返回近12期的未来窗口forecast汇总值
+ */
+export function getFutureWindowTrend(query) {
+  const { window = 3, months = 12, category = 'all', bu = 'all', dataType = 'amount', targetMonth } = query;
+
+  const allData = require('../mock/supply-chain').getMockForecastList();
+
+  // 确定月份列表
+  let endDate;
+  if (targetMonth) {
+    const [year, mon] = targetMonth.split('-').map(Number);
+    endDate = new Date(year, mon - 1, 1);
+  } else {
+    endDate = new Date();
+  }
+
+  const monthList = [];
+  for (let i = months - 1; i >= 0; i--) {
+    const m = new Date(endDate.getFullYear(), endDate.getMonth() - i, 1);
+    monthList.push(`${m.getFullYear()}-${String(m.getMonth() + 1).padStart(2, '0')}`);
+  }
+
+  return monthList.map(month => {
+    const [year, mon] = month.split('-').map(Number);
+
+    // 计算未来N个月窗口
+    const windowMonths = [];
+    for (let i = 1; i <= window; i++) {
+      const targetMonth = new Date(year, mon - 1 + i, 1);
+      windowMonths.push(`${targetMonth.getFullYear()}-${String(targetMonth.getMonth() + 1).padStart(2, '0')}`);
     }
-    
-    const prev = arr[index - 1];
-    const currentValue = dataType === 'amount' ? item.forecastAmount : item.forecastQty;
-    const prevValue = dataType === 'amount' ? prev.forecastAmount : prev.forecastQty;
-    
-    const growthRate = prevValue !== 0 ? ((currentValue - prevValue) / prevValue * 100).toFixed(2) : 0;
-    
+
+    // 计算当前版本对未来窗口的预测汇总
+    let currentForecast = 0;
+    windowMonths.forEach(targetMonth => {
+      let targetData = allData.filter(item => item.month === targetMonth);
+      if (category && category !== 'all') {
+        targetData = targetData.filter(item => item.category === category);
+      }
+      if (bu && bu !== 'all') {
+        targetData = targetData.filter(item => item.bu === bu);
+      }
+
+      currentForecast += dataType === 'amount'
+        ? targetData.reduce((sum, item) => sum + item.forecastAmount, 0)
+        : targetData.reduce((sum, item) => sum + item.forecastQty, 0);
+    });
+
+    // 计算上一期版本（上月）对同一窗口的预测汇总
+    const prevMonth = new Date(year, mon - 2, 1);
+    const prevMonthStr = `${prevMonth.getFullYear()}-${String(prevMonth.getMonth() + 1).padStart(2, '0')}`;
+
+    let previousForecast = 0;
+    windowMonths.forEach(targetMonth => {
+      let targetData = allData.filter(item => item.month === targetMonth);
+      if (category && category !== 'all') {
+        targetData = targetData.filter(item => item.category === category);
+      }
+      if (bu && bu !== 'all') {
+        targetData = targetData.filter(item => item.bu === bu);
+      }
+
+      // 上一期版本的预测用p1Forecast替代（即上月版本对后续月份的预测）
+      previousForecast += dataType === 'amount'
+        ? targetData.reduce((sum, item) => sum + (item.p1ForecastAmount || item.forecastAmount), 0)
+        : targetData.reduce((sum, item) => sum + (item.p1ForecastQty || item.forecastQty), 0);
+    });
+
+    // 计算环比
+    const momRate = previousForecast !== 0
+      ? Number(((currentForecast - previousForecast) / previousForecast * 100).toFixed(2))
+      : 0;
+
     return {
-      month: item.month,
-      growthRate: Number(growthRate),
-      value: currentValue,
+      month,
+      current: currentForecast,
+      previous: previousForecast,
+      momRate,
     };
   });
 }
