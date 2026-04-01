@@ -162,7 +162,15 @@ export function getMockForecastList() {
   }
   
   const mockData = generateMockData();
-  set(SUPPLY_CHAIN_FORECAST, mockData);
+  try {
+    set(SUPPLY_CHAIN_FORECAST, mockData);
+  } catch (e) {
+    // 忽略 localStorage quota 超限错误，直接返回 mock 数据
+    if (e.name !== 'QuotaExceededError') {
+      // eslint-disable-next-line no-console
+      console.warn('Failed to cache forecast mock data:', e.message);
+    }
+  }
   return mockData;
 }
 
