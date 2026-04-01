@@ -17,9 +17,6 @@ import {
   Calendar,
   ToggleLeft,
   CheckSquare,
-  ChevronDown,
-  ChevronRight,
-  Copy,
   AlertCircle,
   Check,
   Database,
@@ -664,8 +661,9 @@ const OptionEditor = ({ options, onChange }) => {
   );
 };
 
-// --------------- 属性编辑抽屉 ---------------
-const AttributeEditDrawer = ({ isOpen, onClose, attribute, onSave }) => {
+// --------------- 属性抽屉（View / Edit 二合一） ---------------
+const AttributeDrawer = ({ isOpen, onClose, attribute, onSave, defaultMode = 'edit' }) => {
+  const [isEditing, setIsEditing] = useState(defaultMode === 'edit');
   const [formData, setFormData] = useState({
     code: '',
     name: '',
@@ -680,6 +678,7 @@ const AttributeEditDrawer = ({ isOpen, onClose, attribute, onSave }) => {
   });
 
   React.useEffect(() => {
+    setIsEditing(defaultMode === 'edit');
     if (attribute) {
       setFormData({
         code: attribute.code,
@@ -693,22 +692,21 @@ const AttributeEditDrawer = ({ isOpen, onClose, attribute, onSave }) => {
         description: attribute.description || '',
         options: attribute.options ? attribute.options.map((item) => ({ ...item })) : [],
       });
-      return;
+    } else {
+      setFormData({
+        code: '',
+        name: '',
+        shortCode: '',
+        groupId: 'basic',
+        type: 'text',
+        required: false,
+        isActive: true,
+        unit: '',
+        description: '',
+        options: [],
+      });
     }
-
-    setFormData({
-      code: '',
-      name: '',
-      shortCode: '',
-      groupId: 'basic',
-      type: 'text',
-      required: false,
-      isActive: true,
-      unit: '',
-      description: '',
-      options: [],
-    });
-  }, [attribute]);
+  }, [attribute, defaultMode]);
 
   const handleSave = () => {
     const savedAttr = {
@@ -723,12 +721,158 @@ const AttributeEditDrawer = ({ isOpen, onClose, attribute, onSave }) => {
     onClose();
   };
 
+  const handleCancel = () => {
+    if (!attribute) {
+      onClose();
+    } else {
+      setIsEditing(false);
+      setFormData({
+        code: attribute.code,
+        name: attribute.name,
+        shortCode: attribute.shortCode,
+        groupId: attribute.groupId,
+        type: attribute.type,
+        required: attribute.required,
+        isActive: attribute.isActive,
+        unit: attribute.unit || '',
+        description: attribute.description || '',
+        options: attribute.options ? attribute.options.map((item) => ({ ...item })) : [],
+      });
+    }
+  };
+
   const typeConfig = ATTRIBUTE_TYPES.find((item) => item.id === formData.type);
   const needsOptions = typeConfig?.hasOptions;
   const needsUnit = formData.type === 'number';
 
   if (!isOpen) return null;
 
+  // View 模式（只读）
+  if (!isEditing) {
+    const groupConfig = ATTRIBUTE_GROUPS.find((group) => group.id === attribute.groupId);
+    const groupStyle = GROUP_COLOR_STYLES[groupConfig?.color] || GROUP_COLOR_STYLES.blue;
+    const sortedOptions = getSortedOptions(attribute.options);
+
+    return (
+      <div className="fixed inset-0 z-modal flex justify-end">
+        <div className="absolute inset-0 bg-slate-950/35" onClick={onClose} />
+        <div className="animate-drawer-in relative flex h-full min-w-[640px] w-[52vw] flex-col bg-surface shadow-elevated">
+          <div className="flex items-center justify-between border-b border-border px-6 py-4">
+            <div className="space-y-2">
+              <div className="flex items-center gap-2">
+                <h2 className="text-lg font-semibold text-text">{attribute.name}</h2>
+                <Badge variant={attribute.isActive ? 'success' : 'default'}>
+                  {attribute.isActive ? '启用中' : '已停用'}
+                </Badge>
+                <span className={cn('rounded-full border px-2.5 py-1 text-xs font-medium', groupStyle.badge)}>
+                  {groupConfig?.name}
+                </span>
+              </div>
+              <p className="text-sm text-text-subtle">{attribute.description || '暂无属性说明。'}</p>
+            </div>
+            <div className="flex items-center gap-2">
+              <SecondaryButton icon={Edit2} size="sm" onClick={() => setIsEditing(true)}>
+                编辑
+              </SecondaryButton>
+              <IconButton icon={X} onClick={onClose} />
+            </div>
+          </div>
+
+          <div className="flex-1 space-y-6 overflow-y-auto p-6">
+            <div className="grid grid-cols-3 gap-4">
+              <Card className="p-4">
+                <p className="text-xs text-text-subtle">属性编码</p>
+                <div className="mt-2">
+                  <CodeBadge>{attribute.code}</CodeBadge>
+                </div>
+              </Card>
+              <Card className="p-4">
+                <p className="text-xs text-text-subtle">简写编码</p>
+                <div className="mt-2">
+                  <CodeBadge tone="accent">{attribute.shortCode}</CodeBadge>
+                </div>
+              </Card>
+              <Card className="p-4">
+                <p className="text-xs text-text-subtle">引用次数</p>
+                <p className="mt-2 text-xl font-semibold text-text">{attribute.refCount.toLocaleString()}</p>
+              </Card>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <Card className="p-4">
+                <p className="text-xs text-text-subtle">属性类型</p>
+                <div className="mt-2">
+                  <TypeBadge type={attribute.type} />
+                </div>
+              </Card>
+              <Card className="p-4">
+                <p className="text-xs text-text-subtle">是否必填</p>
+                <p className="mt-2 text-sm font-medium text-text">{attribute.required ? '是' : '否'}</p>
+              </Card>
+              {attribute.unit && (
+                <Card className="p-4">
+                  <p className="text-xs text-text-subtle">单位</p>
+                  <p className="mt-2 text-sm font-medium text-text">{attribute.unit}</p>
+                </Card>
+              )}
+              <Card className="p-4">
+                <p className="text-xs text-text-subtle">更新时间</p>
+                <p className="mt-2 text-sm font-medium text-text">{attribute.updatedAt}</p>
+              </Card>
+            </div>
+
+            {sortedOptions.length > 0 && (
+              <div>
+                <div className="mb-3 flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-semibold text-text">属性值列表</p>
+                    <p className="mt-1 text-xs text-text-subtle">
+                      共 {sortedOptions.length} 个选项，停用项仍保留用于历史数据回显。
+                    </p>
+                  </div>
+                </div>
+                <div className="overflow-hidden rounded-2xl border border-border">
+                  <table className="w-full text-sm">
+                    <thead className="bg-surface-subtle">
+                      <tr>
+                        <th className="px-3 py-2 text-left font-medium text-text-muted">序号</th>
+                        <th className="px-3 py-2 text-left font-medium text-text-muted">显示名称</th>
+                        <th className="px-3 py-2 text-left font-medium text-text-muted">简写编码</th>
+                        <th className="px-3 py-2 text-left font-medium text-text-muted">状态</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-border-subtle bg-white">
+                      {sortedOptions.map((opt, idx) => (
+                        <tr key={opt.id} className={!opt.isActive ? 'bg-surface-muted text-text-subtle' : ''}>
+                          <td className="px-3 py-2 text-text-subtle">{idx + 1}</td>
+                          <td className="px-3 py-2 font-medium">{opt.value}</td>
+                          <td className="px-3 py-2">
+                            <CodeBadge tone="accent">{opt.code}</CodeBadge>
+                          </td>
+                          <td className="px-3 py-2">
+                            <Badge variant={opt.isActive ? 'success' : 'default'}>
+                              {opt.isActive ? '启用' : '停用'}
+                            </Badge>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
+
+            <div className="rounded-2xl border border-border bg-surface-muted p-4 text-xs text-text-subtle">
+              <p>创建时间：{attribute.createdAt}</p>
+              <p className="mt-1">更新时间：{attribute.updatedAt}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Edit 模式
   return (
     <div className="fixed inset-0 z-modal flex justify-end">
       <div className="absolute inset-0 bg-slate-950/35" onClick={onClose} />
@@ -845,7 +989,7 @@ const AttributeEditDrawer = ({ isOpen, onClose, attribute, onSave }) => {
         </div>
 
         <div className="flex items-center justify-end gap-3 border-t border-border bg-surface-muted px-6 py-4">
-          <SecondaryButton onClick={onClose}>取消</SecondaryButton>
+          <SecondaryButton onClick={handleCancel}>取消</SecondaryButton>
           <PrimaryButton
             icon={Save}
             onClick={handleSave}
@@ -853,133 +997,6 @@ const AttributeEditDrawer = ({ isOpen, onClose, attribute, onSave }) => {
           >
             保存
           </PrimaryButton>
-        </div>
-      </div>
-    </div>
-  );
-};
-
-// --------------- 属性详情展示 ---------------
-const AttributeDetail = ({ attribute, onEdit, onClose }) => {
-  if (!attribute) return null;
-
-  const groupConfig = ATTRIBUTE_GROUPS.find((group) => group.id === attribute.groupId);
-  const groupStyle = GROUP_COLOR_STYLES[groupConfig?.color] || GROUP_COLOR_STYLES.blue;
-  const sortedOptions = getSortedOptions(attribute.options);
-
-  return (
-    <div className="fixed inset-0 z-modal flex justify-end">
-      <div className="absolute inset-0 bg-slate-950/35" onClick={onClose} />
-      <div className="animate-drawer-in relative flex h-full min-w-[640px] w-[52vw] flex-col bg-surface shadow-elevated">
-        <div className="flex items-center justify-between border-b border-border px-6 py-4">
-          <div className="space-y-2">
-            <div className="flex items-center gap-2">
-              <h2 className="text-lg font-semibold text-text">{attribute.name}</h2>
-              <Badge variant={attribute.isActive ? 'success' : 'default'}>
-                {attribute.isActive ? '启用中' : '已停用'}
-              </Badge>
-              <span className={cn('rounded-full border px-2.5 py-1 text-xs font-medium', groupStyle.badge)}>
-                {groupConfig?.name}
-              </span>
-            </div>
-            <p className="text-sm text-text-subtle">{attribute.description || '暂无属性说明。'}</p>
-          </div>
-          <div className="flex items-center gap-2">
-            <SecondaryButton icon={Edit2} size="sm" onClick={() => onEdit(attribute)}>
-              编辑
-            </SecondaryButton>
-            <IconButton icon={X} onClick={onClose} />
-          </div>
-        </div>
-
-        <div className="flex-1 space-y-6 overflow-y-auto p-6">
-          <div className="grid grid-cols-3 gap-4">
-            <Card className="p-4">
-              <p className="text-xs text-text-subtle">属性编码</p>
-              <div className="mt-2">
-                <CodeBadge>{attribute.code}</CodeBadge>
-              </div>
-            </Card>
-            <Card className="p-4">
-              <p className="text-xs text-text-subtle">简写编码</p>
-              <div className="mt-2">
-                <CodeBadge tone="accent">{attribute.shortCode}</CodeBadge>
-              </div>
-            </Card>
-            <Card className="p-4">
-              <p className="text-xs text-text-subtle">引用次数</p>
-              <p className="mt-2 text-xl font-semibold text-text">{attribute.refCount.toLocaleString()}</p>
-            </Card>
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            <Card className="p-4">
-              <p className="text-xs text-text-subtle">属性类型</p>
-              <div className="mt-2">
-                <TypeBadge type={attribute.type} />
-              </div>
-            </Card>
-            <Card className="p-4">
-              <p className="text-xs text-text-subtle">是否必填</p>
-              <p className="mt-2 text-sm font-medium text-text">{attribute.required ? '是' : '否'}</p>
-            </Card>
-            {attribute.unit && (
-              <Card className="p-4">
-                <p className="text-xs text-text-subtle">单位</p>
-                <p className="mt-2 text-sm font-medium text-text">{attribute.unit}</p>
-              </Card>
-            )}
-            <Card className="p-4">
-              <p className="text-xs text-text-subtle">更新时间</p>
-              <p className="mt-2 text-sm font-medium text-text">{attribute.updatedAt}</p>
-            </Card>
-          </div>
-
-          {sortedOptions.length > 0 && (
-            <div>
-              <div className="mb-3 flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-semibold text-text">属性值列表</p>
-                  <p className="mt-1 text-xs text-text-subtle">
-                    共 {sortedOptions.length} 个选项，停用项仍保留用于历史数据回显。
-                  </p>
-                </div>
-              </div>
-              <div className="overflow-hidden rounded-2xl border border-border">
-                <table className="w-full text-sm">
-                  <thead className="bg-surface-subtle">
-                    <tr>
-                      <th className="px-3 py-2 text-left font-medium text-text-muted">序号</th>
-                      <th className="px-3 py-2 text-left font-medium text-text-muted">显示名称</th>
-                      <th className="px-3 py-2 text-left font-medium text-text-muted">简写编码</th>
-                      <th className="px-3 py-2 text-left font-medium text-text-muted">状态</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-border-subtle bg-white">
-                    {sortedOptions.map((opt, idx) => (
-                      <tr key={opt.id} className={!opt.isActive ? 'bg-surface-muted text-text-subtle' : ''}>
-                        <td className="px-3 py-2 text-text-subtle">{idx + 1}</td>
-                        <td className="px-3 py-2 font-medium">{opt.value}</td>
-                        <td className="px-3 py-2">
-                          <CodeBadge tone="accent">{opt.code}</CodeBadge>
-                        </td>
-                        <td className="px-3 py-2">
-                          <Badge variant={opt.isActive ? 'success' : 'default'}>
-                            {opt.isActive ? '启用' : '停用'}
-                          </Badge>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          )}
-
-          <div className="rounded-2xl border border-border bg-surface-muted p-4 text-xs text-text-subtle">
-            <p>创建时间：{attribute.createdAt}</p>
-            <p className="mt-1">更新时间：{attribute.updatedAt}</p>
-          </div>
         </div>
       </div>
     </div>
@@ -1022,9 +1039,9 @@ export default function ProductAttributePage() {
   const [filterType, setFilterType] = useState('');
   const [filterStatus, setFilterStatus] = useState('');
   const [editingAttr, setEditingAttr] = useState(null);
-  const [viewingAttr, setViewingAttr] = useState(null);
+  const [drawerMode, setDrawerMode] = useState('edit');
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
-  const [expandedGroups, setExpandedGroups] = useState(ATTRIBUTE_GROUPS.map((group) => group.id));
+
 
   const filteredAttributes = useMemo(
     () =>
@@ -1047,14 +1064,7 @@ export default function ProductAttributePage() {
     [attributes, searchText, filterGroup, filterType, filterStatus]
   );
 
-  const groupedAttributes = useMemo(
-    () =>
-      ATTRIBUTE_GROUPS.map((group) => ({
-        ...group,
-        attributes: filteredAttributes.filter((attr) => attr.groupId === group.id),
-      })).filter((group) => group.attributes.length > 0),
-    [filteredAttributes]
-  );
+
 
   const stats = useMemo(
     () => ({
@@ -1070,17 +1080,20 @@ export default function ProductAttributePage() {
 
   const handleAddAttr = () => {
     setEditingAttr(null);
+    setDrawerMode('edit');
     setIsDrawerOpen(true);
   };
 
   const handleEditAttr = (attr) => {
     setEditingAttr(attr);
-    setViewingAttr(null);
+    setDrawerMode('edit');
     setIsDrawerOpen(true);
   };
 
   const handleViewAttr = (attr) => {
-    setViewingAttr(attr);
+    setEditingAttr(attr);
+    setDrawerMode('view');
+    setIsDrawerOpen(true);
   };
 
   const handleToggleAttr = (attrId) => {
@@ -1101,11 +1114,7 @@ export default function ProductAttributePage() {
     });
   };
 
-  const toggleGroup = (groupId) => {
-    setExpandedGroups((prev) =>
-      prev.includes(groupId) ? prev.filter((id) => id !== groupId) : [...prev, groupId]
-    );
-  };
+
 
   const resetFilters = () => {
     setSearchText('');
@@ -1115,21 +1124,16 @@ export default function ProductAttributePage() {
   };
 
   return (
-    <div className="space-y-5">
+    <div className="flex flex-col h-full space-y-4">
+      {/* 顶部：标题 + 统计 + 筛选 */}
       <Card className="overflow-hidden">
-        <div className="border-b border-border px-6 py-5">
+        <div className="border-b border-border px-6 py-4">
           <div className="flex flex-wrap items-start justify-between gap-4">
-            <div className="space-y-2">
-              <div className="inline-flex items-center gap-2 rounded-full border border-brand-100 bg-brand-50 px-3 py-1 text-xs font-medium text-brand-700">
-                <Package2 className="h-3.5 w-3.5" />
-                产品中心 / 基础配置
-              </div>
-              <div>
-                <h1 className="ui-page-title">属性管理</h1>
-                <p className="mt-1 text-sm text-text-subtle">
-                  维护产品属性、选项编码与分组配置，支撑 SKU 生成、详情展示和物流识别。
-                </p>
-              </div>
+            <div>
+              <h1 className="ui-page-title">属性管理</h1>
+              <p className="mt-1 text-sm text-text-subtle">
+                维护产品属性、选项编码与分组配置，支撑 SKU 生成、详情展示和物流识别。
+              </p>
             </div>
             <div className="flex flex-wrap items-center gap-3">
               <SecondaryButton icon={Upload}>导入</SecondaryButton>
@@ -1141,14 +1145,14 @@ export default function ProductAttributePage() {
           </div>
         </div>
 
-        <div className="grid gap-4 border-b border-border px-6 py-5 md:grid-cols-2 xl:grid-cols-4">
+        <div className="grid gap-4 border-b border-border px-6 py-4 md:grid-cols-2 xl:grid-cols-4">
           <StatCard title="属性总数" value={stats.total} icon={Database} tone="brand" />
           <StatCard title="已启用" value={stats.active} icon={Check} tone="success" />
           <StatCard title="必填属性" value={stats.required} icon={AlertCircle} tone="warning" />
           <StatCard title="选项值总数" value={stats.optionsCount} icon={Tag} tone="purple" />
         </div>
 
-        <div className="px-6 py-5">
+        <div className="px-6 py-4">
           <div className="flex flex-wrap items-center gap-3">
             <Input
               value={searchText}
@@ -1190,206 +1194,78 @@ export default function ProductAttributePage() {
               </button>
             )}
           </div>
-
-          <div className="mt-4 flex flex-wrap items-center gap-2 text-sm text-text-subtle">
-            <span className="inline-flex items-center gap-1 rounded-full bg-surface-subtle px-3 py-1">
-              <Layers3 className="h-4 w-4" />
-              当前分组 {groupedAttributes.length}
-            </span>
-            <span className="inline-flex items-center gap-1 rounded-full bg-surface-subtle px-3 py-1">
-              <Database className="h-4 w-4" />
-              当前结果 {filteredAttributes.length}
-            </span>
-            <span className="inline-flex items-center gap-1 rounded-full bg-surface-subtle px-3 py-1">
-              <Clock3 className="h-4 w-4" />
-              最近更新时间按属性记录展示
-            </span>
-          </div>
         </div>
       </Card>
 
-      <div className="space-y-4">
-        {groupedAttributes.map((group) => {
-          const groupStyle = GROUP_COLOR_STYLES[group.color] || GROUP_COLOR_STYLES.blue;
-          const isExpanded = expandedGroups.includes(group.id);
+      {/* 列表表格 */}
+      <Card className="flex-1 overflow-hidden flex flex-col">
+        <div className="flex-1 overflow-auto">
+          <table className="min-w-[900px] w-full text-sm">
+            <thead className="bg-surface-subtle sticky top-0 z-10">
+              <tr className="border-b border-border">
+                <th className="px-4 py-3 text-left font-medium text-text-muted whitespace-nowrap">状态</th>
+                <th className="px-4 py-3 text-left font-medium text-text-muted whitespace-nowrap">属性名称</th>
+                <th className="px-4 py-3 text-left font-medium text-text-muted whitespace-nowrap">编码信息</th>
+                <th className="px-4 py-3 text-left font-medium text-text-muted whitespace-nowrap">所属分组</th>
+                <th className="px-4 py-3 text-left font-medium text-text-muted whitespace-nowrap">类型</th>
+                <th className="px-4 py-3 text-left font-medium text-text-muted whitespace-nowrap">必填</th>
+                <th className="px-4 py-3 text-left font-medium text-text-muted whitespace-nowrap">引用次数</th>
+                <th className="px-4 py-3 text-left font-medium text-text-muted whitespace-nowrap">操作</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-border-subtle bg-white">
+              {filteredAttributes.map((attr) => {
+                const groupConfig = ATTRIBUTE_GROUPS.find((g) => g.id === attr.groupId);
+                const groupStyle = GROUP_COLOR_STYLES[groupConfig?.color] || GROUP_COLOR_STYLES.blue;
+                return (
+                  <tr key={attr.id} className="hover:bg-surface-muted">
+                    <td className="px-4 py-3 align-top">
+                      <Badge variant={attr.isActive ? 'success' : 'default'}>
+                        {attr.isActive ? '启用' : '停用'}
+                      </Badge>
+                    </td>
+                    <td className="px-4 py-3 align-top">
+                      <p className="font-semibold text-text">{attr.name}</p>
+                      <p className="mt-0.5 max-w-xs text-xs text-text-subtle truncate">
+                        {attr.description || '暂无说明'}
+                      </p>
+                    </td>
+                    <td className="px-4 py-3 align-top">
+                      <div className="flex flex-wrap gap-2">
+                        <CodeBadge>{attr.code}</CodeBadge>
+                        <CodeBadge tone="accent">{attr.shortCode}</CodeBadge>
+                      </div>
+                    </td>
+                    <td className="px-4 py-3 align-top">
+                      <span className={cn('rounded-full border px-2.5 py-1 text-xs font-medium', groupStyle.badge)}>
+                        {groupConfig?.name || attr.groupId}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3 align-top">
+                      <TypeBadge type={attr.type} />
+                    </td>
+                    <td className="px-4 py-3 align-top">
+                      {attr.required ? <Badge variant="danger">必填</Badge> : <Badge>选填</Badge>}
+                    </td>
+                    <td className="px-4 py-3 align-top">
+                      <span className="text-sm text-text">{attr.refCount.toLocaleString()}</span>
+                    </td>
+                    <td className="px-4 py-3 align-top">
+                      <button
+                        onClick={() => handleViewAttr(attr)}
+                        className="px-3 py-1.5 rounded-lg bg-brand-600 text-white text-xs font-medium hover:bg-brand-700 transition-colors"
+                      >
+                        查看
+                      </button>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
 
-          return (
-            <Card key={group.id} className="overflow-hidden">
-              <div
-                className="flex cursor-pointer items-center gap-3 px-5 py-4 transition-colors hover:bg-surface-muted"
-                onClick={() => toggleGroup(group.id)}
-              >
-                <div className={cn('h-10 w-1 rounded-full', groupStyle.bar)} />
-                <div className="flex-1">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <h3 className="text-base font-semibold text-text">{group.name}</h3>
-                    <span className={cn('rounded-full border px-2.5 py-1 text-xs font-medium', groupStyle.badge)}>
-                      {group.attributes.length} 个属性
-                    </span>
-                    <span className="text-xs text-text-subtle">{isExpanded ? '已展开' : '已收起'}</span>
-                  </div>
-                  <p className="mt-1 text-sm text-text-subtle">{group.description}</p>
-                </div>
-                {isExpanded ? (
-                  <ChevronDown className="h-5 w-5 text-text-subtle" />
-                ) : (
-                  <ChevronRight className="h-5 w-5 text-text-subtle" />
-                )}
-              </div>
-
-              {isExpanded && (
-                <div className="overflow-x-auto border-t border-border">
-                  <table className="min-w-[1080px] w-full text-sm">
-                    <thead className="bg-surface-subtle">
-                      <tr className="border-b border-border">
-                        <th className="px-4 py-3 text-left font-medium text-text-muted whitespace-nowrap">状态</th>
-                        <th className="px-4 py-3 text-left font-medium text-text-muted whitespace-nowrap">属性名称</th>
-                        <th className="px-4 py-3 text-left font-medium text-text-muted whitespace-nowrap">编码信息</th>
-                        <th className="px-4 py-3 text-left font-medium text-text-muted whitespace-nowrap">类型</th>
-                        <th className="px-4 py-3 text-left font-medium text-text-muted whitespace-nowrap">必填</th>
-                        <th className="px-4 py-3 text-left font-medium text-text-muted whitespace-nowrap">选项数 / 单位</th>
-                        <th className="px-4 py-3 text-left font-medium text-text-muted whitespace-nowrap">选项值示例</th>
-                        <th className="px-4 py-3 text-left font-medium text-text-muted whitespace-nowrap">操作</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-border-subtle bg-white">
-                      {group.attributes.map((attr) => {
-                        const previewOptions = getSortedOptions(attr.options).slice(0, 3);
-
-                        return (
-                          <tr key={attr.id} className="hover:bg-surface-muted">
-                            <td className="px-4 py-4 align-top">
-                              <div className="flex items-center gap-3">
-                                <Toggle
-                                  checked={attr.isActive}
-                                  onChange={() => handleToggleAttr(attr.id)}
-                                />
-                                <Badge variant={attr.isActive ? 'success' : 'default'}>
-                                  {attr.isActive ? '启用' : '停用'}
-                                </Badge>
-                              </div>
-                            </td>
-                            <td className="px-4 py-4 align-top">
-                              <button
-                                onClick={() => handleViewAttr(attr)}
-                                className="text-left transition-colors hover:text-brand-700"
-                              >
-                                <div className="flex items-center gap-2">
-                                  <p className="font-semibold text-text">{attr.name}</p>
-                                  <Eye className="h-3.5 w-3.5 text-text-subtle" />
-                                </div>
-                                <p className="mt-1 max-w-sm text-xs leading-5 text-text-subtle">
-                                  {attr.description || '暂无说明'}
-                                </p>
-                                <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-text-subtle">
-                                  <span className="rounded-full bg-surface-subtle px-2.5 py-1">
-                                    引用 {attr.refCount.toLocaleString()}
-                                  </span>
-                                  <span className="rounded-full bg-surface-subtle px-2.5 py-1">
-                                    更新于 {attr.updatedAt}
-                                  </span>
-                                </div>
-                              </button>
-                            </td>
-                            <td className="px-4 py-4 align-top">
-                              <div className="flex flex-wrap gap-2">
-                                <CodeBadge>{attr.code}</CodeBadge>
-                                <CodeBadge tone="accent">{attr.shortCode}</CodeBadge>
-                              </div>
-                            </td>
-                            <td className="px-4 py-4 align-top">
-                              <TypeBadge type={attr.type} />
-                            </td>
-                            <td className="px-4 py-4 align-top">
-                              {attr.required ? <Badge variant="danger">必填</Badge> : <Badge>选填</Badge>}
-                            </td>
-                            <td className="px-4 py-4 align-top">
-                              {attr.unit ? (
-                                <div className="space-y-1">
-                                  <p className="font-medium text-text">{attr.unit}</p>
-                                  <p className="text-xs text-text-subtle">数字属性单位</p>
-                                </div>
-                              ) : isSelectType(attr.type) ? (
-                                <div className="space-y-1">
-                                  <p className="font-medium text-text">{attr.options?.length || 0} 个选项</p>
-                                  <p className="text-xs text-text-subtle">含停用项统计</p>
-                                </div>
-                              ) : (
-                                <span className="text-text-subtle">无额外配置</span>
-                              )}
-                            </td>
-                            <td className="px-4 py-4 align-top">
-                              {previewOptions.length > 0 ? (
-                                <div className="flex max-w-xs flex-wrap gap-2">
-                                  {previewOptions.map((opt) => (
-                                    <span
-                                      key={opt.id}
-                                      className={cn(
-                                        'inline-flex items-center gap-1 rounded-xl border px-2 py-1 text-xs',
-                                        opt.isActive
-                                          ? 'border-border bg-surface-subtle text-text-muted'
-                                          : 'border-border bg-slate-100 text-text-subtle'
-                                      )}
-                                    >
-                                      <span>{opt.value}</span>
-                                      <code className="font-semibold text-brand-700">{opt.code}</code>
-                                    </span>
-                                  ))}
-                                  {(attr.options?.length || 0) > 3 && (
-                                    <span className="inline-flex items-center rounded-xl bg-surface-subtle px-2 py-1 text-xs text-text-subtle">
-                                      +{attr.options.length - 3}
-                                    </span>
-                                  )}
-                                </div>
-                              ) : (
-                                <span className="text-text-subtle">无示例</span>
-                              )}
-                            </td>
-                            <td className="px-4 py-4 align-top">
-                              <div className="flex items-center gap-1">
-                                <IconButton
-                                  icon={Edit2}
-                                  onClick={() => handleEditAttr(attr)}
-                                  title="编辑"
-                                />
-                                <IconButton
-                                  icon={Copy}
-                                  onClick={() => {
-                                    const newAttr = {
-                                      ...attr,
-                                      id: `${Date.now()}`,
-                                      code: `${attr.code}_COPY`,
-                                      shortCode: `${attr.shortCode}2`,
-                                      name: `${attr.name} (副本)`,
-                                      refCount: 0,
-                                      createdAt: TODAY,
-                                      updatedAt: TODAY,
-                                      options:
-                                        attr.options?.map((opt, idx) => ({
-                                          ...opt,
-                                          id: `${Date.now()}_${idx}`,
-                                        })) || [],
-                                    };
-                                    setAttributes((prev) => [...prev, newAttr]);
-                                  }}
-                                  title="复制"
-                                />
-                              </div>
-                            </td>
-                          </tr>
-                        );
-                      })}
-                    </tbody>
-                  </table>
-                </div>
-              )}
-            </Card>
-          );
-        })}
-
-        {groupedAttributes.length === 0 && (
-          <Card className="px-6 py-12">
-            <div className="text-center text-text-subtle">
+          {filteredAttributes.length === 0 && (
+            <div className="px-6 py-12 text-center text-text-subtle">
               <Database className="mx-auto mb-4 h-12 w-12 text-slate-300" />
               <p className="text-base font-medium text-text">
                 {hasActiveFilters ? '当前筛选条件下没有匹配的属性' : '暂无属性数据'}
@@ -1397,7 +1273,7 @@ export default function ProductAttributePage() {
               <p className="mt-2 text-sm">
                 {hasActiveFilters
                   ? '可以尝试清除筛选或调整关键字、分组和状态条件。'
-                  : '创建第一个属性后，这里会显示按分组整理的属性列表。'}
+                  : '创建第一个属性后，这里会显示属性列表。'}
               </p>
               {hasActiveFilters && (
                 <button
@@ -1408,24 +1284,29 @@ export default function ProductAttributePage() {
                 </button>
               )}
             </div>
-          </Card>
-        )}
-      </div>
+          )}
+        </div>
 
-      <AttributeEditDrawer
+        {/* 底部统计 */}
+        <div className="p-4 border-t border-border bg-surface-muted flex items-center justify-between">
+          <div className="text-sm text-text-subtle">
+            共 <span className="font-semibold text-text">{filteredAttributes.length}</span> 个属性
+          </div>
+          <div className="flex items-center gap-2">
+            <button className="px-3 py-1 border border-border rounded-lg hover:bg-surface-subtle text-sm text-text">上一页</button>
+            <span className="text-sm text-text-subtle">1 / 1</span>
+            <button className="px-3 py-1 border border-border rounded-lg hover:bg-surface-subtle text-sm text-text">下一页</button>
+          </div>
+        </div>
+      </Card>
+
+      <AttributeDrawer
         isOpen={isDrawerOpen}
         onClose={() => setIsDrawerOpen(false)}
         attribute={editingAttr}
         onSave={handleSaveAttr}
+        defaultMode={drawerMode}
       />
-
-      {viewingAttr && (
-        <AttributeDetail
-          attribute={viewingAttr}
-          onEdit={handleEditAttr}
-          onClose={() => setViewingAttr(null)}
-        />
-      )}
     </div>
   );
 }

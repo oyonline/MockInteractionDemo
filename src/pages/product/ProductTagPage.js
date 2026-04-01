@@ -395,14 +395,6 @@ export default function ProductTagPage() {
         return matchesSearch && matchesCategory;
     });
 
-    // 按分类分组
-    const groupedTags = filteredTags.reduce((acc, tag) => {
-        const categoryId = tag.categoryId;
-        if (!acc[categoryId]) acc[categoryId] = [];
-        acc[categoryId].push(tag);
-        return acc;
-    }, {});
-
     const handleAddTag = () => {
         setEditingTag(null);
         setIsDrawerOpen(true);
@@ -502,7 +494,7 @@ export default function ProductTagPage() {
                 </Card>
 
                 {/* 右侧标签列表 */}
-                <Card className="flex-1">
+                <Card className="flex-1 flex flex-col overflow-hidden">
                     {/* 搜索栏 */}
                     <div className="p-4 border-b">
                         <Input
@@ -514,50 +506,48 @@ export default function ProductTagPage() {
                         />
                     </div>
 
-                    {/* 标签列表 */}
-                    <div className="p-4">
-                        {selectedCategoryId === 'all' ? (
-                            // 按分类分组显示
-                            <div className="space-y-6">
-                                {initialCategories.map(category => {
-                                    const categoryTags = groupedTags[category.id] || [];
-                                    if (categoryTags.length === 0) return null;
-
-                                    const Icon = category.icon;
+                    {/* 标签列表表格 */}
+                    <div className="flex-1 overflow-auto p-0">
+                        <table className="min-w-[900px] w-full text-sm">
+                            <thead className="bg-gray-50 sticky top-0 z-10">
+                                <tr className="border-b">
+                                    <th className="px-4 py-3 text-left font-medium text-gray-600 whitespace-nowrap">标签名称</th>
+                                    <th className="px-4 py-3 text-left font-medium text-gray-600 whitespace-nowrap">编码</th>
+                                    <th className="px-4 py-3 text-left font-medium text-gray-600 whitespace-nowrap">分类</th>
+                                    <th className="px-4 py-3 text-left font-medium text-gray-600 whitespace-nowrap">描述</th>
+                                    <th className="px-4 py-3 text-left font-medium text-gray-600 whitespace-nowrap">关联产品</th>
+                                    <th className="px-4 py-3 text-left font-medium text-gray-600 whitespace-nowrap">创建人</th>
+                                    <th className="px-4 py-3 text-left font-medium text-gray-600 whitespace-nowrap">操作</th>
+                                </tr>
+                            </thead>
+                            <tbody className="divide-y divide-gray-100 bg-white">
+                                {filteredTags.map(tag => {
+                                    const category = initialCategories.find(c => c.id === tag.categoryId);
                                     return (
-                                        <div key={category.id}>
-                                            <div className="flex items-center gap-2 mb-3">
-                                                <Icon className="w-4 h-4 text-gray-500" />
-                                                <h4 className="text-sm font-semibold text-gray-700">{category.name}</h4>
-                                                <span className="text-xs text-gray-400">({categoryTags.length})</span>
-                                            </div>
-                                            <div className="grid grid-cols-2 lg:grid-cols-3 gap-3">
-                                                {categoryTags.map(tag => (
-                                                    <TagCard
-                                                        key={tag.id}
-                                                        tag={tag}
-                                                        onEdit={handleEditTag}
-                                                        onDelete={handleDeleteTag}
-                                                    />
-                                                ))}
-                                            </div>
-                                        </div>
+                                        <tr key={tag.id} className="hover:bg-gray-50">
+                                            <td className="px-4 py-3 align-top">
+                                                <Badge color={tag.color}>{tag.name}</Badge>
+                                            </td>
+                                            <td className="px-4 py-3 align-top font-mono text-xs text-gray-500">{tag.code}</td>
+                                            <td className="px-4 py-3 align-top text-sm text-gray-700">{category?.name || '-'}</td>
+                                            <td className="px-4 py-3 align-top">
+                                                <p className="max-w-xs text-sm text-gray-600 truncate" title={tag.description}>{tag.description}</p>
+                                            </td>
+                                            <td className="px-4 py-3 align-top">
+                                                <span className="px-2 py-1 bg-blue-100 text-blue-700 rounded-full text-xs">{tag.productCount}</span>
+                                            </td>
+                                            <td className="px-4 py-3 align-top text-sm text-gray-700">{tag.createdBy}</td>
+                                            <td className="px-4 py-3 align-top">
+                                                <div className="flex items-center gap-1">
+                                                    <IconButton icon={Edit2} onClick={() => handleEditTag(tag)} title="编辑" />
+                                                    <IconButton icon={Trash2} onClick={() => handleDeleteTag(tag.id)} title="删除" />
+                                                </div>
+                                            </td>
+                                        </tr>
                                     );
                                 })}
-                            </div>
-                        ) : (
-                            // 单分类显示
-                            <div className="grid grid-cols-2 lg:grid-cols-3 gap-3">
-                                {filteredTags.map(tag => (
-                                    <TagCard
-                                        key={tag.id}
-                                        tag={tag}
-                                        onEdit={handleEditTag}
-                                        onDelete={handleDeleteTag}
-                                    />
-                                ))}
-                            </div>
-                        )}
+                            </tbody>
+                        </table>
 
                         {filteredTags.length === 0 && (
                             <div className="text-center py-12 text-gray-500">
@@ -580,29 +570,3 @@ export default function ProductTagPage() {
         </div>
     );
 }
-
-// --------------- 标签卡片组件 ---------------
-const TagCard = ({ tag, onEdit, onDelete }) => {
-    const colorConfig = TAG_COLORS.find(c => c.id === tag.color) || TAG_COLORS[0];
-
-    return (
-        <div className={cn(
-            'p-4 rounded-lg border-2 transition-all hover:shadow-md',
-            colorConfig.border, 'bg-white'
-        )}>
-            <div className="flex items-start justify-between mb-2">
-                <Badge color={tag.color}>{tag.name}</Badge>
-                <div className="flex items-center gap-1">
-                    <IconButton icon={Edit2} onClick={() => onEdit(tag)} title="编辑" />
-                    <IconButton icon={Trash2} onClick={() => onDelete(tag.id)} title="删除" />
-                </div>
-            </div>
-            <p className="text-xs text-gray-500 mb-2 font-mono">{tag.code}</p>
-            <p className="text-xs text-gray-600 mb-3 line-clamp-2">{tag.description}</p>
-            <div className="flex items-center justify-between text-xs text-gray-400">
-                <span>关联产品: {tag.productCount}</span>
-                <span>{tag.createdBy}</span>
-            </div>
-        </div>
-    );
-};

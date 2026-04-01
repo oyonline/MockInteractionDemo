@@ -214,6 +214,7 @@ export const navConfig = {
             { name: '质量概览', path: '/quality/overview' },
             { name: '入库质检', path: '/quality/inbound' },
             { name: '客诉质量', path: '/quality/complaint' },
+            { name: '质量检查任务', path: '/quality/tasks' },
         ]
     },
     

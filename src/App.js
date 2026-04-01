@@ -67,18 +67,16 @@ import ForecastTrackingPage from './pages/supply-chain/ForecastTrackingPage';
 import SupplyPlanPage from './pages/supply-chain/SupplyPlanPage';
 import QualityInboundPage from './pages/quality/QualityInboundPage';
 import QualityComplaintPage from './pages/quality/QualityComplaintPage';
+import QualityTaskPage from './pages/quality/QualityTaskPage';
 import SalesDataAggregationPage from './pages/sales/SalesDataAggregationPage';
 import SalesPlanDashboardPage from './pages/sales/SalesPlanDashboardPage';
 import SalesChinaPage from './pages/sales/cn/SalesChinaPage';
 import SalesSeaPage from './pages/sales/sea/SalesSeaPage';
 import SalesEuropePage from './pages/sales/eu/SalesEuropePage';
 import ProcurementPlanTrackingPage from './pages/procurement/ProcurementPlanTrackingPage';
-import ProjectManagementPage from './pages/project/ProjectManagementPage';
 import PMOverviewPage from './pages/project/ProjectOverviewPage';
 import ProjectWorkspacePage from './pages/project/ProjectWorkspacePage';
 import ProjectCreatePage from './pages/project/ProjectCreatePage';
-import BusinessAnalysisPage from './pages/business/BusinessAnalysisPage';
-import HumanResourcesPage from './pages/hr/HumanResourcesPage';
 import UsSalesOverviewPage from './pages/overview/UsSalesOverviewPage';
 import UsPrivateDomainPage from './pages/sales/us/UsPrivateDomainPage';
 import CnSalesOverviewPage from './pages/overview/CnSalesOverviewPage';
@@ -90,7 +88,6 @@ import SupplyChainOverviewPage from './pages/overview/SupplyChainOverviewPage';
 import LogisticsOverviewPage from './pages/overview/LogisticsOverviewPage';
 import FinanceOverviewPage from './pages/overview/FinanceOverviewPage';
 import QualityOverviewPage from './pages/overview/QualityOverviewPage';
-import ProjectOverviewPage from './pages/overview/ProjectOverviewPage';
 import HrOverviewPage from './pages/overview/HrOverviewPage';
 import CostAnalysisPage from './pages/finance/CostAnalysisPage';
 import CostAnalysisDetailPage from './pages/finance/CostAnalysisDetailPage';
@@ -114,8 +111,6 @@ const Header = ({ tabs, activeTabId, onTabClick, onTabClose, currentPath, onNavi
     const [userMenuOpen, setUserMenuOpen] = useState(false);
     
     const isHome = currentPath === '/home' || currentPath === '/';
-    const currentModule = isHome ? '工作台' : (tabs.find(t => t.id === activeTabId)?.name ?? '首页');
-
     return (
         <header className="flex h-14 flex-shrink-0 items-center border-b border-border bg-surface px-4">
             {/* 左侧：Logo/标题（首页显示，子模块隐藏） */}
@@ -410,11 +405,14 @@ function App() {
             '/project/create',
         ];
         if (tab.path && tab.path.startsWith('/project/') && !staticProjectPaths.includes(tab.path)) {
+            const projectId = tab.data?.id || tab.path.split('/').filter(Boolean).pop();
             return (
-                <ProjectWorkspacePage
-                    record={tab.data}
-                    onClose={() => closeTab(tab.id)}
-                />
+                <div className="h-full min-h-0 overflow-auto">
+                    <ProjectWorkspacePage
+                        record={tab.data || { id: projectId }}
+                        onClose={() => closeTab(tab.id)}
+                    />
+                </div>
             );
         }
         switch (tab.path) {
@@ -484,7 +482,25 @@ function App() {
             case '/quality/overview':
                 return (
                     <ModuleLayout>
-                        <QualityOverviewPage />
+                        <QualityOverviewPage onNavigate={handleNavigate} />
+                    </ModuleLayout>
+                );
+            case '/quality/inbound':
+                return (
+                    <ModuleLayout>
+                        <QualityInboundPage />
+                    </ModuleLayout>
+                );
+            case '/quality/complaint':
+                return (
+                    <ModuleLayout>
+                        <QualityComplaintPage />
+                    </ModuleLayout>
+                );
+            case '/quality/tasks':
+                return (
+                    <ModuleLayout>
+                        <QualityTaskPage />
                     </ModuleLayout>
                 );
             case '/organization/overview':
@@ -889,7 +905,15 @@ function App() {
             case '/project/overview':
                 return (
                     <ModuleLayout>
-                        <ProjectOverviewPage />
+                        <PMOverviewPage
+                            onOpenProject={(project) => openTab({
+                                id: `project-${project.id}`,
+                                name: project.projectName || project.name,
+                                path: `/project/${project.id}`,
+                                data: project
+                            })}
+                            onCreateProject={() => handleNavigate('/project/create', '新建项目')}
+                        />
                     </ModuleLayout>
                 );
             // 经营分析
@@ -1126,7 +1150,15 @@ function App() {
             case '/project':
                 return (
                     <ModuleLayout>
-                        <ProjectOverviewPage />
+                        <PMOverviewPage
+                            onOpenProject={(project) => openTab({
+                                id: `project-${project.id}`,
+                                name: project.projectName || project.name,
+                                path: `/project/${project.id}`,
+                                data: project
+                            })}
+                            onCreateProject={() => handleNavigate('/project/create', '新建项目')}
+                        />
                     </ModuleLayout>
                 );
             case '/project/new-product':
@@ -1135,7 +1167,7 @@ function App() {
                         <PMOverviewPage
                             onOpenProject={(project) => openTab({
                                 id: `project-${project.id}`,
-                                name: project.name,
+                                name: project.projectName || project.name,
                                 path: `/project/${project.id}`,
                                 data: project
                             })}
