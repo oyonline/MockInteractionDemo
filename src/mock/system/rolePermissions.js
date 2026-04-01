@@ -108,7 +108,7 @@ export function getMockPermissionMeta() {
 export function getMockInitialRolePermissions() {
   const meta = getMockPermissionMeta();
   const byRole = {};
-  ['role_admin', 'role_product', 'role_ops', 'role_sales', 'role_finance', 'role_warehouse'].forEach((rid) => {
+  ['role_admin', 'role_product', 'role_ops', 'role_sales', 'role_finance', 'role_hr', 'role_dev', 'role_procurement', 'role_warehouse', 'role_cs'].forEach((rid) => {
     byRole[rid] = buildInitialRolePermissions(rid, meta.actionColumns);
   });
   return byRole;

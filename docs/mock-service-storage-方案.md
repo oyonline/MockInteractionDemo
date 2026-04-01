@@ -1,6 +1,6 @@
-# Mock / Service / Storage 方案（已实施）
+# Mock / Service / Storage 方案（当前前端原型方案，已实施）
 
-> 本文档记录项目 mock、service、storage 层的实现方案。**当前状态：已完全实施**
+> 本文档记录项目 mock、service、storage 层的实现方案。**当前状态：前端原型方案已实施，但不代表已接入真实后端能力。**
 
 ---
 
@@ -223,13 +223,13 @@ import { ActionBar } from '@/components/ActionBar';
 
 | 方向 | 建议 |
 |------|------|
-| 新增模块 | 按同样模式创建 `src/mock/[模块]/` + `src/services/[模块].js` |
-| 后端对接 | 只需修改 service 层，页面代码无需改动 |
+| 新增模块 | 如需继续完善前端原型，可按同样模式创建 `src/mock/[模块]/` + `src/services/[模块].js` |
+| 后端对接 | 若后续获得真实后端信息，可优先从 service 层梳理替换点；是否只改 service 需以页面实际耦合情况为准 |
 | 数据迁移 | 使用 storage.js 的 schemaVersion 机制做数据版本控制 |
 | Mock 开关 | 可在 `src/mock/index.js` 添加 `__USE_MOCK__` 全局开关 |
 
 ---
 
-*方案已完全实施，如有新模块开发，请遵循本文档约定。*
+*当前前端原型方案已实施；如需继续完善原型，可遵循本文档约定。若进入真实接口替换，请先补齐外部后端信息，不要把本文档当作联调完成证明。*
 
-*最后更新：2026-03-27*
+*最后更新：2026-04-01*

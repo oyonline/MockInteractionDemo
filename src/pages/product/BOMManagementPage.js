@@ -253,8 +253,126 @@ const BOMManagement = () => {
         { version: 'V1', changeDate: '2024-05-15', changeBy: '李明', changeReason: 'iCool产品首发', approver: '王总', approvalDate: '2024-05-15' },
         { version: 'V2', changeDate: '2025-01-12', changeBy: '张三', changeReason: '升级温控模块，增加蓝牙功能', approver: '待审批', approvalDate: '-' }
       ]
+    },
+    {
+      bomId: 'BOM-010',
+      bomCode: 'BOM-KK-RL-2024-7FT-M-V5',
+      bomType: '销售BOM',
+      applicableObject: 'KK-RL-2024-7FT-M',
+      currentVersion: 'V5',
+      status: '生效',
+      effectiveDate: '2025-04-01',
+      expiryDate: '-',
+      componentCount: 9,
+      owner: '李明',
+      lastUpdatedBy: '张三',
+      updateTime: '2025-03-28 11:20',
+      assemblySupplier: '深圳威尔科技有限公司',
+      category: '钓鱼竿 / 路亚竿',
+      series: 'Royale Legend系列',
+      components: [
+        { componentSKU: 'KK-RL-ROD-BLANK-V2', componentName: '竿身碳纤维管V2', quantity: 1, unit: '支', alternateGroup: '', note: '高模量碳纤维升级' },
+        { componentSKU: 'KK-RL-HANDLE-V2', componentName: 'EVA握把V2', quantity: 1, unit: '个', alternateGroup: '', note: '加长防滑' },
+        { componentSKU: 'KK-RL-GUIDE-1', componentName: '导眼（顶部）', quantity: 1, unit: '个', alternateGroup: 'A', note: 'SIC材质' },
+        { componentSKU: 'KK-RL-GUIDE-2', componentName: '导眼（中段）', quantity: 5, unit: '个', alternateGroup: 'A', note: 'SIC材质' },
+        { componentSKU: 'KK-RL-REEL-SEAT', componentName: '轮座', quantity: 1, unit: '个', alternateGroup: '', note: '金属材质' },
+        { componentSKU: 'KK-RL-END-CAP', componentName: '尾塞', quantity: 1, unit: '个', alternateGroup: '', note: '品牌LOGO' },
+        { componentSKU: 'PKG-ROD-TUBE', componentName: '竿筒', quantity: 1, unit: '个', alternateGroup: '', note: '硬质塑料' },
+        { componentSKU: 'PKG-MANUAL', componentName: '说明书', quantity: 1, unit: '份', alternateGroup: '', note: '中英文版' },
+        { componentSKU: 'PKG-STICKER', componentName: '防伪贴纸', quantity: 1, unit: '张', alternateGroup: '', note: '镭射防伪' }
+      ],
+      changeHistory: [
+        { version: 'V1', changeDate: '2024-03-15', changeBy: '李明', changeReason: '初始创建', approver: '王总', approvalDate: '2024-03-15' },
+        { version: 'V5', changeDate: '2025-03-28', changeBy: '张三', changeReason: '升级竿身材质和握把设计，增加防伪贴纸', approver: '王总', approvalDate: '2025-03-28' }
+      ]
+    },
+    {
+      bomId: 'BOM-011',
+      bomCode: 'BOM-KK-MG-2024-3000-V6',
+      bomType: '包装BOM',
+      applicableObject: 'KK-MG-2024-3000',
+      currentVersion: 'V6',
+      status: '生效',
+      effectiveDate: '2025-05-10',
+      expiryDate: '-',
+      componentCount: 6,
+      owner: '王芳',
+      lastUpdatedBy: '李四',
+      updateTime: '2025-04-22 15:40',
+      assemblySupplier: '东莞精密制造有限公司',
+      category: '渔线轮 / 纺车轮',
+      series: 'Megatron系列',
+      components: [
+        { componentSKU: 'KK-MG-BODY', componentName: '轮体', quantity: 1, unit: '个', alternateGroup: '', note: '全金属机身' },
+        { componentSKU: 'KK-MG-ROTOR', componentName: '转子', quantity: 1, unit: '个', alternateGroup: '', note: '铝合金' },
+        { componentSKU: 'KK-MG-SPOOL', componentName: '线杯', quantity: 1, unit: '个', alternateGroup: '', note: '铝合金' },
+        { componentSKU: 'PKG-BOX-MG-V2', componentName: '包装盒V2', quantity: 1, unit: '个', alternateGroup: '', note: '环保彩印纸盒' },
+        { componentSKU: 'PKG-FOAM', componentName: '内衬泡棉', quantity: 1, unit: '个', alternateGroup: '', note: 'EVA材质' },
+        { componentSKU: 'PKG-DESICCANT', componentName: '干燥剂包', quantity: 2, unit: '包', alternateGroup: '', note: '硅胶干燥剂' }
+      ],
+      changeHistory: [
+        { version: 'V1', changeDate: '2024-05-20', changeBy: '王芳', changeReason: '初始创建', approver: '王总', approvalDate: '2024-05-20' },
+        { version: 'V2', changeDate: '2025-01-10', changeBy: '李四', changeReason: '优化包装结构，增加防震泡棉', approver: '王总', approvalDate: '2025-01-10' },
+        { version: 'V6', changeDate: '2025-04-22', changeBy: '李四', changeReason: '更换环保纸盒，增加干燥剂', approver: '王总', approvalDate: '2025-04-22' }
+      ]
+    },
+    {
+      bomId: 'BOM-012',
+      bomCode: 'BOM-PF-TAC-2024-L-BK-V7',
+      bomType: '包装BOM',
+      applicableObject: 'PF-TAC-2024-L-BK',
+      currentVersion: 'V7',
+      status: '生效',
+      effectiveDate: '2025-06-01',
+      expiryDate: '-',
+      componentCount: 5,
+      owner: '赵敏',
+      lastUpdatedBy: '王五',
+      updateTime: '2025-05-15 09:10',
+      assemblySupplier: '广州户外装备厂',
+      category: '钓鱼包 / 路亚包',
+      series: '战术系列',
+      components: [
+        { componentSKU: 'PF-TAC-BAG-L-V2', componentName: '战术包主体（L号）V2', quantity: 1, unit: '个', alternateGroup: '', note: '1050D尼龙' },
+        { componentSKU: 'PF-TAC-DIVIDER', componentName: '内部隔板', quantity: 4, unit: '个', alternateGroup: '', note: '可调节' },
+        { componentSKU: 'PF-TAC-STRAP', componentName: '肩带组件', quantity: 1, unit: '套', alternateGroup: '', note: '加宽加厚' },
+        { componentSKU: 'PF-TAC-PATCH', componentName: '魔术贴徽章', quantity: 1, unit: '个', alternateGroup: '', note: '品牌标识' },
+        { componentSKU: 'PKG-PF-BOX', componentName: '包装盒', quantity: 1, unit: '个', alternateGroup: '', note: '彩盒' }
+      ],
+      changeHistory: [
+        { version: 'V1', changeDate: '2024-06-01', changeBy: '赵敏', changeReason: '战术包系列上市', approver: '刘总', approvalDate: '2024-06-01' },
+        { version: 'V7', changeDate: '2025-05-15', changeBy: '王五', changeReason: '升级尼龙材质，增加隔板和魔术贴', approver: '刘总', approvalDate: '2025-05-15' }
+      ]
+    },
+    {
+      bomId: 'BOM-013',
+      bomCode: 'BOM-KK-SD-2024-7FT-XF-V5',
+      bomType: '销售BOM',
+      applicableObject: 'KK-SD-2024-7FT-XF',
+      currentVersion: 'V5',
+      status: '待审批',
+      effectiveDate: '2025-07-01',
+      expiryDate: '-',
+      componentCount: 5,
+      owner: '李明',
+      lastUpdatedBy: '张三',
+      updateTime: '2025-06-10 14:25',
+      assemblySupplier: '深圳威尔科技有限公司',
+      category: '钓鱼竿 / 路亚竿',
+      series: 'Speed Demon系列',
+      components: [
+        { componentSKU: 'KK-SD-ROD-BLANK-V2', componentName: '竞技竿身V2', quantity: 1, unit: '支', alternateGroup: '', note: '超高模碳纤维升级' },
+        { componentSKU: 'KK-SD-HANDLE', componentName: '竞技握把', quantity: 1, unit: '个', alternateGroup: '', note: '轻量化设计' },
+        { componentSKU: 'KK-SD-GUIDE-T', componentName: '钛合金导眼', quantity: 7, unit: '个', alternateGroup: '', note: '低摩擦系数' },
+        { componentSKU: 'PKG-SD-TUBE', componentName: '竞技竿筒', quantity: 1, unit: '个', alternateGroup: '', note: '碳纤维材质' },
+        { componentSKU: 'PKG-CERT', componentName: '竞技认证卡', quantity: 1, unit: '张', alternateGroup: '', note: '限量编号' }
+      ],
+      changeHistory: [
+        { version: 'V1', changeDate: '2024-07-20', changeBy: '李明', changeReason: '竞技系列新品上市', approver: '王总', approvalDate: '2024-07-20' },
+        { version: 'V5', changeDate: '2025-06-10', changeBy: '张三', changeReason: '升级竿身材质，增加限量认证卡', approver: '待审批', approvalDate: '-' }
+      ]
     }
-  ];
+  ].sort(() => Math.random() - 0.5);
 
   const getStatusColor = (status) => {
     const colors = {

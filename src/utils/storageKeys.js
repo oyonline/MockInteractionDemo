@@ -12,6 +12,8 @@ export const SETTINGS_ENUM = PREFIX + 'settings:enum';
 export const SYSTEM_USERS = PREFIX + 'system:users';
 export const SYSTEM_ROLES = PREFIX + 'system:roles';
 export const SYSTEM_ROLE_PERMISSIONS = PREFIX + 'system:rolePermissions';
+export const SYSTEM_ROLE_FIELD_PERMISSIONS = PREFIX + 'system:roleFieldPermissions';
+export const SYSTEM_ROLE_DATA_PERMISSIONS = PREFIX + 'system:roleDataPermissions';
 
 // 物流与报关 - 基础资料
 export const LOGISTICS_VENDORS = PREFIX + 'logistics:vendors';

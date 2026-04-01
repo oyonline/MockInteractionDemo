@@ -17,11 +17,11 @@ import {
     Share2,
     Printer
 } from 'lucide-react';
-import Badge from '../components/ui/Badge';
-import Button from '../components/ui/Button';
-import Card from '../components/ui/Card';
-import RichTextContent from '../components/ui/RichTextContent';
-import cn from '../utils/cn';
+import Badge from '../../components/ui/Badge';
+import Button from '../../components/ui/Button';
+import Card from '../../components/ui/Card';
+import RichTextContent from '../../components/ui/RichTextContent';
+import cn from '../../utils/cn';
 
 // --------------- 类型配置 ---------------
 const typeConfig = {

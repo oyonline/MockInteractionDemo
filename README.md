@@ -1,10 +1,23 @@
-# 跨境电商管理系统
+# 跨境电商管理系统前端原型仓库
 
-一个企业级的跨境电商自研系统，整合了产品、供应链、预测、库存、采购、费用预算等核心业务能力。
+一个面向跨境电商业务域的纯前端可交互原型仓库，当前以页面、mock 数据、service 和 localStorage 驱动能力为主。
 
 ## 📋 项目简介
 
-本项目是一个基于 React 的现代化跨境电商管理平台，旨在为跨境电商企业提供全方位的业务管理解决方案。系统涵盖了从产品管理、供应链采购、物流报关到财务治理、组织权限等完整的业务流程。
+本项目是一个基于 React 的跨境电商管理平台前端原型仓库，覆盖产品、销售、供应链、物流、财务、组织权限等多个业务域。当前仓库内已经存在大量页面入口与可交互原型实现，但从代码事实看，核心能力仍来自 `src/pages`、`src/mock`、`src/services` 和 `localStorage`，不应被表述为“已进入真实后端联调阶段”或“已形成完整业务系统”。
+
+## 📚 先看这些文档
+
+- `docs/文档索引.md`：总入口，说明每份文档该怎么用
+- `docs/项目记忆与推进约束.md`：事实边界、禁止事项、逐页闭环原则
+- `docs/项目架构与开发指南.md`：前端目录结构、路由接入方式、组件与样式约定
+
+## 🎯 当前仓库定位
+
+- 当前事实：这是一个纯前端 + mock 数据的可交互原型仓库，不应把“已有页面”直接等同于“已完成真实业务闭环”。
+- 当前事实：仓库内未发现现成的真实 HTTP 请求层实现，已存在的 service 主要承接 mock 数据与本地持久化。
+- 当前事实：当前最适合继续推进的工作仍是页面、路由、菜单、mock、service、localStorage 范围内的原型完善与事实梳理。
+- 未来可选方向：如果后续要继续产品化，可优先沿现有页面/路由/菜单/service 链路逐页替换为真实接口，但这不是当前仓库现状。
 
 ## 🛠️ 技术栈
 
@@ -67,7 +80,7 @@
 - **费用类别**: 预算费用类别管理、金蝶科目映射、经营管理视图
 - **费用事实**: 费用事实数据管理
 - **预算版本管理**: 预算版本管理
-- **费用审批**: 费用审批列表与审批单详情
+- **待办 & 审批中心**: 工作台统一审批与待办入口
 
 ### 8. 财务与经营分析（只读）
 - **收入分析**: 收入分析
@@ -162,6 +175,9 @@ ecommerce-system/
 │   │   │   ├── SettingsEnumRulePage.js
 │   │   │   ├── SettingsApiSyncPage.js
 │   │   │   └── SettingsSchedulerPage.js
+│   │   ├── workbench/       # 工作台待办与审批
+│   │   │   ├── ApprovalCenterPage.js
+│   │   │   └── ApprovalDetailPage.js
 │   │   ├── supply-chain/    # 供应链计划
 │   │   │   ├── ForecastTrackingPage.js
 │   │   │   └── SupplyPlanPage.js
@@ -192,8 +208,8 @@ ecommerce-system/
 │   │   ├── ExpenseCategoryPage.js               # 费用类别
 │   │   ├── ExpenseFactPage.js                   # 费用事实
 │   │   ├── ExpenseFactDetailPage.js             # 费用事实详情
-│   │   ├── ExpenseApprovalListPage.simple.js    # 费用审批列表
-│   │   ├── ExpenseApprovalDetailPage.simple.js  # 费用审批详情
+│   │   ├── ExpenseApprovalListPage.simple.js    # 审批兼容壳（finance -> workbench）
+│   │   ├── ExpenseApprovalDetailPage.simple.js  # 详情兼容壳（finance -> workbench）
 │   │   ├── BudgetVersionPage.js                 # 预算版本
 │   │   ├── BudgetVersionDetailPage.js           # 预算版本详情
 │   │   ├── RevenueAnalysisPage.js               # 收入分析
@@ -306,4 +322,4 @@ npm run build
 
 ---
 
-**最后更新**: 2026年3月
+**最后更新**: 2026-04-01

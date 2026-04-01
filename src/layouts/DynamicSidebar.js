@@ -249,6 +249,7 @@ export const navConfig = {
 // --------------- 判断当前模块 ---------------
 const getCurrentModule = (path) => {
     if (path === '/home' || path === '/') return 'home';
+    if (path.startsWith('/workbench')) return 'home';
     if (path.startsWith('/product')) return 'product';
     if (path.startsWith('/sales/us')) return 'sales-us';
     if (path.startsWith('/us-private-domain')) return 'us-private-domain';

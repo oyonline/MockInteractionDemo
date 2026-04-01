@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { ChevronDown, ChevronUp } from 'lucide-react';
-import { userService } from '../services/system';
+import { userService } from '../../services/system';
 
 const TABS = [
   { key: 'roles', label: '角色' },

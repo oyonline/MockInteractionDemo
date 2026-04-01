@@ -1,12 +1,12 @@
 // src/pages/SupplierListPage.js
 import React, { useState, useMemo } from 'react';
 import { Search, Plus, Edit2, Eye, Phone, Mail, MapPin, Star, TrendingUp, Award, ArrowRight } from 'lucide-react';
-import TablePagination from '../components/TablePagination';
-import Badge from '../components/ui/Badge';
-import Button from '../components/ui/Button';
-import Card from '../components/ui/Card';
-import ModalShell from '../components/ui/ModalShell';
-import TableShell from '../components/ui/TableShell';
+import TablePagination from '../../components/TablePagination';
+import Badge from '../../components/ui/Badge';
+import Button from '../../components/ui/Button';
+import Card from '../../components/ui/Card';
+import ModalShell from '../../components/ui/ModalShell';
+import TableShell from '../../components/ui/TableShell';
 
 const SupplierListPage = ({ data: externalData, onOpenDetail }) => {
   const [filters, setFilters] = useState({

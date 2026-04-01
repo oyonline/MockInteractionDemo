@@ -1,11 +1,11 @@
 /**
  * 角色与权限页：左侧角色列表 + 顶部 Tabs + 功能权限（模块树列 + 权限矩阵表格），
- * 勾选联动、保存/重置，数据走 rolePermissionService + localStorage。
+ * 勾选联动、保存/重置，数据走 rolePermissionService + storage 封装。
  * 样式对齐后台截图；角色用户/字段权限/数据权限为骨架页。
  */
 
 import React, { useEffect, useState, useMemo } from 'react';
-import { rolePermissionService } from '../services/system';
+import { rolePermissionService } from '../../services/system';
 
 const TABS = [
   { key: 'users', label: '角色用户' },
@@ -13,9 +13,6 @@ const TABS = [
   { key: 'field', label: '字段权限' },
   { key: 'data', label: '数据权限' },
 ];
-
-const FIELD_STORAGE_KEY = 'ecommerce:system:roleFieldPermissions';
-const DATA_STORAGE_KEY = 'ecommerce:system:roleDataPermissions';
 
 function RolePermissionPage() {
   const [roles, setRoles] = useState([]);
@@ -28,7 +25,7 @@ function RolePermissionPage() {
   const [showAddModal, setShowAddModal] = useState(false);
   const [newRoleName, setNewRoleName] = useState('');
 
-  // 角色用户 Tab：模拟用户列表
+  // 角色用户 Tab：通过 service 读取当前原型里的用户角色归属
   const [roleUsers, setRoleUsers] = useState([]);
   const [roleUserSearch, setRoleUserSearch] = useState('');
   const [selectedUserIds, setSelectedUserIds] = useState([]);
@@ -44,13 +41,25 @@ function RolePermissionPage() {
   const [dataPerms, setDataPerms] = useState({});
 
   const loadRoles = () => {
-    setRoles(rolePermissionService.getRoles());
+    const nextRoles = rolePermissionService.getRoles();
+    setRoles(nextRoles);
+    setSelectedRoleId((current) => {
+      if (nextRoles.length === 0) return null;
+      if (current && nextRoles.some((role) => role.id === current)) return current;
+      return nextRoles[0].id;
+    });
   };
 
   const loadMeta = () => {
-    setMeta(rolePermissionService.getPermissionMeta());
+    const permissionMeta = rolePermissionService.getPermissionMeta();
+    setMeta(permissionMeta);
     setFieldMeta(rolePermissionService.getFieldPermissionMeta?.() ?? null);
     setDataMeta(rolePermissionService.getDataPermissionMeta?.() ?? null);
+    setSelectedModuleId((current) => {
+      if (!permissionMeta?.modules?.length) return null;
+      if (current && permissionMeta.modules.some((module) => module.id === current)) return current;
+      return permissionMeta.modules[0].id;
+    });
   };
 
   useEffect(() => {
@@ -67,35 +76,27 @@ function RolePermissionPage() {
   }, [selectedRoleId]);
 
   useEffect(() => {
-    if (!selectedRoleId || !fieldMeta) return;
-    try {
-      const raw = window.localStorage.getItem(FIELD_STORAGE_KEY);
-      const all = raw ? JSON.parse(raw) : {};
-      setFieldPerms(all[selectedRoleId] || {});
-    } catch {
+    if (!selectedRoleId || !fieldMeta) {
       setFieldPerms({});
+      return;
     }
+    setFieldPerms(rolePermissionService.getFieldPermissions(selectedRoleId));
   }, [selectedRoleId, fieldMeta]);
 
   useEffect(() => {
-    if (!selectedRoleId || !dataMeta) return;
-    try {
-      const raw = window.localStorage.getItem(DATA_STORAGE_KEY);
-      const all = raw ? JSON.parse(raw) : {};
-      setDataPerms(all[selectedRoleId] || {});
-    } catch {
+    if (!selectedRoleId || !dataMeta) {
+      setDataScope('self');
       setDataPerms({});
+      return;
     }
+    const next = rolePermissionService.getDataPermissions(selectedRoleId);
+    setDataScope(next.scope);
+    setDataPerms(next.perms);
   }, [selectedRoleId, dataMeta]);
 
-  // 角色用户： mock 几条
   useEffect(() => {
     if (activeTab === 'users' && selectedRoleId) {
-      setRoleUsers([
-        { id: 'ru1', username: 'zhangsan', realName: '张三', phone: '13800138000' },
-        { id: 'ru2', username: 'lisi', realName: '李四', phone: '13800138001' },
-        { id: 'ru3', username: 'wangwu', realName: '王五', phone: '13800138002' },
-      ]);
+      setRoleUsers(rolePermissionService.getRoleUsers(selectedRoleId));
     } else {
       setRoleUsers([]);
     }
@@ -179,43 +180,64 @@ function RolePermissionPage() {
   const handleRefresh = () => {
     loadRoles();
     loadMeta();
-    if (selectedRoleId) setPermissions(rolePermissionService.getRolePermissions(selectedRoleId));
+    if (!selectedRoleId) return;
+    setPermissions(rolePermissionService.getRolePermissions(selectedRoleId));
+    setRoleUsers(rolePermissionService.getRoleUsers(selectedRoleId));
+    setFieldPerms(rolePermissionService.getFieldPermissions(selectedRoleId));
+    const nextData = rolePermissionService.getDataPermissions(selectedRoleId);
+    setDataScope(nextData.scope);
+    setDataPerms(nextData.perms);
   };
 
   const handleAddRole = () => {
     const name = (newRoleName || '').trim();
     if (!name) return window.alert('请输入角色名称');
-    rolePermissionService.createRole(name);
+    const nextRole = rolePermissionService.createRole(name);
     setShowAddModal(false);
     setNewRoleName('');
     loadRoles();
+    setSelectedRoleId(nextRole.id);
   };
 
   const handleRemoveRoleUser = (u) => {
     if (!window.confirm(`确定移除用户「${u.realName || u.username}」？`)) return;
-    setRoleUsers((prev) => prev.filter((x) => x.id !== u.id));
+    const nextRoleUsers = rolePermissionService.removeRoleUsers(selectedRoleId, [u.id]);
+    setRoleUsers(nextRoleUsers);
+    setSelectedUserIds((prev) => prev.filter((id) => id !== u.id));
+  };
+
+  const handleBatchRemoveRoleUsers = () => {
+    if (selectedUserIds.length === 0) return;
+    if (!window.confirm(`确定移除当前选中的 ${selectedUserIds.length} 个用户？`)) return;
+    const nextRoleUsers = rolePermissionService.removeRoleUsers(selectedRoleId, selectedUserIds);
+    setRoleUsers(nextRoleUsers);
+    setSelectedUserIds([]);
   };
 
   const handleSaveFieldPermission = () => {
     if (!selectedRoleId) return;
-    try {
-      const raw = window.localStorage.getItem(FIELD_STORAGE_KEY);
-      const all = raw ? JSON.parse(raw) : {};
-      all[selectedRoleId] = fieldPerms;
-      window.localStorage.setItem(FIELD_STORAGE_KEY, JSON.stringify(all));
-    } catch {}
+    rolePermissionService.updateFieldPermissions(selectedRoleId, fieldPerms);
     window.alert('已保存');
   };
 
   const handleSaveDataPermission = () => {
     if (!selectedRoleId) return;
-    try {
-      const raw = window.localStorage.getItem(DATA_STORAGE_KEY);
-      const all = raw ? JSON.parse(raw) : {};
-      all[selectedRoleId] = { scope: dataScope, perms: dataPerms };
-      window.localStorage.setItem(DATA_STORAGE_KEY, JSON.stringify(all));
-    } catch {}
+    rolePermissionService.updateDataPermissions(selectedRoleId, { scope: dataScope, perms: dataPerms });
     window.alert('已保存');
+  };
+
+  const handleResetFieldPermission = () => {
+    if (!selectedRoleId) return;
+    setFieldPerms(rolePermissionService.getFieldPermissions(selectedRoleId));
+    window.alert('已重置为上次保存状态');
+  };
+
+  const handleResetDataPermission = () => {
+    if (!selectedRoleId) return;
+    const next = rolePermissionService.getDataPermissions(selectedRoleId);
+    setDataScope(next.scope);
+    setDataPerms(next.perms);
+    window.alert('已重置为上次保存状态');
   };
 
   const setFieldPerm = (fieldId, optionId) => {
@@ -503,12 +525,14 @@ function RolePermissionPage() {
                       <div className="flex items-center gap-2">
                         <button
                           type="button"
+                          onClick={() => window.alert('请在“用户管理 > 编辑用户信息”中分配角色后，再回到当前页查看角色成员。')}
                           className="px-4 py-2 text-sm bg-blue-600 text-white rounded-md hover:bg-blue-700"
                         >
                           添加用户
                         </button>
                         <button
                           type="button"
+                          onClick={handleBatchRemoveRoleUsers}
                           disabled={selectedUserIds.length === 0}
                           className="px-4 py-2 text-sm border border-gray-200 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
                         >
@@ -652,6 +676,13 @@ function RolePermissionPage() {
                     <div className="flex justify-end pt-4 mt-4">
                       <button
                         type="button"
+                        onClick={handleResetFieldPermission}
+                        className="px-4 py-2 mr-2 text-sm border border-gray-200 rounded-md hover:bg-gray-50"
+                      >
+                        重置
+                      </button>
+                      <button
+                        type="button"
                         onClick={handleSaveFieldPermission}
                         className="px-4 py-2 text-sm bg-blue-600 text-white rounded-md hover:bg-blue-700"
                       >
@@ -770,6 +801,13 @@ function RolePermissionPage() {
                       </div>
                     </div>
                     <div className="flex justify-end pt-4 mt-4 flex-shrink-0">
+                      <button
+                        type="button"
+                        onClick={handleResetDataPermission}
+                        className="px-4 py-2 mr-2 text-sm border border-gray-200 rounded-md hover:bg-gray-50"
+                      >
+                        重置
+                      </button>
                       <button
                         type="button"
                         onClick={handleSaveDataPermission}

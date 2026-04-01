@@ -9,38 +9,38 @@ import {
     User
 } from 'lucide-react';
 import HomePage from './pages/HomePage';
-import ProductMasterPage from './pages/ProductMasterPage';
-import BOMManagementPage from './pages/BOMManagementPage';
-import BrandManagementPage from './pages/BrandManagementPage';
-import ProductStructurePage from './pages/ProductStructurePage';
-import CategoryTemplatePage from './pages/CategoryTemplatePage';
-import StoreDeptMappingPage from './pages/StoreDeptMappingPage';
-import CostCenterPage from './pages/CostCenterPage';
-import AllocationRulePage from './pages/AllocationRulePage';
+import ProductMasterPage from './pages/product/ProductMasterPage';
+import BOMManagementPage from './pages/product/BOMManagementPage';
+import BrandManagementPage from './pages/product/BrandManagementPage';
+import ProductStructurePage from './pages/product/ProductStructurePage';
+import CategoryTemplatePage from './pages/product/CategoryTemplatePage';
+import StoreDeptMappingPage from './pages/finance/StoreDeptMappingPage';
+import CostCenterPage from './pages/finance/CostCenterPage';
+import AllocationRulePage from './pages/finance/AllocationRulePage';
 
-import ExpenseApprovalListPageSimple from './pages/ExpenseApprovalListPage.simple';
-import ExpenseApprovalDetailPageSimple from './pages/ExpenseApprovalDetailPage.simple';
-import ExpenseFactPage from './pages/ExpenseFactPage';
-import ExpenseFactDetailPage from './pages/ExpenseFactDetailPage';
-import ExpenseCategoryPage from './pages/ExpenseCategoryPage';
-import OrganizationManagementPage from './pages/OrganizationManagementPage';
-import UserManagementPage from './pages/UserManagementPage';
-import RolePermissionPage from './pages/RolePermissionPage';
+import ApprovalCenterPage from './pages/workbench/ApprovalCenterPage';
+import ApprovalDetailPage from './pages/workbench/ApprovalDetailPage';
+import ExpenseFactPage from './pages/finance/ExpenseFactPage';
+import ExpenseFactDetailPage from './pages/finance/ExpenseFactDetailPage';
+import ExpenseCategoryPage from './pages/finance/ExpenseCategoryPage';
+import OrganizationManagementPage from './pages/organization/OrganizationManagementPage';
+import UserManagementPage from './pages/organization/UserManagementPage';
+import RolePermissionPage from './pages/organization/RolePermissionPage';
 import PlaceholderPage from './pages/PlaceholderPage';
-import SlowMovingAnalysisPage from './pages/SlowMovingAnalysisPage';
-import SkuDetailPage from './pages/SkuDetailPage.simple';
-import SalesTargetPage from './pages/SalesTargetPage';
-import ProductTagPage from './pages/ProductTagPage';
-import CodingRulePage from './pages/CodingRulePage';
-import ProductAttributePage from './pages/ProductAttributePage';
-import BudgetVersionPage from './pages/BudgetVersionPage';
-import BudgetVersionDetailPage from './pages/BudgetVersionDetailPage';
-import SupplierListPage from './pages/SupplierListPage';
-import SupplierDetailPage from './pages/SupplierDetailPage';
-import SkuIterationPage from './pages/SkuIterationPage';
-import SalesForecastPage from './pages/SalesForecastPage';
-import VirtualComboPage from './pages/VirtualComboPage';
-import SalesProductPage from './pages/SalesProductPage';
+import SlowMovingAnalysisPage from './pages/sales/SlowMovingAnalysisPage';
+import SkuDetailPage from './pages/product/SkuDetailPage.simple';
+import SalesTargetPage from './pages/sales/SalesTargetPage';
+import ProductTagPage from './pages/product/ProductTagPage';
+import CodingRulePage from './pages/product/CodingRulePage';
+import ProductAttributePage from './pages/product/ProductAttributePage';
+import BudgetVersionPage from './pages/finance/BudgetVersionPage';
+import BudgetVersionDetailPage from './pages/finance/BudgetVersionDetailPage';
+import SupplierListPage from './pages/procurement/SupplierListPage';
+import SupplierDetailPage from './pages/procurement/SupplierDetailPage';
+import SkuIterationPage from './pages/product/SkuIterationPage';
+import SalesForecastPage from './pages/sales/SalesForecastPage';
+import VirtualComboPage from './pages/product/VirtualComboPage';
+import SalesProductPage from './pages/sales/SalesProductPage';
 import SettingsParamsPage from './pages/settings/SettingsParamsPage';
 import SettingsLogPage from './pages/settings/SettingsLogPage';
 import SettingsDictPage from './pages/settings/SettingsDictPage';
@@ -69,9 +69,9 @@ import QualityInboundPage from './pages/quality/QualityInboundPage';
 import QualityComplaintPage from './pages/quality/QualityComplaintPage';
 import SalesDataAggregationPage from './pages/sales/SalesDataAggregationPage';
 import SalesPlanDashboardPage from './pages/sales/SalesPlanDashboardPage';
-import SalesChinaPage from './pages/sales/SalesChinaPage';
-import SalesSeaPage from './pages/sales/SalesSeaPage';
-import SalesEuropePage from './pages/sales/SalesEuropePage';
+import SalesChinaPage from './pages/sales/cn/SalesChinaPage';
+import SalesSeaPage from './pages/sales/sea/SalesSeaPage';
+import SalesEuropePage from './pages/sales/eu/SalesEuropePage';
 import ProcurementPlanTrackingPage from './pages/procurement/ProcurementPlanTrackingPage';
 import ProjectManagementPage from './pages/project/ProjectManagementPage';
 import PMOverviewPage from './pages/project/ProjectOverviewPage';
@@ -80,7 +80,7 @@ import ProjectCreatePage from './pages/project/ProjectCreatePage';
 import BusinessAnalysisPage from './pages/business/BusinessAnalysisPage';
 import HumanResourcesPage from './pages/hr/HumanResourcesPage';
 import UsSalesOverviewPage from './pages/overview/UsSalesOverviewPage';
-import UsPrivateDomainPage from './pages/sales/UsPrivateDomainPage';
+import UsPrivateDomainPage from './pages/sales/us/UsPrivateDomainPage';
 import CnSalesOverviewPage from './pages/overview/CnSalesOverviewPage';
 import SeaSalesOverviewPage from './pages/overview/SeaSalesOverviewPage';
 import EuSalesOverviewPage from './pages/overview/EuSalesOverviewPage';
@@ -92,18 +92,18 @@ import FinanceOverviewPage from './pages/overview/FinanceOverviewPage';
 import QualityOverviewPage from './pages/overview/QualityOverviewPage';
 import ProjectOverviewPage from './pages/overview/ProjectOverviewPage';
 import HrOverviewPage from './pages/overview/HrOverviewPage';
-import CostAnalysisPage from './pages/CostAnalysisPage';
-import CostAnalysisDetailPage from './pages/CostAnalysisDetailPage';
-import RevenueAnalysisPage from './pages/RevenueAnalysisPage';
-import ProfitAnalysisPage from './pages/ProfitAnalysisPage';
-import AnnouncementsPage from './pages/AnnouncementsPage';
-import EmployeeManagementPage from './pages/EmployeeManagementPage';
+import CostAnalysisPage from './pages/finance/CostAnalysisPage';
+import CostAnalysisDetailPage from './pages/finance/CostAnalysisDetailPage';
+import RevenueAnalysisPage from './pages/finance/RevenueAnalysisPage';
+import ProfitAnalysisPage from './pages/finance/ProfitAnalysisPage';
+import AnnouncementsPage from './pages/announcement/AnnouncementsPage';
+import EmployeeManagementPage from './pages/hr/EmployeeManagementPage';
 import ActiveEmployeeListPage from './pages/hr/ActiveEmployeeListPage';
 import FormerEmployeeListPage from './pages/hr/FormerEmployeeListPage';
 import HrOrganizationPage from './pages/hr/HrOrganizationPage';
 import PerformanceManagementPage from './pages/hr/PerformanceManagementPage';
 import RecruitmentManagementPage from './pages/hr/RecruitmentManagementPage';
-import AnnouncementDetailPage from './pages/AnnouncementDetailPage';
+import AnnouncementDetailPage from './pages/announcement/AnnouncementDetailPage';
 import ModuleLayout from './layouts/ModuleLayout';
 import DynamicSidebar, { navConfig } from './layouts/DynamicSidebar';
 
@@ -552,7 +552,7 @@ function App() {
             // 产品相关详情页
             case '/product/sku-detail':
                 return (
-                    <div className="flex-1 min-h-0 overflow-auto">
+                    <div className="h-full">
                         <SkuDetailPage record={tab.data} />
                     </div>
                 );
@@ -569,14 +569,34 @@ function App() {
                         }
                     />
                 );
-            case '/finance/approval/list':
+            case '/workbench/approvals':
                 return (
-                    <ExpenseApprovalListPageSimple
+                    <ApprovalCenterPage
                         onOpenDetail={(rec) => {
                             openTab({
-                                id: `finance/approval/detail-${rec?.id ?? Date.now()}`,
+                                id: `workbench/approvals/detail-${rec?.id ?? Date.now()}`,
                                 name: '审批单详情',
-                                path: '/finance/approval/detail',
+                                path: '/workbench/approvals/detail',
+                                data: rec
+                            });
+                        }}
+                    />
+                );
+            case '/workbench/approvals/detail':
+                return (
+                    <ApprovalDetailPage
+                        record={tab.data}
+                        onBack={() => closeTab(tab.id)}
+                    />
+                );
+            case '/finance/approval/list':
+                return (
+                    <ApprovalCenterPage
+                        onOpenDetail={(rec) => {
+                            openTab({
+                                id: `workbench/approvals/detail-${rec?.id ?? Date.now()}`,
+                                name: '审批单详情',
+                                path: '/workbench/approvals/detail',
                                 data: rec
                             });
                         }}
@@ -584,7 +604,7 @@ function App() {
                 );
             case '/finance/approval/detail':
                 return (
-                    <ExpenseApprovalDetailPageSimple
+                    <ApprovalDetailPage
                         record={tab.data}
                         onBack={() => closeTab(tab.id)}
                     />
