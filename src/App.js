@@ -1,7 +1,6 @@
 // src/App.js
-import React, {useState, useCallback, useMemo} from 'react';
+import React, {useState, useCallback} from 'react';
 import {
-    ChevronDown,
     X,
     Search,
     Bell,
@@ -106,56 +105,16 @@ import PerformanceManagementPage from './pages/hr/PerformanceManagementPage';
 import RecruitmentManagementPage from './pages/hr/RecruitmentManagementPage';
 import AnnouncementDetailPage from './pages/AnnouncementDetailPage';
 import ModuleLayout from './layouts/ModuleLayout';
-import DynamicSidebar from './layouts/DynamicSidebar';
+import DynamicSidebar, { navConfig } from './layouts/DynamicSidebar';
 
 // 导航配置已移至 DynamicSidebar.js
 
-// 标签栏最多直接展示的个数，超出部分放入「更多」下拉
-const MAX_VISIBLE_TABS = 8;
-
 // --------------- 顶部导航栏（标题 + 标签 + 功能）---------------
 const Header = ({ tabs, activeTabId, onTabClick, onTabClose, currentPath, onNavigate }) => {
-    const [moreOpen, setMoreOpen] = useState(false);
     const [userMenuOpen, setUserMenuOpen] = useState(false);
-    // 记录标签访问顺序（最近访问的在前面）
-    const [accessOrder, setAccessOrder] = useState([]);
     
     const isHome = currentPath === '/home' || currentPath === '/';
     const currentModule = isHome ? '工作台' : (tabs.find(t => t.id === activeTabId)?.name ?? '首页');
-    
-    // 当激活标签变化时，更新访问顺序
-    React.useEffect(() => {
-        if (activeTabId) {
-            setAccessOrder(prev => {
-                // 移除当前标签（如果存在）
-                const filtered = prev.filter(id => id !== activeTabId);
-                // 添加到最前面
-                return [activeTabId, ...filtered];
-            });
-        }
-    }, [activeTabId]);
-    
-    // 智能排序：按最近访问顺序排列标签
-    const sortedTabs = useMemo(() => {
-        if (tabs.length <= MAX_VISIBLE_TABS) return tabs;
-        
-        // 按访问顺序排序
-        const ordered = [...tabs].sort((a, b) => {
-            const indexA = accessOrder.indexOf(a.id);
-            const indexB = accessOrder.indexOf(b.id);
-            // 都没访问过的按原顺序（新标签在后面）
-            if (indexA === -1 && indexB === -1) return 0;
-            if (indexA === -1) return 1;
-            if (indexB === -1) return -1;
-            return indexA - indexB;
-        });
-        
-        return ordered;
-    }, [tabs, accessOrder]);
-    
-    const showOverflow = tabs.length > MAX_VISIBLE_TABS;
-    const visibleTabs = showOverflow ? sortedTabs.slice(0, MAX_VISIBLE_TABS - 1) : sortedTabs;
-    const overflowTabs = showOverflow ? sortedTabs.slice(MAX_VISIBLE_TABS - 1) : [];
 
     return (
         <header className="flex h-14 flex-shrink-0 items-center border-b border-border bg-surface px-4">
@@ -172,21 +131,21 @@ const Header = ({ tabs, activeTabId, onTabClick, onTabClose, currentPath, onNavi
                 </div>
             )}
             
-            {/* 中间：标签栏 */}
-            <div className="flex-1 min-w-0 flex items-center">
-                <div className="flex-1 min-w-0 overflow-x-auto">
-                    <div className="flex items-center gap-1 min-w-0">
-                        {visibleTabs.map(tab => (
-                            <div
-                                key={tab.id}
-                                className={`group flex items-center gap-2 px-3 py-1.5 rounded-lg cursor-pointer transition-colors min-w-0 max-w-[160px] flex-shrink-0 ${
-                                    activeTabId === tab.id
-                                        ? 'bg-brand-50 text-brand-700 font-medium'
-                                        : 'text-text-muted hover:bg-surface-subtle'
-                                }`}
-                                onClick={() => onTabClick(tab.id)}
-                            >
-                                <span className="text-sm truncate flex-1 min-w-0">{tab.name}</span>
+            {/* 中间：标签栏（横向滚动） */}
+            <div className="flex-1 min-w-0 overflow-x-auto" style={{ scrollbarWidth: 'none' }}>
+                <div className="flex items-center gap-1" style={{ width: 'max-content' }}>
+                    {tabs.map(tab => (
+                        <div
+                            key={tab.id}
+                            className={`group flex items-center gap-2 px-3 py-1.5 rounded-lg cursor-pointer transition-colors flex-shrink-0 max-w-[160px] ${
+                                activeTabId === tab.id
+                                    ? 'bg-brand-50 text-brand-700 font-medium'
+                                    : 'text-text-muted hover:bg-surface-subtle'
+                            }`}
+                            onClick={() => onTabClick(tab.id)}
+                        >
+                            <span className="text-sm truncate flex-1 min-w-0">{tab.name}</span>
+                            {tab.id !== '/home' && (
                                 <button
                                     onClick={(e) => {
                                         e.stopPropagation();
@@ -196,73 +155,10 @@ const Header = ({ tabs, activeTabId, onTabClick, onTabClose, currentPath, onNavi
                                 >
                                     <X className="w-3 h-3" />
                                 </button>
-                            </div>
-                        ))}
-                    </div>
+                            )}
+                        </div>
+                    ))}
                 </div>
-                
-                {/* 更多标签 */}
-                {showOverflow && (
-                    <div className="relative flex-shrink-0 ml-1">
-                        <button
-                            type="button"
-                            onClick={() => setMoreOpen(prev => !prev)}
-                            className={`flex items-center gap-1 px-2 py-1.5 rounded-lg text-sm transition-colors ${
-                                overflowTabs.some(t => t.id === activeTabId)
-                                    ? 'bg-brand-50 text-brand-700 font-medium'
-                                    : 'text-text-muted hover:bg-surface-subtle'
-                            }`}
-                        >
-                            <span>更多</span>
-                            <ChevronDown className={`w-4 h-4 transition-transform ${moreOpen ? 'rotate-180' : ''}`} />
-                        </button>
-                        {moreOpen && (
-                            <>
-                                <div
-                                    className="fixed inset-0 z-[100]"
-                                    onClick={() => setMoreOpen(false)}
-                                    aria-hidden="true"
-                                />
-                                <div className="absolute right-0 top-full z-[101] mt-1 max-h-72 min-w-[200px] overflow-y-auto rounded-2xl border border-border bg-surface py-1 shadow-elevated">
-                                    {overflowTabs.map(tab => (
-                                        <div
-                                            key={tab.id}
-                                            role="button"
-                                            tabIndex={0}
-                                                className={`flex items-center justify-between gap-2 px-3 py-2 cursor-pointer text-sm hover:bg-surface-subtle ${
-                                                activeTabId === tab.id ? 'bg-brand-50 text-brand-700' : 'text-text-muted'
-                                            }`}
-                                            onClick={() => {
-                                                onTabClick(tab.id);
-                                                setMoreOpen(false);
-                                            }}
-                                            onKeyDown={(e) => {
-                                                if (e.key === 'Enter' || e.key === ' ') {
-                                                    e.preventDefault();
-                                                    onTabClick(tab.id);
-                                                    setMoreOpen(false);
-                                                }
-                                            }}
-                                        >
-                                            <span className="truncate flex-1 min-w-0">{tab.name}</span>
-                                            <button
-                                                type="button"
-                                                onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    onTabClose(tab.id);
-                                                    setMoreOpen(false);
-                                                }}
-                                                className="p-1 rounded hover:bg-gray-200 text-gray-400 hover:text-gray-600"
-                                            >
-                                                <X className="w-3 h-3" />
-                                            </button>
-                                        </div>
-                                    ))}
-                                </div>
-                            </>
-                        )}
-                    </div>
-                )}
             </div>
             
             {/* 右侧：功能按钮 */}
@@ -376,12 +272,14 @@ function App() {
         });
     }, []);
 
-    // 关闭标签后若当前激活的 tab 已被移除，则激活最后一个
+    // 关闭标签后若当前激活的 tab 已被移除，则激活最后一个并同步 URL
     React.useEffect(() => {
         if (tabs.length > 0 && !tabs.some(t => t.id === activeTabId)) {
-            setActiveTabId(tabs[tabs.length - 1].id);
+            const nextTab = tabs[tabs.length - 1];
+            setActiveTabId(nextTab.id);
+            updateUrl(nextTab.path);
         }
-    }, [tabs, activeTabId]);
+    }, [tabs, activeTabId, updateUrl]);
 
     const switchTab = useCallback((tabId) => {
         setActiveTabId(tabId);
@@ -392,41 +290,37 @@ function App() {
         }
     }, [tabs, updateUrl]);
 
-    // 根据 URL 路径获取页面名称
+    // 根据 URL 路径获取页面名称（从 navConfig 自动派生，保证与侧栏完全一致）
     const getPageNameFromPath = useCallback((path) => {
-        const pathMap = {
-            '/home': '首页',
-            '/product': '产品中心',
-            '/product/master': '产品主数据',
-            '/hr/employees': '企业人才库',
-            '/hr/active-employees': '在职员工列表',
-            '/hr/former-employees': '离职员工列表',
-            '/hr/organization': '组织架构管理',
-            '/hr/performance': '绩效管理',
-            '/hr/recruitment': '招聘管理',
-            '/procurement/supplier': '供应商管理',
-            '/logistics': '物流与报关',
-            '/finance/expense-fact': '费用事实',
-            '/announcements': '公司公告',
-            '/supply-chain-plan': '供应链计划',
-            '/project': '新品开发项目',
-        };
-        // 尝试直接匹配
+        // 从 navConfig 所有模块的 items 中收集 path -> name 映射
+        const pathMap = { '/home': '首页' };
+        Object.values(navConfig).forEach(module => {
+            (module.items || []).forEach(item => {
+                if (item.path && item.name) {
+                    pathMap[item.path] = item.name;
+                }
+            });
+        });
         if (pathMap[path]) return pathMap[path];
-        // 尝试前缀匹配
+        // 前缀匹配（处理详情页等动态路径）
+        let bestMatch = '';
+        let bestName = '页面';
         for (const [key, value] of Object.entries(pathMap)) {
-            if (path.startsWith(key)) return value;
+            if (path.startsWith(key) && key.length > bestMatch.length) {
+                bestMatch = key;
+                bestName = value;
+            }
         }
-        return '页面';
+        return bestName;
     }, []);
 
-    // 首次加载：根据 URL 打开对应页面
+    // 首次加载：根据 URL 打开对应页面（首页 tab 始终保留在第一位）
     React.useEffect(() => {
         const currentPath = window.location.pathname;
         if (currentPath && currentPath !== '/' && currentPath !== '/home') {
             const pageName = getPageNameFromPath(currentPath);
-            // 清空默认标签页，直接打开 URL 对应的页面
-            setTabs([{ id: currentPath, name: pageName, path: currentPath }]);
+            const homeTab = { id: '/home', name: '首页', path: '/home' };
+            setTabs([homeTab, { id: currentPath, name: pageName, path: currentPath }]);
             setActiveTabId(currentPath);
         }
     }, [getPageNameFromPath]);
@@ -454,6 +348,7 @@ function App() {
 
     // 根据当前激活的标签渲染内容（所有页面统一走标签）
     const renderTabContent = (tab) => {
+        console.log('渲染 Tab 内容:', tab);
         if (!tab) return <HomePage />;
         // ---------- 物流基础资料详情 Tab（path 前缀判断，包一层 div 与物流商一致） ----------
         if (tab.path && tab.path.startsWith('/logistics/vendors/')) {
@@ -507,7 +402,14 @@ function App() {
             );
         }
         // ---------- 项目工作台（动态路由）----------
-        if (tab.path && tab.path.startsWith('/project/') && tab.path !== '/project/create') {
+        const staticProjectPaths = [
+            '/project/overview',
+            '/project/new-product',
+            '/project/kanban',
+            '/project/tasks',
+            '/project/create',
+        ];
+        if (tab.path && tab.path.startsWith('/project/') && !staticProjectPaths.includes(tab.path)) {
             return (
                 <ProjectWorkspacePage
                     record={tab.data}
@@ -856,16 +758,70 @@ function App() {
                         <CnSalesOverviewPage />
                     </ModuleLayout>
                 );
+            case '/sales/cn/maindata':
+                return (
+                    <ModuleLayout>
+                        <SalesChinaPage />
+                    </ModuleLayout>
+                );
+            case '/sales/cn/target':
+                return (
+                    <ModuleLayout>
+                        <PlaceholderPage pageName="销售目标" path={tab.path} />
+                    </ModuleLayout>
+                );
+            case '/sales/cn/forecast':
+                return (
+                    <ModuleLayout>
+                        <PlaceholderPage pageName="销量预测" path={tab.path} />
+                    </ModuleLayout>
+                );
             case '/sales/sea/overview':
                 return (
                     <ModuleLayout>
                         <SeaSalesOverviewPage />
                     </ModuleLayout>
                 );
+            case '/sales/sea/maindata':
+                return (
+                    <ModuleLayout>
+                        <SalesSeaPage />
+                    </ModuleLayout>
+                );
+            case '/sales/sea/target':
+                return (
+                    <ModuleLayout>
+                        <PlaceholderPage pageName="销售目标" path={tab.path} />
+                    </ModuleLayout>
+                );
+            case '/sales/sea/forecast':
+                return (
+                    <ModuleLayout>
+                        <PlaceholderPage pageName="销量预测" path={tab.path} />
+                    </ModuleLayout>
+                );
             case '/sales/eu/overview':
                 return (
                     <ModuleLayout>
                         <EuSalesOverviewPage />
+                    </ModuleLayout>
+                );
+            case '/sales/eu/maindata':
+                return (
+                    <ModuleLayout>
+                        <SalesEuropePage />
+                    </ModuleLayout>
+                );
+            case '/sales/eu/target':
+                return (
+                    <ModuleLayout>
+                        <PlaceholderPage pageName="销售目标" path={tab.path} />
+                    </ModuleLayout>
+                );
+            case '/sales/eu/forecast':
+                return (
+                    <ModuleLayout>
+                        <PlaceholderPage pageName="销量预测" path={tab.path} />
                     </ModuleLayout>
                 );
             // 旧销售路由兼容（重定向到美国事业部对应页面）
@@ -923,6 +879,24 @@ function App() {
                         <PlaceholderPage pageName="经营概览" path={tab.path} />
                     </ModuleLayout>
                 );
+            case '/business-analysis/metrics':
+                return (
+                    <ModuleLayout>
+                        <PlaceholderPage pageName="经营指标" path={tab.path} />
+                    </ModuleLayout>
+                );
+            case '/business-analysis/data':
+                return (
+                    <ModuleLayout>
+                        <PlaceholderPage pageName="数据分析" path={tab.path} />
+                    </ModuleLayout>
+                );
+            case '/business-analysis/decision':
+                return (
+                    <ModuleLayout>
+                        <PlaceholderPage pageName="决策支持" path={tab.path} />
+                    </ModuleLayout>
+                );
             // 人力资源
             case '/hr/overview':
                 return (
@@ -964,6 +938,12 @@ function App() {
                 return (
                     <ModuleLayout>
                         <RecruitmentManagementPage />
+                    </ModuleLayout>
+                );
+            case '/hr/salary':
+                return (
+                    <ModuleLayout>
+                        <PlaceholderPage pageName="薪酬管理" path={tab.path} />
                     </ModuleLayout>
                 );
             // 供应链采购模块
@@ -1107,6 +1087,12 @@ function App() {
                         <SettingsEnumRulePage />
                     </ModuleLayout>
                 );
+            case '/settings':
+                return (
+                    <ModuleLayout>
+                        <SettingsBasicPage />
+                    </ModuleLayout>
+                );
             // 财务分析详情页（不需要ModuleLayout，因为是详情页）
             case '/finance-analysis/cost/detail':
                 return (
@@ -1119,15 +1105,35 @@ function App() {
             // 项目管理 - 新品开发PM模块
             case '/project':
                 return (
-                    <PMOverviewPage
-                        onOpenProject={(project) => openTab({
-                            id: `project-${project.id}`,
-                            name: project.name,
-                            path: `/project/${project.id}`,
-                            data: project
-                        })}
-                        onCreateProject={() => handleNavigate('/project/create', '新建项目')}
-                    />
+                    <ModuleLayout>
+                        <ProjectOverviewPage />
+                    </ModuleLayout>
+                );
+            case '/project/new-product':
+                return (
+                    <ModuleLayout>
+                        <PMOverviewPage
+                            onOpenProject={(project) => openTab({
+                                id: `project-${project.id}`,
+                                name: project.name,
+                                path: `/project/${project.id}`,
+                                data: project
+                            })}
+                            onCreateProject={() => handleNavigate('/project/create', '新建项目')}
+                        />
+                    </ModuleLayout>
+                );
+            case '/project/kanban':
+                return (
+                    <ModuleLayout>
+                        <PlaceholderPage pageName="项目看板" path={tab.path} />
+                    </ModuleLayout>
+                );
+            case '/project/tasks':
+                return (
+                    <ModuleLayout>
+                        <PlaceholderPage pageName="任务管理" path={tab.path} />
+                    </ModuleLayout>
                 );
             case '/project/create':
                 return (

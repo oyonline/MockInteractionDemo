@@ -15,20 +15,20 @@ import cn from '../utils/cn';
 // --------------- 一级入口配置 ---------------
 const mainEntries = [
     // 按指定顺序排列
-    { id: 'business-analysis', name: '经营管理分析', icon: BarChart3, desc: '经营指标 · 数据分析 · 决策支持', color: 'bg-blue-700', lightColor: 'bg-blue-100', path: '/business-analysis/overview' },
-    { id: 'sales-us-eu', name: '欧美事业部', icon: Globe, desc: '美国 · 欧洲销售运营', color: 'bg-rose-500', lightColor: 'bg-rose-50', path: '/sales/us/overview' },
-    { id: 'sales-cn-sea', name: '亚太事业部', icon: Globe, desc: '中国 · 东南亚销售运营', color: 'bg-violet-500', lightColor: 'bg-violet-50', path: '/sales/cn/overview' },
-    { id: 'product', name: '产品中心', icon: Package, desc: 'SKU管理 · BOM · 品牌', color: 'bg-sky-500', lightColor: 'bg-sky-50', path: '/product/overview' },
-    { id: 'project', name: '项目管理', icon: FolderKanban, desc: '立项 · 执行 · 交付', color: 'bg-amber-700', lightColor: 'bg-amber-100', path: '/project' },
-    { id: 'us-private-domain', name: 'KK-US私域管理', icon: Globe, desc: '私域客户 · 运营分析', color: 'bg-rose-600', lightColor: 'bg-rose-100', path: '/us-private-domain' },
-    { id: 'supply-chain', name: '供应链计划', icon: ClipboardList, desc: '需求计划 · 补货计划 · 库存策略', color: 'bg-teal-500', lightColor: 'bg-teal-50', path: '/supply-chain/overview' },
-    { id: 'procurement', name: '供应链采购', icon: ShoppingCart, desc: '供应商 · 采购计划', color: 'bg-amber-500', lightColor: 'bg-amber-50', path: '/procurement/overview' },
-    { id: 'logistics', name: '供应链物流', icon: Truck, desc: '物流商 · 渠道 · 报关', color: 'bg-purple-500', lightColor: 'bg-purple-50', path: '/logistics/overview' },
-    { id: 'quality', name: '供应链质量', icon: TestTube, desc: '质检 · 客诉 · 改善', color: 'bg-cyan-500', lightColor: 'bg-cyan-50', path: '/quality/overview' },
-    { id: 'finance', name: '财务中心', icon: DollarSign, desc: '成本中心 · 预算 · 分析', color: 'bg-emerald-500', lightColor: 'bg-emerald-50', path: '/finance/overview' },
-    { id: 'hr', name: '人力资源', icon: Briefcase, desc: '招聘 · 绩效 · 薪酬管理', color: 'bg-pink-500', lightColor: 'bg-pink-50', path: '/hr/overview' },
-    { id: 'organization', name: '权限设置', icon: Users, desc: '用户 · 角色 · 部门', color: 'bg-indigo-500', lightColor: 'bg-indigo-50', path: '/organization/overview' },
-    { id: 'settings', name: '系统设置', icon: Settings, desc: 'IT专用 · 系统配置', color: 'bg-gray-500', lightColor: 'bg-gray-100', path: '/settings' },
+    { id: 'business-analysis', name: '经营管理分析', routeName: '经营概览', icon: BarChart3, desc: '经营指标 · 数据分析 · 决策支持', color: 'bg-blue-700', lightColor: 'bg-blue-100', path: '/business-analysis/overview' },
+    { id: 'sales-us-eu', name: '欧美事业部', routeName: '事业部概览', icon: Globe, desc: '美国 · 欧洲销售运营', color: 'bg-rose-500', lightColor: 'bg-rose-50', path: '/sales/us/overview' },
+    { id: 'sales-cn-sea', name: '亚太事业部', routeName: '事业部概览', icon: Globe, desc: '中国 · 东南亚销售运营', color: 'bg-violet-500', lightColor: 'bg-violet-50', path: '/sales/cn/overview' },
+    { id: 'product', name: '产品中心', routeName: '产品概览', icon: Package, desc: 'SKU管理 · BOM · 品牌', color: 'bg-sky-500', lightColor: 'bg-sky-50', path: '/product/overview' },
+    { id: 'project', name: '项目管理', routeName: '项目概览', icon: FolderKanban, desc: '立项 · 执行 · 交付', color: 'bg-amber-700', lightColor: 'bg-amber-100', path: '/project/overview' },
+    { id: 'us-private-domain', name: 'KK-US私域管理', routeName: '概览', icon: Globe, desc: '私域客户 · 运营分析', color: 'bg-rose-600', lightColor: 'bg-rose-100', path: '/us-private-domain' },
+    { id: 'supply-chain', name: '供应链计划', routeName: '计划概览', icon: ClipboardList, desc: '需求计划 · 补货计划 · 库存策略', color: 'bg-teal-500', lightColor: 'bg-teal-50', path: '/supply-chain/overview' },
+    { id: 'procurement', name: '供应链采购', routeName: '采购概览', icon: ShoppingCart, desc: '供应商 · 采购计划', color: 'bg-amber-500', lightColor: 'bg-amber-50', path: '/procurement/overview' },
+    { id: 'logistics', name: '供应链物流', routeName: '物流概览', icon: Truck, desc: '物流商 · 渠道 · 报关', color: 'bg-purple-500', lightColor: 'bg-purple-50', path: '/logistics/overview' },
+    { id: 'quality', name: '供应链质量', routeName: '质量概览', icon: TestTube, desc: '质检 · 客诉 · 改善', color: 'bg-cyan-500', lightColor: 'bg-cyan-50', path: '/quality/overview' },
+    { id: 'finance', name: '财务中心', routeName: '财务概览', icon: DollarSign, desc: '成本中心 · 预算 · 分析', color: 'bg-emerald-500', lightColor: 'bg-emerald-50', path: '/finance/overview' },
+    { id: 'hr', name: '人力资源', routeName: '人力概览', icon: Briefcase, desc: '招聘 · 绩效 · 薪酬管理', color: 'bg-pink-500', lightColor: 'bg-pink-50', path: '/hr/overview' },
+    { id: 'organization', name: '权限设置', routeName: '组织概览', icon: Users, desc: '用户 · 角色 · 部门', color: 'bg-indigo-500', lightColor: 'bg-indigo-50', path: '/organization/overview' },
+    { id: 'settings', name: '系统设置', routeName: '系统设置', icon: Settings, desc: 'IT专用 · 系统配置', color: 'bg-gray-500', lightColor: 'bg-gray-100', path: '/settings' },
 ];
 
 // --------------- Mock 公告数据 ---------------
@@ -68,7 +68,7 @@ const todos = [
 export default function HomePage({ onNavigate, onOpenAnnouncement, onOpenAnnouncementsList }) {
     const handleEntryClick = (entry) => {
         if (onNavigate) {
-            onNavigate(entry.path, entry.name);
+            onNavigate(entry.path, entry.routeName || entry.name);
         }
     };
 
