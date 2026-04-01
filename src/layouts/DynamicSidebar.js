@@ -5,7 +5,7 @@ import { ChevronLeft, Package, TrendingUp, ShoppingCart, Truck, DollarSign, Test
 import cn from '../utils/cn';
 
 // --------------- 导航配置 ---------------
-const navConfig = {
+export const navConfig = {
     // 首页导航 - 一级入口
     home: {
         title: '工作台',
@@ -17,7 +17,7 @@ const navConfig = {
             { id: 'logistics', name: '物流与报关', icon: Truck, path: '/logistics/overview' },
             { id: 'finance', name: '财务中心', icon: DollarSign, path: '/finance/overview' },
             { id: 'quality', name: '质量管理', icon: TestTube, path: '/quality/overview' },
-            { id: 'project', name: '项目管理', icon: FolderKanban, path: '/project' },
+            { id: 'project', name: '项目管理', icon: FolderKanban, path: '/project/overview' },
             { id: 'business-analysis', name: '经营分析', icon: BarChart3, path: '/business-analysis/overview' },
             { id: 'organization', name: '组织权限', icon: Users, path: '/organization/overview' },
             { id: 'hr', name: '人力资源', icon: Briefcase, path: '/hr/overview' },
@@ -78,9 +78,9 @@ const navConfig = {
         parent: '/home',
         items: [
             { name: '事业部概览', path: '/sales/cn/overview' },
-            { name: '销售主数据', path: '/sales/cn' },
-            { name: '销售目标', path: '/sales/cn' },
-            { name: '销量预测', path: '/sales/cn' },
+            { name: '销售主数据', path: '/sales/cn/maindata' },
+            { name: '销售目标', path: '/sales/cn/target' },
+            { name: '销量预测', path: '/sales/cn/forecast' },
         ]
     },
     
@@ -90,9 +90,9 @@ const navConfig = {
         parent: '/home',
         items: [
             { name: '事业部概览', path: '/sales/sea/overview' },
-            { name: '销售主数据', path: '/sales/sea' },
-            { name: '销售目标', path: '/sales/sea' },
-            { name: '销量预测', path: '/sales/sea' },
+            { name: '销售主数据', path: '/sales/sea/maindata' },
+            { name: '销售目标', path: '/sales/sea/target' },
+            { name: '销量预测', path: '/sales/sea/forecast' },
         ]
     },
     
@@ -102,9 +102,9 @@ const navConfig = {
         parent: '/home',
         items: [
             { name: '事业部概览', path: '/sales/eu/overview' },
-            { name: '销售主数据', path: '/sales/eu' },
-            { name: '销售目标', path: '/sales/eu' },
-            { name: '销量预测', path: '/sales/eu' },
+            { name: '销售主数据', path: '/sales/eu/maindata' },
+            { name: '销售目标', path: '/sales/eu/target' },
+            { name: '销量预测', path: '/sales/eu/forecast' },
         ]
     },
     
@@ -114,7 +114,7 @@ const navConfig = {
         parent: '/home',
         items: [
             { name: '经营概览', path: '/business-analysis/overview' },
-            { name: '经营指标', path: '/business-analysis' },
+            { name: '经营指标', path: '/business-analysis/metrics' },
             { name: '数据分析', path: '/business-analysis/data' },
             { name: '决策支持', path: '/business-analysis/decision' },
         ]
@@ -141,9 +141,10 @@ const navConfig = {
         title: '项目管理',
         parent: '/home',
         items: [
-            { name: '新品开发项目', path: '/project' },
-            { name: '项目看板', path: '/project' },
-            { name: '任务管理', path: '/project' },
+            { name: '项目概览', path: '/project/overview' },
+            { name: '新品开发项目', path: '/project/new-product' },
+            { name: '项目看板', path: '/project/kanban' },
+            { name: '任务管理', path: '/project/tasks' },
         ]
     },
     
