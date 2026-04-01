@@ -11,15 +11,27 @@ const bus = [
   'JP Amazon', 'Other'
 ];
 
+/**
+ * 生成模拟数据
+ * 关键概念：P-1/P-3/P-5 表示"在N月前做出的对当前月份的预测"
+ * 例如：对于2026-02月的记录
+ * - p1ForecastAmount = 2026-01版本对2026-02的预测
+ * - p3ForecastAmount = 2025-12版本对2026-02的预测
+ * - p5ForecastAmount = 2025-10版本对2026-02的预测
+ */
 function generateMockData() {
   const data = [];
   const now = new Date();
   const currentMonth = new Date(now.getFullYear(), now.getMonth(), 1);
   
+  // 先生成基础数据模板（用于跨月引用）
+  const baseDataTemplate = {};
+  
   // 生成最近24个月的数据
   for (let i = 0; i < 24; i++) {
     const month = new Date(currentMonth.getFullYear(), currentMonth.getMonth() - i, 1);
     const monthStr = `${month.getFullYear()}-${String(month.getMonth() + 1).padStart(2, '0')}`;
+    baseDataTemplate[monthStr] = {};
     
     // 每个BU每个类目生成2-5个SKU
     bus.forEach(bu => {
@@ -28,52 +40,114 @@ function generateMockData() {
         
         for (let j = 0; j < skuCount; j++) {
           const skuId = `SKU${String(Math.floor(Math.random() * 9999)).padStart(4, '0')}`;
+          // 基础金额和数量（用于保持一致性）
           const baseAmount = 50000 + Math.random() * 200000;
           const baseQty = 100 + Math.floor(Math.random() * 500);
           
-          // Forecast数据（预测数据）
-          const forecastAmount = Math.round(baseAmount * (0.8 + Math.random() * 0.4));
-          const forecastQty = Math.round(baseQty * (0.8 + Math.random() * 0.4));
+          // 为每个SKU创建一个稳定的随机种子，确保跨月预测一致性
+          const skuSeed = `${bu}-${category}-${skuId}`;
           
-          // 实际销售数据（与预测有一定偏差）
-          const deviationRate = (Math.random() - 0.5) * 0.4; // -20% ~ +20%
-          const actualAmount = Math.round(forecastAmount * (1 + deviationRate));
-          const actualQty = Math.round(forecastQty * (1 + deviationRate));
+          if (!baseDataTemplate[monthStr][skuSeed]) {
+            baseDataTemplate[monthStr][skuSeed] = {};
+          }
           
-          // P-1: 上月forecast (如果i>0则有数据)
-          const p1ForecastAmount = i > 0 ? Math.round(baseAmount * (0.85 + Math.random() * 0.3)) : null;
-          const p1ForecastQty = i > 0 ? Math.round(baseQty * (0.85 + Math.random() * 0.3)) : null;
-          
-          // P-3: 3月前forecast (如果i>2则有数据)
-          const p3ForecastAmount = i > 2 ? Math.round(baseAmount * (0.9 + Math.random() * 0.2)) : null;
-          const p3ForecastQty = i > 2 ? Math.round(baseQty * (0.9 + Math.random() * 0.2)) : null;
-
-          // P-5: 5月前forecast (如果i>4则有数据)
-          const p5ForecastAmount = i > 4 ? Math.round(baseAmount * (0.92 + Math.random() * 0.16)) : null;
-          const p5ForecastQty = i > 4 ? Math.round(baseQty * (0.92 + Math.random() * 0.16)) : null;
-
-          data.push({
-            id: `${monthStr}-${bu}-${category}-${skuId}`,
-            sku: skuId,
+          baseDataTemplate[monthStr][skuSeed] = {
+            skuId,
             skuName: `${category} Product ${j + 1}`,
             category,
             bu,
-            month: monthStr,
-            forecastAmount,
-            forecastQty,
-            actualAmount,
-            actualQty,
-            deviationRate: Number(((actualAmount - forecastAmount) / forecastAmount).toFixed(4)),
-            p1ForecastAmount,
-            p1ForecastQty,
-            p3ForecastAmount,
-            p3ForecastQty,
-            p5ForecastAmount,
-            p5ForecastQty,
-            createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString(),
-          });
+            baseAmount,
+            baseQty,
+          };
         }
+      });
+    });
+  }
+  
+  // 第二次遍历：为每个月生成实际数据和历史预测数据
+  for (let i = 0; i < 24; i++) {
+    const month = new Date(currentMonth.getFullYear(), currentMonth.getMonth() - i, 1);
+    const monthStr = `${month.getFullYear()}-${String(month.getMonth() + 1).padStart(2, '0')}`;
+    
+    // 获取P-1, P-3, P-5对应的月份
+    const p1Month = new Date(month.getFullYear(), month.getMonth() - 1, 1);
+    const p1MonthStr = `${p1Month.getFullYear()}-${String(p1Month.getMonth() + 1).padStart(2, '0')}`;
+    const p3Month = new Date(month.getFullYear(), month.getMonth() - 3, 1);
+    const p3MonthStr = `${p3Month.getFullYear()}-${String(p3Month.getMonth() + 1).padStart(2, '0')}`;
+    const p5Month = new Date(month.getFullYear(), month.getMonth() - 5, 1);
+    const p5MonthStr = `${p5Month.getFullYear()}-${String(p5Month.getMonth() + 1).padStart(2, '0')}`;
+    
+    Object.keys(baseDataTemplate[monthStr]).forEach(skuSeed => {
+      const template = baseDataTemplate[monthStr][skuSeed];
+      const { skuId, skuName, category, bu, baseAmount, baseQty } = template;
+      
+      // 当前版本的Forecast（本月最新预测）
+      const forecastAmount = Math.round(baseAmount * (0.8 + Math.random() * 0.4));
+      const forecastQty = Math.round(baseQty * (0.8 + Math.random() * 0.4));
+      
+      // 实际销售数据（与最新预测有一定偏差）
+      const deviationRate = (Math.random() - 0.5) * 0.4; // -20% ~ +20%
+      const actualAmount = Math.round(forecastAmount * (1 + deviationRate));
+      const actualQty = Math.round(forecastQty * (1 + deviationRate));
+      
+      /**
+       * P-1: 上月(P-1Month)版本中对此月份(month)的预测
+       * 即从P-1Month的数据模板中获取对此月份的预测值
+       */
+      let p1ForecastAmount = null;
+      let p1ForecastQty = null;
+      if (i > 0 && baseDataTemplate[p1MonthStr] && baseDataTemplate[p1MonthStr][skuSeed]) {
+        const p1Template = baseDataTemplate[p1MonthStr][skuSeed];
+        // P-1月的预测对当前月：使用基础值的0.85-1.15倍，并加入一些随机性
+        const p1Seed = (p1Template.baseAmount * 1000) % 100 / 100;
+        p1ForecastAmount = Math.round(p1Template.baseAmount * (0.85 + p1Seed * 0.3));
+        p1ForecastQty = Math.round(p1Template.baseQty * (0.85 + p1Seed * 0.3));
+      }
+      
+      /**
+       * P-3: 3月前(P-3Month)版本中对此月份(month)的预测
+       */
+      let p3ForecastAmount = null;
+      let p3ForecastQty = null;
+      if (i > 2 && baseDataTemplate[p3MonthStr] && baseDataTemplate[p3MonthStr][skuSeed]) {
+        const p3Template = baseDataTemplate[p3MonthStr][skuSeed];
+        const p3Seed = (p3Template.baseAmount * 100) % 100 / 100;
+        p3ForecastAmount = Math.round(p3Template.baseAmount * (0.9 + p3Seed * 0.2));
+        p3ForecastQty = Math.round(p3Template.baseQty * (0.9 + p3Seed * 0.2));
+      }
+
+      /**
+       * P-5: 5月前(P-5Month)版本中对此月份(month)的预测
+       */
+      let p5ForecastAmount = null;
+      let p5ForecastQty = null;
+      if (i > 4 && baseDataTemplate[p5MonthStr] && baseDataTemplate[p5MonthStr][skuSeed]) {
+        const p5Template = baseDataTemplate[p5MonthStr][skuSeed];
+        const p5Seed = (p5Template.baseAmount * 10) % 100 / 100;
+        p5ForecastAmount = Math.round(p5Template.baseAmount * (0.92 + p5Seed * 0.16));
+        p5ForecastQty = Math.round(p5Template.baseQty * (0.92 + p5Seed * 0.16));
+      }
+
+      data.push({
+        id: `${monthStr}-${bu}-${category}-${skuId}`,
+        sku: skuId,
+        skuName,
+        category,
+        bu,
+        month: monthStr,
+        forecastAmount,
+        forecastQty,
+        actualAmount,
+        actualQty,
+        deviationRate: Number(((actualAmount - forecastAmount) / forecastAmount).toFixed(4)),
+        p1ForecastAmount,
+        p1ForecastQty,
+        p3ForecastAmount,
+        p3ForecastQty,
+        p5ForecastAmount,
+        p5ForecastQty,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
       });
     });
   }

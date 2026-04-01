@@ -25,4 +25,4 @@ export const LOGISTICS_ROUTING_RULES = PREFIX + 'logistics:routingRules';
 export const LOGISTICS_CONSOLIDATION_RULES = PREFIX + 'logistics:consolidationRules';
 
 // 供应链计划
-export const SUPPLY_CHAIN_FORECAST = PREFIX + 'supply-chain:forecast';
+export const SUPPLY_CHAIN_FORECAST = PREFIX + 'supply-chain:forecast:v2';
