@@ -17,6 +17,7 @@ const CategoryTemplatePage = () => {
       status: '已发布',
       effectiveDate: '2024-06-15',
       attributeCount: 18,
+      creator: '张建国',
       lastUpdatedBy: '李明',
       updateTime: '2024-06-15 10:30',
       attributes: [
@@ -34,11 +35,172 @@ const CategoryTemplatePage = () => {
       status: '已发布',
       effectiveDate: '2024-05-20',
       attributeCount: 15,
+      creator: '刘敏',
       lastUpdatedBy: '王芳',
       updateTime: '2024-05-20 14:20',
       attributes: [
         { group: '基础参数', name: '型号', code: 'model', level: 'SPU', type: '枚举', required: true, impactFlag: '泄力报警', enabled: true },
         { group: '基础参数', name: '手向', code: 'handedness', level: 'SKU', type: '枚举', required: true, impactFlag: '捏手', enabled: true }
+      ]
+    },
+    {
+      id: 'tpl-3',
+      name: 'Sharky III系列属性模板',
+      bindingObject: 'KastKing / 钓鱼竿 / 海竿 / Sharky III系列',
+      currentVersion: 'V1',
+      status: '已发布',
+      effectiveDate: '2024-04-10',
+      attributeCount: 16,
+      creator: '赵强',
+      lastUpdatedBy: '赵强',
+      updateTime: '2024-04-10 09:15',
+      attributes: [
+        { group: '基础参数', name: '长度', code: 'length', level: 'SPU', type: '枚举', required: true, impactFlag: '', enabled: true },
+        { group: '基础参数', name: '节数', code: 'sections', level: 'SPU', type: '枚举', required: true, impactFlag: '', enabled: true }
+      ]
+    },
+    {
+      id: 'tpl-4',
+      name: 'Speed Demon系列属性模板',
+      bindingObject: 'KastKing / 钓鱼竿 / 路亚竿 / Speed Demon系列',
+      currentVersion: 'V3',
+      status: '草稿',
+      effectiveDate: '2025-02-01',
+      attributeCount: 20,
+      creator: '王磊',
+      lastUpdatedBy: '陈静',
+      updateTime: '2025-01-12 16:40',
+      attributes: [
+        { group: '基础参数', name: '硬度', code: 'power', level: 'SPU', type: '枚举', required: true, impactFlag: '', enabled: true },
+        { group: '基础参数', name: '速比', code: 'gear_ratio', level: 'SPU', type: '枚举', required: false, impactFlag: '', enabled: true }
+      ]
+    },
+    {
+      id: 'tpl-5',
+      name: 'iCool系列属性模板',
+      bindingObject: 'KastKing / 钓鱼配件 / 钓鱼箱 / iCool系列',
+      currentVersion: 'V1',
+      status: '已发布',
+      effectiveDate: '2024-08-20',
+      attributeCount: 12,
+      creator: '孙丽',
+      lastUpdatedBy: '孙丽',
+      updateTime: '2024-08-20 11:00',
+      attributes: [
+        { group: '基础参数', name: '容量', code: 'capacity', level: 'SPU', type: '数值', required: true, impactFlag: '', enabled: true },
+        { group: '功能属性', name: '保温时长', code: 'insulation_time', level: 'SPU', type: '数值', required: false, impactFlag: '', enabled: true }
+      ]
+    },
+    {
+      id: 'tpl-6',
+      name: '战术系列路亚包模板',
+      bindingObject: 'Piscifun / 钓鱼包 / 路亚包 / 战术系列',
+      currentVersion: 'V2',
+      status: '已发布',
+      effectiveDate: '2024-07-05',
+      attributeCount: 14,
+      creator: '周涛',
+      lastUpdatedBy: '吴洋',
+      updateTime: '2024-11-08 13:25',
+      attributes: [
+        { group: '基础参数', name: '尺寸', code: 'size', level: 'SPU', type: '枚举', required: true, impactFlag: '', enabled: true },
+        { group: '材质属性', name: '面料', code: 'fabric', level: 'SPU', type: '枚举', required: true, impactFlag: '防水涂层', enabled: true }
+      ]
+    },
+    {
+      id: 'tpl-7',
+      name: '碳素线系列属性模板',
+      bindingObject: 'Piscifun / 钓鱼配件 / 钓鱼线 / 碳素系列',
+      currentVersion: 'V1',
+      status: '已发布',
+      effectiveDate: '2024-09-12',
+      attributeCount: 10,
+      creator: '郑华',
+      lastUpdatedBy: '郑华',
+      updateTime: '2024-09-12 10:10',
+      attributes: [
+        { group: '基础参数', name: '线径', code: 'diameter', level: 'SPU', type: '数值', required: true, impactFlag: '', enabled: true },
+        { group: '基础参数', name: '拉力', code: 'strength', level: 'SPU', type: '数值', required: true, impactFlag: '', enabled: true }
+      ]
+    },
+    {
+      id: 'tpl-8',
+      name: 'Chaos系列纺车轮模板',
+      bindingObject: 'KastKing / 渔线轮 / 纺车轮 / Chaos系列',
+      currentVersion: 'V4',
+      status: '草稿',
+      effectiveDate: '2025-03-15',
+      attributeCount: 17,
+      creator: '钱明',
+      lastUpdatedBy: '冯雪',
+      updateTime: '2025-01-20 14:50',
+      attributes: [
+        { group: '基础参数', name: '轴承数', code: 'bearings', level: 'SPU', type: '数值', required: true, impactFlag: '', enabled: true },
+        { group: '基础参数', name: '最大卸力', code: 'max_drag', level: 'SPU', type: '数值', required: false, impactFlag: '', enabled: true }
+      ]
+    },
+    {
+      id: 'tpl-9',
+      name: 'Bassinator系列水滴轮模板',
+      bindingObject: 'KastKing / 渔线轮 / 水滴轮 / Bassinator系列',
+      currentVersion: 'V1',
+      status: '已发布',
+      effectiveDate: '2024-10-01',
+      attributeCount: 15,
+      creator: '黄伟',
+      lastUpdatedBy: '黄伟',
+      updateTime: '2024-10-01 08:30',
+      attributes: [
+        { group: '基础参数', name: '重量', code: 'weight', level: 'SPU', type: '数值', required: true, impactFlag: '', enabled: true },
+        { group: '基础参数', name: '刹车系统', code: 'brake_system', level: 'SPU', type: '枚举', required: true, impactFlag: '磁力刹车', enabled: true }
+      ]
+    },
+    {
+      id: 'tpl-10',
+      name: 'Trifecta系列旅行竿模板',
+      bindingObject: 'KastKing / 钓鱼竿 / 旅行竿 / Trifecta系列',
+      currentVersion: 'V2',
+      status: '已发布',
+      effectiveDate: '2024-11-18',
+      attributeCount: 19,
+      creator: '林峰',
+      lastUpdatedBy: '蒋欣',
+      updateTime: '2024-12-05 15:10',
+      attributes: [
+        { group: '基础参数', name: '收缩长度', code: 'collapsed_length', level: 'SPU', type: '数值', required: true, impactFlag: '', enabled: true },
+        { group: '基础参数', name: '携带节数', code: 'travel_sections', level: 'SPU', type: '枚举', required: true, impactFlag: '', enabled: true }
+      ]
+    },
+    {
+      id: 'tpl-11',
+      name: 'Wild River系列钓椅模板',
+      bindingObject: 'Piscifun / 钓鱼配件 / 钓椅 / Wild River系列',
+      currentVersion: 'V1',
+      status: '草稿',
+      effectiveDate: '2025-04-01',
+      attributeCount: 11,
+      creator: '何平',
+      lastUpdatedBy: '何平',
+      updateTime: '2025-01-08 09:45',
+      attributes: [
+        { group: '基础参数', name: '承重', code: 'load_capacity', level: 'SPU', type: '数值', required: true, impactFlag: '', enabled: true },
+        { group: '基础参数', name: '折叠尺寸', code: 'folded_size', level: 'SPU', type: '枚举', required: false, impactFlag: '', enabled: true }
+      ]
+    },
+    {
+      id: 'tpl-12',
+      name: 'KastPro系列PE线模板',
+      bindingObject: 'KastKing / 钓鱼配件 / 钓鱼线 / KastPro系列',
+      currentVersion: 'V3',
+      status: '已发布',
+      effectiveDate: '2024-12-20',
+      attributeCount: 13,
+      creator: '徐东',
+      lastUpdatedBy: '谢薇',
+      updateTime: '2025-01-15 11:20',
+      attributes: [
+        { group: '基础参数', name: '编数', code: 'strands', level: 'SPU', type: '枚举', required: true, impactFlag: '', enabled: true },
+        { group: '基础参数', name: '涂层', code: 'coating', level: 'SPU', type: '枚举', required: false, impactFlag: '耐磨涂层', enabled: true }
       ]
     }
   ];
@@ -83,7 +245,8 @@ const CategoryTemplatePage = () => {
                 <th className="px-4 py-3 text-left font-medium text-gray-600">状态</th>
                 <th className="px-4 py-3 text-left font-medium text-gray-600">生效时间</th>
                 <th className="px-4 py-3 text-left font-medium text-gray-600">属性项数</th>
-                <th className="px-4 py-3 text-left font-medium text-gray-600">更新信息</th>
+                <th className="px-4 py-3 text-left font-medium text-gray-600">创建人</th>
+                <th className="px-4 py-3 text-left font-medium text-gray-600">更新人</th>
                 <th className="px-4 py-3 text-left font-medium text-gray-600">操作</th>
               </tr>
             </thead>
@@ -108,9 +271,10 @@ const CategoryTemplatePage = () => {
                       {tpl.attributeCount}
                     </span>
                   </td>
+                  <td className="px-4 py-3 text-sm text-gray-700">{tpl.creator}</td>
                   <td className="px-4 py-3 text-xs text-gray-500">
-                    <div>{tpl.updateTime}</div>
                     <div>{tpl.lastUpdatedBy}</div>
+                    <div className="text-gray-400">{tpl.updateTime}</div>
                   </td>
                   <td className="px-4 py-3">
                     <div className="flex gap-2">

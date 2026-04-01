@@ -1,8 +1,22 @@
-/** 系统模块 service：用户管理等，内部读 mock 或 localStorage，页面仅调用本层。 */
+/** 系统模块 service：用户管理与角色权限统一走 mock + localStorage 封装。 */
 
 import * as storage from '../utils/storage';
-import { SYSTEM_USERS, SYSTEM_ROLES, SYSTEM_ROLE_PERMISSIONS } from '../utils/storageKeys';
-import { getMockUserList, getMockUserMeta, getMockRoleList, getMockPermissionMeta, getMockInitialRolePermissions, getMockFieldPermissionMeta, getMockDataPermissionMeta } from '../mock';
+import {
+  SYSTEM_USERS,
+  SYSTEM_ROLES,
+  SYSTEM_ROLE_PERMISSIONS,
+  SYSTEM_ROLE_FIELD_PERMISSIONS,
+  SYSTEM_ROLE_DATA_PERMISSIONS,
+} from '../utils/storageKeys';
+import {
+  getMockUserList,
+  getMockUserMeta,
+  getMockRoleList,
+  getMockPermissionMeta,
+  getMockInitialRolePermissions,
+  getMockFieldPermissionMeta,
+  getMockDataPermissionMeta,
+} from '../mock';
 
 const DEFAULT_PERMISSIONS = {
   roles: [],
@@ -13,6 +27,14 @@ const DEFAULT_PERMISSIONS = {
   mailboxes: [],
 };
 
+const ROLE_NAME_ALIASES = {
+  role_admin: ['管理员', '系统管理员'],
+};
+
+function clone(data) {
+  return JSON.parse(JSON.stringify(data));
+}
+
 function toStatusValue(s) {
   if (s === 'enabled' || s === 'disabled') return s;
   if (s === '启用') return 'enabled';
@@ -20,38 +42,167 @@ function toStatusValue(s) {
   return 'enabled';
 }
 
-function normalizeUser(u, meta) {
-  const next = { ...u };
+function normalizeText(v) {
+  return String(v ?? '').trim().toLowerCase();
+}
+
+function splitRoleText(value) {
+  return String(value || '')
+    .split(/[、,，/]/)
+    .map((item) => item.trim())
+    .filter(Boolean);
+}
+
+function normalizeRolesData(list) {
+  const defaults = getMockRoleList();
+  const currentList = Array.isArray(list) ? list : [];
+  const currentById = new Map(currentList.filter((item) => item && item.id).map((item) => [item.id, item]));
+  const merged = defaults.map((item) => ({
+    ...item,
+    ...(currentById.get(item.id) || {}),
+    name: item.name,
+    preset: item.preset,
+  }));
+
+  currentList.forEach((item) => {
+    if (!item || !item.id) return;
+    if (defaults.some((base) => base.id === item.id)) return;
+    merged.push({ ...item });
+  });
+
+  return merged;
+}
+
+function getRolesData() {
+  let list = storage.get(SYSTEM_ROLES);
+  if (list == null || !Array.isArray(list)) {
+    list = getMockRoleList();
+  }
+  const normalized = normalizeRolesData(list);
+  if (JSON.stringify(normalized) !== JSON.stringify(list)) {
+    storage.set(SYSTEM_ROLES, normalized);
+  }
+  return normalized;
+}
+
+function setRolesData(list) {
+  storage.set(SYSTEM_ROLES, normalizeRolesData(list));
+}
+
+function getRoleById(roleId) {
+  return getRolesData().find((item) => item.id === roleId) || null;
+}
+
+function getAllRoleNames(role) {
+  const names = [role?.name, ...(ROLE_NAME_ALIASES[role?.id] || [])].filter(Boolean);
+  return Array.from(new Set(names));
+}
+
+function findRoleByValue(value) {
+  const normalizedValue = normalizeText(value);
+  if (!normalizedValue) return null;
+  return (
+    getRolesData().find((role) => {
+      if (normalizeText(role.id) === normalizedValue) return true;
+      return getAllRoleNames(role).some((name) => normalizeText(name) === normalizedValue);
+    }) || null
+  );
+}
+
+function normalizeRoleIds(values) {
+  const ids = [];
+  const seen = new Set();
+  [].concat(values || []).forEach((value) => {
+    const role = findRoleByValue(value);
+    const nextId = role?.id || String(value || '').trim();
+    if (!nextId || seen.has(nextId)) return;
+    seen.add(nextId);
+    ids.push(nextId);
+  });
+  return ids;
+}
+
+function getRoleNamesByIds(roleIds) {
+  return normalizeRoleIds(roleIds)
+    .map((roleId) => getRoleById(roleId)?.name || roleId)
+    .filter(Boolean);
+}
+
+function normalizeUserPermissions(user) {
+  const currentPermissions =
+    user.permissions && typeof user.permissions === 'object'
+      ? { ...DEFAULT_PERMISSIONS, ...clone(user.permissions) }
+      : { ...DEFAULT_PERMISSIONS };
+  const fallbackRoleIds = splitRoleText(user.roles);
+  const roleIds = normalizeRoleIds(currentPermissions.roles.length > 0 ? currentPermissions.roles : fallbackRoleIds);
+  currentPermissions.roles = roleIds;
+  if (!currentPermissions.stores.length && user.storeId) currentPermissions.stores = [user.storeId];
+  if (!currentPermissions.warehouses.length && user.warehouseId) currentPermissions.warehouses = [user.warehouseId];
+  if (!currentPermissions.accounts1688.length && user.account1688Id) currentPermissions.accounts1688 = [user.account1688Id];
+  return currentPermissions;
+}
+
+function syncUserRoleState(user) {
+  const permissions = normalizeUserPermissions(user);
+  const roleNames = getRoleNamesByIds(permissions.roles);
+  const primaryRoleId = permissions.roles[0] || '';
+  const primaryRole = getRoleById(primaryRoleId);
+  return {
+    ...user,
+    permissions,
+    roles: roleNames.join('、'),
+    roleId: primaryRoleId,
+    roleName: primaryRole?.name || roleNames[0] || '',
+  };
+}
+
+function getNormalizedUserMeta() {
+  const mockMeta = getMockUserMeta();
+  return {
+    ...mockMeta,
+    roles: getRolesData().map((role) => ({
+      id: role.id,
+      name: role.name,
+      isPreset: !!role.preset,
+    })),
+  };
+}
+
+function normalizeUser(user, meta) {
+  const next = { ...user };
   next.status = toStatusValue(next.status);
   if (next.mobile && !next.phone) next.phone = next.mobile;
   if (next.keywordField && next.keywordField === 'mobile') next.keywordField = 'phone';
   if (!next.deptId && next.department && meta && Array.isArray(meta.depts)) {
-    const d = meta.depts.find((x) => x.name === next.department);
-    if (d) next.deptId = d.id;
+    const dept = meta.depts.find((item) => item.name === next.department);
+    if (dept) next.deptId = dept.id;
   }
   if (next.deptId && (!next.department || next.department === '')) {
-    const d = meta && Array.isArray(meta.depts) ? meta.depts.find((x) => x.id === next.deptId) : null;
-    if (d) next.department = d.name;
+    const dept = meta && Array.isArray(meta.depts) ? meta.depts.find((item) => item.id === next.deptId) : null;
+    if (dept) next.department = dept.name;
   }
-  return next;
+  return syncUserRoleState(next);
 }
 
 function getUsersData() {
-  const meta = getMockUserMeta();
+  const meta = getNormalizedUserMeta();
   let list = storage.get(SYSTEM_USERS);
   if (list == null || !Array.isArray(list)) {
     list = getMockUserList();
-    storage.set(SYSTEM_USERS, list);
   }
-  const normalized = list.map((u) => normalizeUser(u, meta));
-  // 若存在历史值（启用/禁用）或缺字段，回写一次（最小成本保证后续筛选一致）
-  const changed = normalized.some((u, idx) => JSON.stringify(u) !== JSON.stringify(list[idx]));
-  if (changed) storage.set(SYSTEM_USERS, normalized);
+  const normalized = list.map((item) => normalizeUser(item, meta));
+  if (JSON.stringify(normalized) !== JSON.stringify(list)) {
+    storage.set(SYSTEM_USERS, normalized);
+  }
   return normalized;
 }
 
 function setUsersData(list) {
-  storage.set(SYSTEM_USERS, list);
+  const meta = getNormalizedUserMeta();
+  storage.set(
+    SYSTEM_USERS,
+    list.map((item) => normalizeUser(item, meta))
+  );
 }
 
 function getDateKeyFromDatetime(dt) {
@@ -73,41 +224,100 @@ function normalizeKeywordField(f) {
   return 'realName';
 }
 
-function normalizeText(v) {
-  return String(v ?? '').trim().toLowerCase();
+function getPermissionsData() {
+  let data = storage.get(SYSTEM_ROLE_PERMISSIONS);
+  if (data == null || typeof data !== 'object') {
+    data = getMockInitialRolePermissions();
+  }
+  const next = { ...getMockInitialRolePermissions(), ...data };
+  if (JSON.stringify(next) !== JSON.stringify(data)) {
+    storage.set(SYSTEM_ROLE_PERMISSIONS, next);
+  }
+  return next;
+}
+
+function setPermissionsData(data) {
+  storage.set(SYSTEM_ROLE_PERMISSIONS, data);
+}
+
+function getFieldPermissionsData() {
+  const data = storage.get(SYSTEM_ROLE_FIELD_PERMISSIONS);
+  return data && typeof data === 'object' ? data : {};
+}
+
+function setFieldPermissionsData(data) {
+  storage.set(SYSTEM_ROLE_FIELD_PERMISSIONS, data);
+}
+
+function getDataPermissionsData() {
+  const data = storage.get(SYSTEM_ROLE_DATA_PERMISSIONS);
+  return data && typeof data === 'object' ? data : {};
+}
+
+function setDataPermissionsData(data) {
+  storage.set(SYSTEM_ROLE_DATA_PERMISSIONS, data);
+}
+
+function buildEmptyRolePermissions() {
+  const meta = getMockPermissionMeta();
+  const empty = {};
+  (meta.flatRows || []).forEach((row) => {
+    empty[row.id] = {};
+    (meta.actionColumns || []).forEach((col) => {
+      empty[row.id][col.id] = false;
+    });
+  });
+  return empty;
+}
+
+function getDefaultFieldPermissions() {
+  const meta = getMockFieldPermissionMeta();
+  return (meta.fields || []).reduce((acc, field) => {
+    acc[field.id] = 'visible';
+    return acc;
+  }, {});
+}
+
+function getDefaultDataPermissionState() {
+  const meta = getMockDataPermissionMeta();
+  return {
+    scope: meta.scopeOptions?.[0]?.id || 'self',
+    perms: (meta.rows || []).reduce((acc, row) => {
+      acc[row.functionId] = 'all';
+      return acc;
+    }, {}),
+  };
+}
+
+function getNormalizedRoleUsers(roleId) {
+  return getUsersData()
+    .filter((user) => user.permissions?.roles?.includes(roleId))
+    .map((user) => ({
+      id: user.id,
+      username: user.username,
+      realName: user.realName,
+      phone: user.phone,
+      email: user.email,
+      department: user.department,
+    }));
 }
 
 export const userService = {
-  /** 页面下拉选项等元数据（roles/stores/warehouses/accounts1688/depts/plans） */
+  /** 页面下拉元数据继续来自 mock/service，本次不引入真实接口。 */
   getMeta() {
-    return getMockUserMeta();
+    return getNormalizedUserMeta();
   },
 
-  /** 按 id 获取单用户，用于编辑页；缺省 permissions 时从旧字段迁移 */
   getUserById(id) {
-    const meta = getMockUserMeta();
-    const list = getUsersData().slice();
-    const u = list.find((x) => x.id === id);
-    if (!u) return null;
-    const normalized = normalizeUser({ ...u }, meta);
-    let permissions = normalized.permissions;
-    if (!permissions || typeof permissions !== 'object') {
-      permissions = { ...DEFAULT_PERMISSIONS };
-      if (normalized.roles) permissions.roles = [].concat(normalized.roles).filter(Boolean);
-      if (normalized.storeId) permissions.stores = [normalized.storeId];
-      if (normalized.warehouseId) permissions.warehouses = [normalized.warehouseId];
-      if (normalized.account1688Id) permissions.accounts1688 = [normalized.account1688Id];
-    }
-    return { ...normalized, permissions };
+    return getUsersData().find((item) => item.id === id) || null;
   },
 
-  /** 更新用户基础信息与权限勾选（编辑页保存） */
   updateUser(id, patch) {
-    const p = { ...patch };
-    if (p.permissions && typeof p.permissions === 'object') {
-      p.permissions = { ...DEFAULT_PERMISSIONS, ...p.permissions };
+    const nextPatch = { ...patch };
+    if (nextPatch.permissions && typeof nextPatch.permissions === 'object') {
+      nextPatch.permissions = { ...DEFAULT_PERMISSIONS, ...clone(nextPatch.permissions) };
     }
-    return this.update(id, p);
+    return this.update(id, nextPatch);
   },
 
   list(query = {}) {
@@ -132,44 +342,41 @@ export const userService = {
 
     let data = getUsersData().slice();
 
-    // 1) 时间区间
     const tf = timeField === 'createdAt' ? 'createdAt' : 'lastLoginAt';
     const from = String(dateFrom || '').trim();
     const to = String(dateTo || '').trim();
     if (from || to) {
-      data = data.filter((u) => inDateRange(getDateKeyFromDatetime(u[tf]), from, to));
+      data = data.filter((item) => inDateRange(getDateKeyFromDatetime(item[tf]), from, to));
     }
 
-    // 2) 状态
     if (status) {
-      const st = toStatusValue(status);
-      data = data.filter((u) => u.status === st);
+      const targetStatus = toStatusValue(status);
+      data = data.filter((item) => item.status === targetStatus);
     }
 
-    // 3) 角色
-    if (role) data = data.filter((u) => String(u.roles || '') === String(role));
+    if (role) {
+      const roleIds = normalizeRoleIds([role]);
+      data = data.filter((item) => roleIds.some((roleId) => item.permissions?.roles?.includes(roleId)));
+    }
 
-    // 4) 更多筛选
-    if (storeId) data = data.filter((u) => String(u.storeId || '') === String(storeId));
-    if (warehouseId) data = data.filter((u) => String(u.warehouseId || '') === String(warehouseId));
-    if (account1688Id) data = data.filter((u) => String(u.account1688Id || '') === String(account1688Id));
-    if (deptId) data = data.filter((u) => String(u.deptId || '') === String(deptId));
+    if (storeId) data = data.filter((item) => String(item.storeId || '') === String(storeId));
+    if (warehouseId) data = data.filter((item) => String(item.warehouseId || '') === String(warehouseId));
+    if (account1688Id) data = data.filter((item) => String(item.account1688Id || '') === String(account1688Id));
+    if (deptId) data = data.filter((item) => String(item.deptId || '') === String(deptId));
 
-    // 5) 关键词 / 精确
     const kf = normalizeKeywordField(keywordField);
     const exact = Array.isArray(exactList) ? exactList : [];
-    const exactNormalized = exact.map((x) => normalizeText(x)).filter(Boolean);
+    const exactNormalized = exact.map((item) => normalizeText(item)).filter(Boolean);
     if (exactNormalized.length > 0) {
-      const set = new Set(exactNormalized);
-      data = data.filter((u) => set.has(normalizeText(u[kf])));
+      const values = new Set(exactNormalized);
+      data = data.filter((item) => values.has(normalizeText(item[kf])));
     } else {
-      const kw = normalizeText(keyword);
-      if (kw) {
-        data = data.filter((u) => normalizeText(u[kf]).includes(kw));
+      const normalizedKeyword = normalizeText(keyword);
+      if (normalizedKeyword) {
+        data = data.filter((item) => normalizeText(item[kf]).includes(normalizedKeyword));
       }
     }
 
-    // 6) 排序
     if (sortBy) {
       data.sort((a, b) => {
         const av = a[sortBy] || '';
@@ -179,7 +386,6 @@ export const userService = {
       });
     }
 
-    // 7) 分页
     const total = data.length;
     const start = (Math.max(1, page) - 1) * Math.max(1, pageSize);
     const list = data.slice(start, start + Math.max(1, pageSize));
@@ -187,13 +393,18 @@ export const userService = {
   },
 
   create(payload) {
-    const meta = getMockUserMeta();
+    const meta = getNormalizedUserMeta();
     const list = getUsersData().slice();
     const id = 'u' + Date.now();
     const now = new Date().toISOString().slice(0, 19).replace('T', ' ');
 
-    const deptId = payload.deptId || (payload.department ? (meta.depts.find((d) => d.name === payload.department)?.id || '') : '');
-    const deptName = deptId ? (meta.depts.find((d) => d.id === deptId)?.name || payload.department || '') : (payload.department || '');
+    const deptId =
+      payload.deptId ||
+      (payload.department ? meta.depts.find((dept) => dept.name === payload.department)?.id || '' : '');
+    const deptName = deptId
+      ? meta.depts.find((dept) => dept.id === deptId)?.name || payload.department || ''
+      : payload.department || '';
+    const roleIds = normalizeRoleIds([payload.roles]);
 
     const user = {
       id,
@@ -208,12 +419,13 @@ export const userService = {
       warehouseId: String(payload.warehouseId ?? '').trim(),
       account1688Id: payload.account1688Id ?? '',
       createdAt: now,
-      roles: String(payload.roles ?? '').trim(),
+      roles: getRoleNamesByIds(roleIds).join('、'),
       permissionSummary: String(payload.permissionSummary ?? '').trim(),
       loginCount: 0,
       lastLoginAt: null,
       lastLoginIp: null,
       thirdPartyAuth: payload.thirdPartyAuth ?? null,
+      permissions: { ...DEFAULT_PERMISSIONS, roles: roleIds },
     };
     list.push(user);
     setUsersData(list);
@@ -221,26 +433,42 @@ export const userService = {
   },
 
   update(id, patch) {
-    const meta = getMockUserMeta();
+    const meta = getNormalizedUserMeta();
     const list = getUsersData().slice();
-    const idx = list.findIndex((u) => u.id === id);
-    if (idx === -1) return null;
+    const index = list.findIndex((item) => item.id === id);
+    if (index === -1) return null;
 
-    const next = { ...list[idx], ...patch };
+    const current = list[index];
+    const next = {
+      ...current,
+      ...patch,
+      permissions:
+        patch.permissions && typeof patch.permissions === 'object'
+          ? { ...DEFAULT_PERMISSIONS, ...clone(patch.permissions) }
+          : current.permissions,
+    };
+
     if (patch.status != null) next.status = toStatusValue(patch.status);
 
-    // deptId/department 双向补齐（不强制页面改表单字段）
     if (patch.deptId != null && patch.deptId !== '') {
-      const d = meta.depts.find((x) => x.id === patch.deptId);
-      if (d) next.department = d.name;
+      const dept = meta.depts.find((item) => item.id === patch.deptId);
+      if (dept) next.department = dept.name;
     } else if (patch.department != null && patch.department !== '') {
-      const d = meta.depts.find((x) => x.name === patch.department);
-      if (d) next.deptId = d.id;
+      const dept = meta.depts.find((item) => item.name === patch.department);
+      if (dept) next.deptId = dept.id;
     }
 
-    list[idx] = next;
+    if (patch.roles != null && (!patch.permissions || typeof patch.permissions !== 'object')) {
+      next.permissions = {
+        ...DEFAULT_PERMISSIONS,
+        ...(current.permissions || {}),
+        roles: normalizeRoleIds([patch.roles]),
+      };
+    }
+
+    list[index] = syncUserRoleState(next);
     setUsersData(list);
-    return next;
+    return list[index];
   },
 
   updateStatus(id, status) {
@@ -248,77 +476,47 @@ export const userService = {
   },
 
   remove(id) {
-    const list = getUsersData().filter((u) => u.id !== id);
-    setUsersData(list);
+    setUsersData(getUsersData().filter((item) => item.id !== id));
   },
 
   resetPassword(id, newPassword) {
-    // 原型只记录，不落库密码
     return this.update(id, {});
   },
 
   batchOperate({ ids, action }) {
     const list = getUsersData().slice();
     if (action === 'delete') {
-      const next = list.filter((u) => !ids.includes(u.id));
-      setUsersData(next);
+      setUsersData(list.filter((item) => !ids.includes(item.id)));
       return;
     }
-    const st = action === 'enable' ? 'enabled' : 'disabled';
-    list.forEach((u) => {
-      if (ids.includes(u.id)) u.status = st;
+
+    const nextStatus = action === 'enable' ? 'enabled' : 'disabled';
+    list.forEach((item) => {
+      if (ids.includes(item.id)) item.status = nextStatus;
     });
     setUsersData(list);
   },
 
   handover({ fromUserId, toUserId, scope }) {
-    // 原型：仅逻辑存在，可写日志或 toast
+    return { fromUserId, toUserId, scope };
   },
 
   reset() {
-    const list = getMockUserList();
-    setUsersData(list);
+    setUsersData(getMockUserList());
   },
 };
 
-// ---------- 角色与权限 ----------
-function getRolesData() {
-  let list = storage.get(SYSTEM_ROLES);
-  if (list == null || !Array.isArray(list)) {
-    list = getMockRoleList();
-    storage.set(SYSTEM_ROLES, list);
-  }
-  return list;
-}
-
-function setRolesData(list) {
-  storage.set(SYSTEM_ROLES, list);
-}
-
-function getPermissionsData() {
-  let data = storage.get(SYSTEM_ROLE_PERMISSIONS);
-  if (data == null || typeof data !== 'object') {
-    data = getMockInitialRolePermissions();
-    storage.set(SYSTEM_ROLE_PERMISSIONS, data);
-  }
-  return data;
-}
-
-function setPermissionsData(data) {
-  storage.set(SYSTEM_ROLE_PERMISSIONS, data);
-}
-
 export const rolePermissionService = {
   getRoles() {
-    return getRolesData().map((r) => ({ ...r }));
+    return getRolesData().map((item) => ({ ...item }));
   },
 
   createRole(name) {
     const list = getRolesData().slice();
-    const id = 'role_' + Date.now();
-    list.push({ id, name: String(name || '').trim(), preset: false });
+    const nextRole = { id: 'role_' + Date.now(), name: String(name || '').trim(), preset: false };
+    list.push(nextRole);
     setRolesData(list);
-    return list[list.length - 1];
+    return { ...nextRole };
   },
 
   getPermissionMeta() {
@@ -335,22 +533,74 @@ export const rolePermissionService = {
 
   getRolePermissions(roleId) {
     const data = getPermissionsData();
-    const rolePerms = data[roleId];
-    if (rolePerms && typeof rolePerms === 'object') return JSON.parse(JSON.stringify(rolePerms));
-    const meta = getMockPermissionMeta();
-    const empty = {};
-    (meta.flatRows || []).forEach((row) => {
-      empty[row.id] = {};
-      (meta.actionColumns || []).forEach((col) => {
-        empty[row.id][col.id] = false;
-      });
-    });
-    return empty;
+    const rolePermissions = data[roleId];
+    return rolePermissions && typeof rolePermissions === 'object' ? clone(rolePermissions) : buildEmptyRolePermissions();
   },
 
   updateRolePermissions(roleId, permissions) {
-    const data = getPermissionsData();
-    const next = { ...data, [roleId]: permissions };
+    const next = { ...getPermissionsData(), [roleId]: clone(permissions) };
     setPermissionsData(next);
+    return this.getRolePermissions(roleId);
+  },
+
+  getRoleUsers(roleId) {
+    return getNormalizedRoleUsers(roleId);
+  },
+
+  removeRoleUsers(roleId, userIds) {
+    const list = getUsersData().slice();
+    let changed = false;
+    list.forEach((user, index) => {
+      if (!userIds.includes(user.id)) return;
+      if (!user.permissions?.roles?.includes(roleId)) return;
+      changed = true;
+      const nextRoleIds = user.permissions.roles.filter((item) => item !== roleId);
+      list[index] = syncUserRoleState({
+        ...user,
+        permissions: {
+          ...DEFAULT_PERMISSIONS,
+          ...clone(user.permissions),
+          roles: nextRoleIds,
+        },
+      });
+    });
+    if (changed) setUsersData(list);
+    return this.getRoleUsers(roleId);
+  },
+
+  getFieldPermissions(roleId) {
+    const all = getFieldPermissionsData();
+    return {
+      ...getDefaultFieldPermissions(),
+      ...(all[roleId] || {}),
+    };
+  },
+
+  updateFieldPermissions(roleId, permissions) {
+    const all = getFieldPermissionsData();
+    all[roleId] = { ...getDefaultFieldPermissions(), ...clone(permissions) };
+    setFieldPermissionsData(all);
+    return this.getFieldPermissions(roleId);
+  },
+
+  getDataPermissions(roleId) {
+    const all = getDataPermissionsData();
+    const current = all[roleId] || {};
+    const defaults = getDefaultDataPermissionState();
+    return {
+      scope: current.scope || defaults.scope,
+      perms: { ...defaults.perms, ...(current.perms || {}) },
+    };
+  },
+
+  updateDataPermissions(roleId, payload) {
+    const all = getDataPermissionsData();
+    const defaults = getDefaultDataPermissionState();
+    all[roleId] = {
+      scope: payload?.scope || defaults.scope,
+      perms: { ...defaults.perms, ...(payload?.perms || {}) },
+    };
+    setDataPermissionsData(all);
+    return this.getDataPermissions(roleId);
   },
 };

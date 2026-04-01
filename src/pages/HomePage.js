@@ -31,14 +31,205 @@ const mainEntries = [
     { id: 'settings', name: '系统设置', routeName: '系统设置', icon: Settings, desc: 'IT专用 · 系统配置', color: 'bg-gray-500', lightColor: 'bg-gray-100', path: '/settings' },
 ];
 
-// --------------- Mock 公告数据 ---------------
+// --------------- Mock 公告数据（与公告列表页一致）---------------
 const announcements = [
-    { id: 1, title: '关于2024年度预算调整的通知', type: 'urgent', date: '2024-03-20', author: '财务部', department: '财务部' },
-    { id: 2, title: '新供应商准入流程上线说明', type: 'normal', date: '2024-03-18', author: '采购部', department: '采购部' },
-    { id: 3, title: 'Q1季度经营分析报告发布', type: 'normal', date: '2024-03-15', author: '经管部', department: '经管部' },
-    { id: 4, title: '系统升级维护通知（3月25日）', type: 'warning', date: '2024-03-12', author: 'IT部', department: 'IT部' },
-    { id: 5, title: '关于启用新的费用报销标准的通知', type: 'normal', date: '2024-03-10', author: '财务部', department: '财务部' },
-    { id: 6, title: '2024年供应商绩效评估启动', type: 'normal', date: '2024-03-08', author: '采购部', department: '采购部' },
+    {
+        id: 1,
+        title: '关于2024年度预算调整的通知',
+        type: 'urgent',
+        date: '2024-03-20',
+        author: '财务部',
+        department: '财务部',
+        content: `
+            <h3>一、调整背景</h3>
+            <p>根据公司2024年第一季度经营情况分析，为适应市场变化，优化资源配置，经管理层研究决定，对2024年度预算进行部分调整。</p>
+            
+            <h3>二、调整内容</h3>
+            <p>1. 营销费用预算增加15%，主要用于Q2季度品牌推广活动；</p>
+            <p>2. 研发费用预算增加10%，加大新产品研发投入；</p>
+            <p>3. 行政费用预算压缩8%，提倡节约办公；</p>
+            <p>4. 各部门请于3月25日前提交调整后的预算方案。</p>
+            
+            <h3>三、执行要求</h3>
+            <p>各部门要高度重视预算调整工作，严格按照公司预算管理制度执行，确保预算调整科学合理、操作规范有序。</p>
+            
+            <p>特此通知。</p>
+        `,
+        coverImage: 'https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?w=800&h=400&fit=crop',
+        attachments: [
+            { name: '2024年度预算调整方案.pdf', size: '2.3 MB' },
+            { name: '预算调整申请表.docx', size: '156 KB' }
+        ],
+        views: 328,
+        readCount: 245,
+        isRead: false
+    },
+    {
+        id: 2,
+        title: '新供应商准入流程上线说明',
+        type: 'normal',
+        date: '2024-03-18',
+        author: '采购部',
+        department: '采购部',
+        content: `
+            <h3>一、上线背景</h3>
+            <p>为进一步规范供应商管理，提升采购效率，公司自研的供应商准入流程已于今日正式上线运行。</p>
+            
+            <h3>二、新流程亮点</h3>
+            <p>1. <strong>在线申请</strong>：供应商可通过系统提交准入申请，无需线下提交纸质材料；</p>
+            <p>2. <strong>智能审核</strong>：系统自动校验资质文件，减少人工审核工作量；</p>
+            <p>3. <strong>进度透明</strong>：申请方可实时查看审核进度，及时补充材料；</p>
+            <p>4. <strong>数据沉淀</strong>：所有供应商信息自动归档，便于后续管理分析。</p>
+            
+            <h3>三、操作指南</h3>
+            <p>详细的操作说明请参考附件《供应商准入系统操作手册》。</p>
+            
+            <h3>四、培训安排</h3>
+            <p>本周五下午14:00将进行系统操作培训，请各相关部门派人参训。</p>
+        `,
+        coverImage: 'https://images.unsplash.com/photo-1556761175-5973dc0f32e7?w=800&h=400&fit=crop',
+        attachments: [
+            { name: '供应商准入系统操作手册.pdf', size: '5.8 MB' }
+        ],
+        views: 256,
+        readCount: 198,
+        isRead: true
+    },
+    {
+        id: 3,
+        title: 'Q1季度经营分析报告发布',
+        type: 'normal',
+        date: '2024-03-15',
+        author: '经管部',
+        department: '经管部',
+        content: `
+            <h3>一、总体经营情况</h3>
+            <p>2024年第一季度，公司整体经营稳中向好，主要指标完成情况如下：</p>
+            <p>• 营业收入：完成年度目标的28.5%，同比增长15.2%</p>
+            <p>• 净利润：完成年度目标的31.0%，同比增长22.8%</p>
+            <p>• 回款率：95.3%，较去年同期提升3.2个百分点</p>
+            
+            <h3>二、各事业部业绩</h3>
+            <p>美国事业部：超额完成季度目标，销售额同比增长18%；</p>
+            <p>中国事业部：达成率98%，新品上市表现亮眼；</p>
+            <p>东南亚事业部：快速增长期，销售额同比增长35%。</p>
+            
+            <h3>三、下季度重点工作</h3>
+            <p>1. 继续深化海外市场拓展；</p>
+            <p>2. 推进供应链数字化转型；</p>
+            <p>3. 加强成本管控，提升盈利能力。</p>
+        `,
+        coverImage: 'https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=800&h=400&fit=crop',
+        attachments: [
+            { name: 'Q1经营分析报告.pdf', size: '8.2 MB' },
+            { name: '事业部业绩明细.xlsx', size: '1.5 MB' }
+        ],
+        views: 412,
+        readCount: 380,
+        isRead: false
+    },
+    {
+        id: 4,
+        title: '系统升级维护通知（3月25日）',
+        type: 'warning',
+        date: '2024-03-12',
+        author: 'IT部',
+        department: 'IT部',
+        content: `
+            <h3>一、维护时间</h3>
+            <p>2024年3月25日（周一）凌晨 00:00 - 06:00</p>
+            
+            <h3>二、维护内容</h3>
+            <p>1. 服务器安全补丁更新；</p>
+            <p>2. 数据库性能优化；</p>
+            <p>3. 系统功能模块升级；</p>
+            <p>4. 数据备份与清理。</p>
+            
+            <h3>三、影响范围</h3>
+            <p>维护期间，以下系统将暂停服务：</p>
+            <p>• EPoseidon 2.0 主系统</p>
+            <p>• 供应商门户</p>
+            <p>• 数据报表平台</p>
+            
+            <h3>四、注意事项</h3>
+            <p>1. 请提前做好数据保存工作；</p>
+            <p>2. 维护期间请勿进行重要操作；</p>
+            <p>3. 如有紧急情况，请联系IT值班人员。</p>
+        `,
+        coverImage: 'https://images.unsplash.com/photo-1518770660439-4636190af475?w=800&h=400&fit=crop',
+        attachments: [],
+        views: 567,
+        readCount: 523,
+        isRead: true
+    },
+    {
+        id: 5,
+        title: '关于启用新的费用报销标准的通知',
+        type: 'normal',
+        date: '2024-03-10',
+        author: '财务部',
+        department: '财务部',
+        content: `
+            <h3>一、调整说明</h3>
+            <p>为进一步规范公司费用管理，结合市场行情及公司实际情况，经研究决定，自2024年4月1日起启用新的费用报销标准。</p>
+            
+            <h3>二、主要调整内容</h3>
+            <p><strong>差旅费：</strong></p>
+            <p>• 一线城市住宿标准：由500元/晚调整至550元/晚</p>
+            <p>• 二线城市住宿标准：由350元/晚调整至400元/晚</p>
+            <p>• 飞机票：经济舱标准不变，增加高铁一等座报销选项</p>
+            
+            <p><strong>餐费补贴：</strong></p>
+            <p>• 一线城市：由150元/天调整至180元/天</p>
+            <p>• 其他城市：由120元/天调整至150元/天</p>
+            
+            <h3>三、执行时间</h3>
+            <p>2024年4月1日起执行，4月1日前发生的费用按原标准执行。</p>
+        `,
+        coverImage: 'https://images.unsplash.com/photo-1554224154-26032ffc0d07?w=800&h=400&fit=crop',
+        attachments: [
+            { name: '2024费用报销标准.pdf', size: '1.2 MB' }
+        ],
+        views: 298,
+        readCount: 267,
+        isRead: false
+    },
+    {
+        id: 6,
+        title: '2024年供应商绩效评估启动',
+        type: 'normal',
+        date: '2024-03-08',
+        author: '采购部',
+        department: '采购部',
+        content: `
+            <h3>一、评估目的</h3>
+            <p>客观评价供应商合作表现，优化供应商结构，建立长期稳定的战略合作关系。</p>
+            
+            <h3>二、评估范围</h3>
+            <p>2023年1月1日至2023年12月31日期间有业务往来的所有合作供应商。</p>
+            
+            <h3>三、评估维度</h3>
+            <p>1. <strong>质量表现</strong>（30%）：产品合格率、退货率、质量事故</p>
+            <p>2. <strong>交付表现</strong>（25%）：准时交付率、交付柔性</p>
+            <p>3. <strong>成本竞争力</strong>（20%）：价格水平、降价配合度</p>
+            <p>4. <strong>服务配合</strong>（15%）：响应速度、问题解决能力</p>
+            <p>5. <strong>合规经营</strong>（10%）：资质完备性、合同履约</p>
+            
+            <h3>四、时间安排</h3>
+            <p>• 3月8日-3月22日：数据收集与初评</p>
+            <p>• 3月23日-3月31日：部门复评</p>
+            <p>• 4月1日-4月10日：结果公示与申诉</p>
+            <p>• 4月15日：最终结果发布</p>
+        `,
+        coverImage: 'https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?w=800&h=400&fit=crop',
+        attachments: [
+            { name: '供应商绩效评估表.xlsx', size: '89 KB' },
+            { name: '评分细则说明.pdf', size: '456 KB' }
+        ],
+        views: 189,
+        readCount: 156,
+        isRead: true
+    },
 ];
 
 // --------------- 外部系统入口 ---------------
@@ -58,10 +249,10 @@ const employeeExperiences = [
 
 // --------------- Mock 待办/审批 ---------------
 const todos = [
-    { id: 1, title: '深圳鑫源电子Q2绩效评估待审核', type: 'approval', from: '采购部 张三', time: '2小时前' },
-    { id: 2, title: '2024年度预算版本V3待确认', type: 'approval', from: '财务部 李四', time: '5小时前' },
-    { id: 3, title: '新员工入职权限申请', type: 'todo', from: 'HR 王五', time: '1天前' },
-    { id: 4, title: '物流商合同到期提醒', type: 'todo', from: '系统', time: '2天前' },
+    { id: 1, title: '深圳鑫源电子Q2绩效评估待审核', type: 'approval', from: '采购部 张三', time: '2小时前', path: '/workbench/approvals', routeName: '待办 & 审批' },
+    { id: 2, title: '2024年度预算版本V3待确认', type: 'approval', from: '财务部 李四', time: '5小时前', path: '/workbench/approvals', routeName: '待办 & 审批' },
+    { id: 3, title: '新员工入职权限申请', type: 'todo', from: 'HR 王五', time: '1天前', path: '/workbench/approvals', routeName: '待办 & 审批' },
+    { id: 4, title: '物流商合同到期提醒', type: 'todo', from: '系统', time: '2天前', path: '/workbench/approvals', routeName: '待办 & 审批' },
 ];
 
 // --------------- 主组件 ---------------
@@ -83,6 +274,18 @@ export default function HomePage({ onNavigate, onOpenAnnouncement, onOpenAnnounc
     const handleViewMoreAnnouncements = () => {
         if (onOpenAnnouncementsList) {
             onOpenAnnouncementsList();
+        }
+    };
+
+    const handleTodoClick = (item) => {
+        if (onNavigate && item?.path) {
+            onNavigate(item.path, item.routeName || '待办 & 审批');
+        }
+    };
+
+    const handleViewAllTodos = () => {
+        if (onNavigate) {
+            onNavigate('/workbench/approvals', '待办 & 审批');
         }
     };
 
@@ -173,6 +376,7 @@ export default function HomePage({ onNavigate, onOpenAnnouncement, onOpenAnnounc
                                 <div 
                                     key={item.id} 
                                     className="flex cursor-pointer items-start gap-3 rounded-xl bg-surface-subtle p-3 transition-colors hover:bg-slate-100"
+                                    onClick={() => handleTodoClick(item)}
                                 >
                                     <div className={cn(
                                         "w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0",
@@ -201,7 +405,7 @@ export default function HomePage({ onNavigate, onOpenAnnouncement, onOpenAnnounc
                                 <p className="text-sm">暂无待办事项</p>
                             </div>
                         )}
-                        <Button variant="ghost" size="sm" fullWidth className="mt-4">
+                        <Button variant="ghost" size="sm" fullWidth className="mt-4" onClick={handleViewAllTodos}>
                             查看全部
                         </Button>
                     </Card>

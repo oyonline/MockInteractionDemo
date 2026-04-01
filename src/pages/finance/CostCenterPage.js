@@ -6,13 +6,13 @@ import {
     Building2, ChevronRight, Check, AlertCircle, Calendar,
     User, History
 } from 'lucide-react';
-import Button from '../components/ui/Button';
-import Badge from '../components/ui/Badge';
-import Card from '../components/ui/Card';
-import DrawerShell from '../components/ui/DrawerShell';
-import ModalShell from '../components/ui/ModalShell';
-import TableShell from '../components/ui/TableShell';
-import cn from '../utils/cn';
+import Button from '../../components/ui/Button';
+import Badge from '../../components/ui/Badge';
+import Card from '../../components/ui/Card';
+import DrawerShell from '../../components/ui/DrawerShell';
+import ModalShell from '../../components/ui/ModalShell';
+import TableShell from '../../components/ui/TableShell';
+import cn from '../../utils/cn';
 
 // --------------- 部门数据（用于选择归属部门） ---------------
 const departmentTree = [

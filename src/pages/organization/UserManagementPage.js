@@ -2,9 +2,9 @@
 
 import React, { useEffect, useRef, useState } from 'react';
 import { ChevronDown, List, Plus, Search, SlidersHorizontal, X } from 'lucide-react';
-import { userService } from '../services/system';
-import TablePagination from '../components/TablePagination';
-import ActionBar from '../components/ActionBar';
+import { userService } from '../../services/system';
+import TablePagination from '../../components/TablePagination';
+import ActionBar from '../../components/ActionBar';
 import UserEditPage from './UserEditPage';
 
 const PAGE_SIZE = 10;

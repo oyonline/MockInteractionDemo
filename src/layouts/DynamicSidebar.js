@@ -214,6 +214,7 @@ export const navConfig = {
             { name: '质量概览', path: '/quality/overview' },
             { name: '入库质检', path: '/quality/inbound' },
             { name: '客诉质量', path: '/quality/complaint' },
+            { name: '质量检查任务', path: '/quality/tasks' },
         ]
     },
     
@@ -249,6 +250,7 @@ export const navConfig = {
 // --------------- 判断当前模块 ---------------
 const getCurrentModule = (path) => {
     if (path === '/home' || path === '/') return 'home';
+    if (path.startsWith('/workbench')) return 'home';
     if (path.startsWith('/product')) return 'product';
     if (path.startsWith('/sales/us')) return 'sales-us';
     if (path.startsWith('/us-private-domain')) return 'us-private-domain';

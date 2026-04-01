@@ -113,7 +113,7 @@ function ExpenseFactDetailPage({ record, onClose }) {
   const StatusIcon = statusCfg.icon;
 
   return (
-    <div className="min-h-full bg-gray-50/50">
+    <div className="h-full min-h-full overflow-auto bg-gray-50/50">
       {/* 顶部导航栏 */}
       <div className="sticky top-0 z-20 bg-white border-b border-gray-200 px-6 py-4">
         <div className="flex items-center justify-between">
