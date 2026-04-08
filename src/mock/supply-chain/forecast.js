@@ -21,14 +21,16 @@ const bus = [
  */
 function generateMockData() {
   const data = [];
-  const now = new Date();
+  // 使用固定参考时间确保数据一致性（模拟2026年3月）
+  const REFERENCE_NOW = new Date('2026-03-15');
+  const now = REFERENCE_NOW;
   const currentMonth = new Date(now.getFullYear(), now.getMonth(), 1);
   
   // 先生成基础数据模板（用于跨月引用）
   const baseDataTemplate = {};
-  
-  // 生成最近24个月的数据
-  for (let i = 0; i < 24; i++) {
+
+  // 生成36个月的数据（覆盖2024、2025、2026三年，从2026-03往前推）
+  for (let i = 0; i < 36; i++) {
     const month = new Date(currentMonth.getFullYear(), currentMonth.getMonth() - i, 1);
     const monthStr = `${month.getFullYear()}-${String(month.getMonth() + 1).padStart(2, '0')}`;
     baseDataTemplate[monthStr] = {};
@@ -65,7 +67,7 @@ function generateMockData() {
   }
   
   // 第二次遍历：为每个月生成实际数据和历史预测数据
-  for (let i = 0; i < 24; i++) {
+  for (let i = 0; i < 36; i++) {
     const month = new Date(currentMonth.getFullYear(), currentMonth.getMonth() - i, 1);
     const monthStr = `${month.getFullYear()}-${String(month.getMonth() + 1).padStart(2, '0')}`;
     
@@ -197,8 +199,9 @@ export function getMockTrendData(months = 6, query = {}) {
   const { category, bu } = query;
   const allData = getMockForecastList();
   
-  // 获取最近months个月的月份列表
-  const now = new Date();
+  // 获取最近months个月的月份列表（使用固定参考时间）
+  const REFERENCE_NOW = new Date('2026-03-15');
+  const now = REFERENCE_NOW;
   const monthList = [];
   for (let i = 0; i < months; i++) {
     const m = new Date(now.getFullYear(), now.getMonth() - i, 1);
