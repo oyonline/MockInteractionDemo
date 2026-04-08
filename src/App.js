@@ -9,6 +9,12 @@ import {
     User
 } from 'lucide-react';
 import HomePage from './pages/HomePage';
+import ProcessManagementPage from './pages/process/ProcessManagementPage';
+import ProcessTemplateListPage from './pages/process/ProcessTemplateListPage';
+import ProcessTemplateDetailPage from './pages/process/ProcessTemplateDetailPage';
+import ProcessTemplateEditPage from './pages/process/ProcessTemplateEditPage';
+import ProcessTemplateVersionPage from './pages/process/ProcessTemplateVersionPage';
+import ProcessCategoryPage from './pages/process/ProcessCategoryPage';
 import ProductMasterPage from './pages/product/ProductMasterPage';
 import BOMManagementPage from './pages/product/BOMManagementPage';
 import BrandManagementPage from './pages/product/BrandManagementPage';
@@ -345,6 +351,30 @@ function App() {
     const renderTabContent = (tab) => {
         console.log('渲染 Tab 内容:', tab);
         if (!tab) return <HomePage />;
+        // ---------- 流程模板详情页（path 前缀判断） ----------
+        if (tab.path && tab.path.startsWith('/process/detail/')) {
+            return (
+                <ModuleLayout>
+                    <ProcessTemplateDetailPage onNavigate={handleNavigate} />
+                </ModuleLayout>
+            );
+        }
+        // ---------- 流程模板编辑页（path 前缀判断） ----------
+        if (tab.path && tab.path.startsWith('/process/edit/')) {
+            return (
+                <ModuleLayout>
+                    <ProcessTemplateEditPage isEdit={true} onNavigate={handleNavigate} />
+                </ModuleLayout>
+            );
+        }
+        // ---------- 流程模板版本记录页（path 前缀判断） ----------
+        if (tab.path && tab.path.startsWith('/process/versions/')) {
+            return (
+                <ModuleLayout>
+                    <ProcessTemplateVersionPage onNavigate={handleNavigate} />
+                </ModuleLayout>
+            );
+        }
         // ---------- 物流基础资料详情 Tab（path 前缀判断，包一层 div 与物流商一致） ----------
         if (tab.path && tab.path.startsWith('/logistics/vendors/')) {
             return (
@@ -860,14 +890,6 @@ function App() {
                         <PlaceholderPage pageName="销量预测" path={tab.path} />
                     </ModuleLayout>
                 );
-            // 旧销售路由兼容（重定向到美国事业部对应页面）
-            case '/sales':
-            case '/sales/product':
-                return (
-                    <ModuleLayout>
-                        <SalesProductPage />
-                    </ModuleLayout>
-                );
             case '/sales/target':
                 return (
                     <ModuleLayout>
@@ -921,6 +943,39 @@ function App() {
                 return (
                     <ModuleLayout>
                         <PlaceholderPage pageName="经营概览" path={tab.path} />
+                    </ModuleLayout>
+                );
+            // 流程管理
+            case '/process/overview':
+                return (
+                    <ModuleLayout>
+                        <ProcessManagementPage onNavigate={handleNavigate} />
+                    </ModuleLayout>
+                );
+            case '/process/templates':
+                return (
+                    <ModuleLayout>
+                        <ProcessTemplateListPage onNavigate={handleNavigate} />
+                    </ModuleLayout>
+                );
+            case '/process/create':
+                return (
+                    <ModuleLayout>
+                        <ProcessTemplateEditPage isEdit={false} onNavigate={handleNavigate} />
+                    </ModuleLayout>
+                );
+            case '/process/categories':
+                return (
+                    <ModuleLayout>
+                        <ProcessCategoryPage onNavigate={handleNavigate} />
+                    </ModuleLayout>
+                );
+            case '/process/versions':
+            case '/process/drafts':
+            case '/process/documents':
+                return (
+                    <ModuleLayout>
+                        <PlaceholderPage pageName={tab.name} path={tab.path} />
                     </ModuleLayout>
                 );
             case '/business-analysis/metrics':

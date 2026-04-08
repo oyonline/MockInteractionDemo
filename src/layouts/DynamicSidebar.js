@@ -1,7 +1,7 @@
 // src/layouts/DynamicSidebar.js
 // 动态左侧导航 - 根据当前模块显示不同导航
 import React from 'react';
-import { ChevronLeft, Package, TrendingUp, ShoppingCart, Truck, DollarSign, TestTube, Users, Settings, Briefcase, BarChart3, FolderKanban, CalendarDays } from 'lucide-react';
+import { ChevronLeft, Package, TrendingUp, ShoppingCart, Truck, DollarSign, TestTube, Users, Settings, Briefcase, BarChart3, FolderKanban, CalendarDays, GitBranch } from 'lucide-react';
 import cn from '../utils/cn';
 
 // --------------- 导航配置 ---------------
@@ -10,6 +10,7 @@ export const navConfig = {
     home: {
         title: '工作台',
         items: [
+            { id: 'process-management', name: '流程管理', icon: GitBranch, path: '/process/overview' },
             { id: 'product', name: '产品中心', icon: Package, path: '/product/overview' },
             { id: 'sales', name: '销售与计划', icon: TrendingUp, path: '/sales/us/overview' },
             { id: 'procurement', name: '供应链采购', icon: ShoppingCart, path: '/procurement/overview' },
@@ -117,6 +118,20 @@ export const navConfig = {
             { name: '经营指标', path: '/business-analysis/metrics' },
             { name: '数据分析', path: '/business-analysis/data' },
             { name: '决策支持', path: '/business-analysis/decision' },
+        ]
+    },
+    
+    // 流程管理子导航
+    'process-management': {
+        title: '流程管理',
+        parent: '/home',
+        items: [
+            { name: '流程概览', path: '/process/overview' },
+            { name: '流程模板列表', path: '/process/templates' },
+            { name: '流程分类管理', path: '/process/categories' },
+            { name: '版本记录', path: '/process/versions' },
+            { name: '草稿箱', path: '/process/drafts' },
+            { name: '规范文档中心', path: '/process/documents' },
         ]
     },
     
@@ -264,6 +279,7 @@ const getCurrentModule = (path) => {
     if (path.startsWith('/quality')) return 'quality';
     if (path.startsWith('/project')) return 'project';
     if (path.startsWith('/business-analysis')) return 'business-analysis';
+    if (path.startsWith('/process')) return 'process-management';
     if (path.startsWith('/organization')) return 'organization';
     if (path.startsWith('/hr')) return 'hr';
     if (path.startsWith('/settings')) return 'settings';

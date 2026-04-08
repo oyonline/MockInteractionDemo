@@ -113,22 +113,31 @@ const mockSamples = [
 ];
 
 // --------------- Tab 组件 ---------------
-const TabButton = ({ active, onClick, children }) => (
+const TabButton = ({ active, onClick, icon: Icon, count, children }) => (
     <button
         onClick={onClick}
         className={cn(
-            'px-4 py-3 text-sm font-medium border-b-2 transition-colors',
+            'flex items-center gap-1.5 px-4 py-3 text-sm font-medium border-b-2 transition-colors',
             active
-                ? 'border-indigo-600 text-indigo-600'
-                : 'border-transparent text-gray-500 hover:text-gray-700'
+                ? 'border-brand-600 text-brand-600'
+                : 'border-transparent text-text-subtle hover:text-text'
         )}
     >
+        {Icon && <Icon className="w-4 h-4" />}
         {children}
+        {count != null && (
+            <span className={cn(
+                'ml-1 rounded-full px-1.5 py-0.5 text-xs',
+                active ? 'bg-brand-50 text-brand-600' : 'bg-surface-subtle text-text-subtle'
+            )}>
+                {count}
+            </span>
+        )}
     </button>
 );
 
 export default function ProjectDetailPage({ record, onClose }) {
-    const [activeTab, setActiveTab] = useState('tasks');
+    const [activeTab, setActiveTab] = useState('overview');
     const project = record || mockProject;
 
     const currentStageIndex = stages.findIndex(s => s.code === project.currentStage);
@@ -148,37 +157,37 @@ export default function ProjectDetailPage({ record, onClose }) {
     };
 
     return (
-        <div className="h-full flex flex-col bg-gray-50">
+        <div className="h-full flex flex-col bg-surface-muted">
             {/* 顶部导航 */}
-            <div className="bg-white border-b border-gray-200 px-6 py-4">
+            <div className="bg-surface border-b border-border px-6 py-4">
                 <div className="flex items-center justify-between">
                     <div className="flex items-center gap-4">
                         <button
                             onClick={onClose}
-                            className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                            className="p-2 hover:bg-surface-subtle rounded-lg transition-colors"
                         >
-                            <ArrowLeft className="w-5 h-5 text-gray-600" />
+                            <ArrowLeft className="w-5 h-5 text-text-muted" />
                         </button>
                         <div>
                             <div className="flex items-center gap-3">
-                                <h1 className="text-xl font-bold text-gray-900">{project.name}</h1>
-                                <span className="px-2 py-0.5 bg-gray-100 text-gray-600 text-xs rounded border border-gray-200">
+                                <h1 className="text-xl font-bold text-text">{project.name}</h1>
+                                <span className="px-2 py-0.5 bg-surface-subtle text-text-muted text-xs rounded border border-border">
                                     {project.id}
                                 </span>
                             </div>
-                            <p className="text-sm text-gray-500 mt-1">
+                            <p className="text-sm text-text-subtle mt-1">
                                 {project.dept} · {project.brand} · PM: {project.pm}
                             </p>
                         </div>
                     </div>
                     <div className="flex items-center gap-2">
-                        <button className="flex items-center gap-2 px-4 py-2 border border-gray-200 rounded-lg text-sm hover:bg-gray-50 transition-colors">
+                        <button className="flex items-center gap-2 px-4 py-2 border border-border rounded-xl text-sm hover:bg-surface-subtle transition-colors">
                             <Edit2 className="w-4 h-4" />
                             编辑
                         </button>
                         <button
                             onClick={handleNextStage}
-                            className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
+                            className="flex items-center gap-2 px-4 py-2 bg-brand-600 text-white rounded-xl hover:bg-brand-700 transition-colors"
                         >
                             <Play className="w-4 h-4" />
                             推进阶段
@@ -188,8 +197,8 @@ export default function ProjectDetailPage({ record, onClose }) {
             </div>
 
             {/* 流程图 */}
-            <div className="bg-white border-b border-gray-200 px-6 py-6">
-                <div className="flex items-center justify-between">
+            <div className="bg-surface-subtle border-b border-border px-6 py-6 overflow-x-auto">
+                <div className="flex items-center justify-between min-w-[600px]">
                     {stages.map((stage, index) => {
                         const status = getStageStatus(stage.code, index);
                         const isLast = index === stages.length - 1;
@@ -200,8 +209,8 @@ export default function ProjectDetailPage({ record, onClose }) {
                                     <div className={cn(
                                         'w-10 h-10 rounded-full flex items-center justify-center border-2 transition-colors',
                                         status === 'completed' && 'bg-green-500 border-green-500 text-white',
-                                        status === 'ongoing' && 'bg-indigo-600 border-indigo-600 text-white ring-4 ring-indigo-100',
-                                        status === 'pending' && 'bg-white border-gray-300 text-gray-400'
+                                        status === 'ongoing' && 'bg-brand-600 border-brand-600 text-white ring-4 ring-brand-100',
+                                        status === 'pending' && 'bg-surface border-border-strong text-text-subtle'
                                     )}>
                                         {status === 'completed' ? (
                                             <CheckCircle2 className="w-5 h-5" />
@@ -213,21 +222,21 @@ export default function ProjectDetailPage({ record, onClose }) {
                                     </div>
                                     <span className={cn(
                                         'mt-2 text-xs font-medium',
-                                        status === 'ongoing' ? 'text-indigo-600' : 'text-gray-600'
+                                        status === 'ongoing' ? 'text-brand-600' : 'text-text-muted'
                                     )}>
                                         {stage.name}
                                     </span>
                                     {status === 'ongoing' && (
-                                        <span className="text-xs text-gray-400 mt-0.5">进行中</span>
+                                        <span className="text-xs text-text-subtle mt-0.5">进行中</span>
                                     )}
                                     {stage.skippable && status !== 'completed' && (
-                                        <span className="text-[10px] text-gray-400 mt-0.5">可跳过</span>
+                                        <span className="text-[10px] text-text-subtle mt-0.5">可跳过</span>
                                     )}
                                 </div>
                                 {!isLast && (
                                     <div className={cn(
                                         'flex-1 h-0.5 mx-2',
-                                        status === 'completed' ? 'bg-green-500' : 'bg-gray-200'
+                                        status === 'completed' ? 'bg-green-500' : 'bg-border'
                                     )} />
                                 )}
                             </React.Fragment>
@@ -237,17 +246,17 @@ export default function ProjectDetailPage({ record, onClose }) {
             </div>
 
             {/* 子任务面板 */}
-            <div className="bg-white border-b border-gray-200 px-6 py-4">
+            <div className="bg-surface border-b border-border px-6 py-4">
                 <div className="flex items-center justify-between mb-4">
                     <div className="flex items-center gap-2">
-                        <h3 className="font-semibold text-gray-900">
+                        <h3 className="font-semibold text-text">
                             {stages[currentStageIndex]?.name}阶段
                         </h3>
-                        <span className="text-sm text-gray-500">
+                        <span className="text-sm text-text-subtle">
                             {mockTasks.filter(t => t.status === 'completed').length}/{mockTasks.length} 任务完成
                         </span>
                     </div>
-                    <button className="flex items-center gap-1 px-3 py-1.5 text-sm text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors">
+                    <button className="flex items-center gap-1 px-3 py-1.5 text-sm text-brand-600 hover:bg-brand-50 rounded-lg transition-colors">
                         <Plus className="w-4 h-4" />
                         添加子任务
                     </button>
@@ -255,21 +264,21 @@ export default function ProjectDetailPage({ record, onClose }) {
 
                 <div className="space-y-3">
                     {mockTasks.map(task => (
-                        <div key={task.id} className="border border-gray-200 rounded-lg p-4 hover:border-gray-300 transition-colors">
+                        <div key={task.id} className="border border-border rounded-xl p-4 hover:border-border-strong transition-colors">
                             <div className="flex items-start justify-between">
                                 <div className="flex-1">
                                     <div className="flex items-center gap-2">
                                         <span className={cn(
                                             'w-2 h-2 rounded-full',
                                             task.status === 'completed' ? 'bg-green-500' :
-                                            task.status === 'ongoing' ? 'bg-indigo-500' : 'bg-gray-300'
+                                            task.status === 'ongoing' ? 'bg-brand-600' : 'bg-border-strong'
                                         )} />
-                                        <span className="font-medium text-gray-900">{task.name}</span>
+                                        <span className="font-medium text-text">{task.name}</span>
                                         {task.status === 'ongoing' && (
-                                            <span className="px-2 py-0.5 bg-indigo-50 text-indigo-600 text-xs rounded">进行中</span>
+                                            <span className="px-2 py-0.5 bg-brand-50 text-brand-600 text-xs rounded">进行中</span>
                                         )}
                                     </div>
-                                    <div className="flex items-center gap-4 mt-2 text-sm text-gray-500">
+                                    <div className="flex items-center gap-4 mt-2 text-sm text-text-subtle">
                                         <span className="flex items-center gap-1">
                                             <User className="w-3.5 h-3.5" />
                                             {task.assignee}
@@ -280,26 +289,26 @@ export default function ProjectDetailPage({ record, onClose }) {
                                         </span>
                                     </div>
                                     {task.update && (
-                                        <p className="mt-2 text-sm text-gray-600 bg-gray-50 rounded-lg px-3 py-2">
+                                        <p className="mt-2 text-sm text-text-muted bg-surface-subtle rounded-lg px-3 py-2">
                                             最新进展: {task.update}
                                         </p>
                                     )}
                                 </div>
-                                <div className="flex items-center gap-4">
+                                <div className="flex items-center gap-4 pl-4 border-l border-border">
                                     <div className="text-right">
-                                        <span className="text-sm font-medium text-gray-900">{task.progress}%</span>
-                                        <div className="w-24 h-2 bg-gray-200 rounded-full mt-1 overflow-hidden">
-                                            <div 
+                                        <span className="text-sm font-medium text-text">{task.progress}%</span>
+                                        <div className="w-24 h-2 bg-border rounded-full mt-1 overflow-hidden">
+                                            <div
                                                 className={cn(
                                                     'h-full rounded-full',
-                                                    task.progress === 100 ? 'bg-green-500' : 'bg-indigo-500'
+                                                    task.progress === 100 ? 'bg-green-500' : 'bg-brand-600'
                                                 )}
                                                 style={{ width: `${task.progress}%` }}
                                             />
                                         </div>
                                     </div>
-                                    <button className="p-1.5 hover:bg-gray-100 rounded-lg">
-                                        <MoreHorizontal className="w-4 h-4 text-gray-400" />
+                                    <button className="p-1.5 hover:bg-surface-subtle rounded-lg">
+                                        <MoreHorizontal className="w-4 h-4 text-text-subtle" />
                                     </button>
                                 </div>
                             </div>
@@ -307,16 +316,16 @@ export default function ProjectDetailPage({ record, onClose }) {
                     ))}
                 </div>
 
-                <div className="flex items-center justify-end gap-3 mt-4 pt-4 border-t border-gray-100">
+                <div className="flex items-center justify-end gap-3 mt-4 pt-4 border-t border-border-subtle">
                     <button
                         onClick={handlePrevStage}
-                        className="px-4 py-2 text-sm text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
+                        className="px-4 py-2 text-sm text-text-muted hover:text-text hover:bg-surface-subtle rounded-xl transition-colors"
                     >
                         ← 回退阶段
                     </button>
                     <button
                         onClick={handleNextStage}
-                        className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white text-sm rounded-lg hover:bg-indigo-700 transition-colors"
+                        className="flex items-center gap-2 px-4 py-2 bg-brand-600 text-white text-sm rounded-xl hover:bg-brand-700 transition-colors"
                     >
                         推进到下一阶段
                         <ChevronRight className="w-4 h-4" />
@@ -325,18 +334,18 @@ export default function ProjectDetailPage({ record, onClose }) {
             </div>
 
             {/* Tab 切换 */}
-            <div className="bg-white border-b border-gray-200 px-6">
+            <div className="bg-surface border-b border-border px-6">
                 <div className="flex gap-6">
-                    <TabButton active={activeTab === 'tasks'} onClick={() => setActiveTab('tasks')}>
-                        子任务
+                    <TabButton active={activeTab === 'overview'} onClick={() => setActiveTab('overview')} icon={FileText}>
+                        项目概览
                     </TabButton>
-                    <TabButton active={activeTab === 'meetings'} onClick={() => setActiveTab('meetings')}>
+                    <TabButton active={activeTab === 'meetings'} onClick={() => setActiveTab('meetings')} icon={Calendar} count={mockMeetings.length}>
                         会议记录
                     </TabButton>
-                    <TabButton active={activeTab === 'skus'} onClick={() => setActiveTab('skus')}>
+                    <TabButton active={activeTab === 'skus'} onClick={() => setActiveTab('skus')} icon={Package} count={mockSkus.length}>
                         SKU列表
                     </TabButton>
-                    <TabButton active={activeTab === 'samples'} onClick={() => setActiveTab('samples')}>
+                    <TabButton active={activeTab === 'samples'} onClick={() => setActiveTab('samples')} icon={Box} count={mockSamples.length}>
                         样品管理
                     </TabButton>
                 </div>
@@ -344,34 +353,78 @@ export default function ProjectDetailPage({ record, onClose }) {
 
             {/* Tab 内容 */}
             <div className="flex-1 overflow-auto p-6">
-                {activeTab === 'tasks' && (
-                    <div className="text-center text-gray-500 py-12">
-                        <CheckCircle2 className="w-12 h-12 mx-auto mb-3 text-gray-300" />
-                        <p>子任务已在上方面板展示</p>
+                {activeTab === 'overview' && (
+                    <div className="bg-surface rounded-xl border border-border p-6 space-y-5">
+                        <h3 className="font-semibold text-text">项目信息</h3>
+                        <div className="grid grid-cols-2 gap-x-8 gap-y-4">
+                            <div>
+                                <p className="text-xs text-text-subtle mb-1">项目编号</p>
+                                <p className="text-sm font-medium text-text">{project.id}</p>
+                            </div>
+                            <div>
+                                <p className="text-xs text-text-subtle mb-1">所属部门</p>
+                                <p className="text-sm font-medium text-text">{project.dept}</p>
+                            </div>
+                            <div>
+                                <p className="text-xs text-text-subtle mb-1">品牌</p>
+                                <p className="text-sm font-medium text-text">{project.brand}</p>
+                            </div>
+                            <div>
+                                <p className="text-xs text-text-subtle mb-1">项目经理</p>
+                                <p className="text-sm font-medium text-text">{project.pm}</p>
+                            </div>
+                            <div>
+                                <p className="text-xs text-text-subtle mb-1">创建人</p>
+                                <p className="text-sm font-medium text-text">{project.creator}</p>
+                            </div>
+                            <div>
+                                <p className="text-xs text-text-subtle mb-1">创建时间</p>
+                                <p className="text-sm font-medium text-text">{project.createTime}</p>
+                            </div>
+                            <div>
+                                <p className="text-xs text-text-subtle mb-1">当前阶段</p>
+                                <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-brand-50 text-brand-600 text-xs rounded font-medium">
+                                    <Play className="w-3 h-3" />
+                                    {stages[currentStageIndex]?.name}
+                                </span>
+                            </div>
+                            <div>
+                                <p className="text-xs text-text-subtle mb-1">项目状态</p>
+                                <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-green-50 text-green-700 text-xs rounded font-medium">
+                                    进行中
+                                </span>
+                            </div>
+                        </div>
+                        {project.description && (
+                            <div className="pt-4 border-t border-border-subtle">
+                                <p className="text-xs text-text-subtle mb-1">项目描述</p>
+                                <p className="text-sm text-text-muted leading-relaxed">{project.description}</p>
+                            </div>
+                        )}
                     </div>
                 )}
 
                 {activeTab === 'meetings' && (
                     <div className="space-y-4">
                         {mockMeetings.map(meeting => (
-                            <div key={meeting.id} className="bg-white border border-gray-200 rounded-xl p-5">
+                            <div key={meeting.id} className="bg-surface border border-border rounded-xl p-5">
                                 <div className="flex items-start justify-between">
                                     <div>
                                         <div className="flex items-center gap-2">
-                                            <span className="px-2 py-0.5 bg-blue-50 text-blue-600 text-xs rounded border border-blue-100">
+                                            <span className="px-2 py-0.5 bg-brand-50 text-brand-600 text-xs rounded border border-brand-100">
                                                 {meeting.type}
                                             </span>
                                             <span className={cn(
                                                 'px-2 py-0.5 text-xs rounded border',
                                                 meeting.decision === '通过' ? 'bg-green-50 text-green-600 border-green-100' :
                                                 meeting.decision === '驳回' ? 'bg-red-50 text-red-600 border-red-100' :
-                                                'bg-gray-50 text-gray-600 border-gray-100'
+                                                'bg-surface-subtle text-text-muted border-border'
                                             )}>
                                                 决策: {meeting.decision}
                                             </span>
                                         </div>
-                                        <p className="mt-2 text-sm text-gray-600">{meeting.minutes}</p>
-                                        <div className="flex items-center gap-4 mt-3 text-xs text-gray-500">
+                                        <p className="mt-2 text-sm text-text-muted">{meeting.minutes}</p>
+                                        <div className="flex items-center gap-4 mt-3 text-xs text-text-subtle">
                                             <span className="flex items-center gap-1">
                                                 <Clock className="w-3.5 h-3.5" />
                                                 {meeting.time}
@@ -382,13 +435,13 @@ export default function ProjectDetailPage({ record, onClose }) {
                                             </span>
                                         </div>
                                         {meeting.decisionBasis && (
-                                            <p className="mt-2 text-xs text-gray-500">
+                                            <p className="mt-2 text-xs text-text-subtle">
                                                 决策依据: {meeting.decisionBasis}
                                             </p>
                                         )}
                                     </div>
-                                    <button className="p-1.5 hover:bg-gray-100 rounded-lg">
-                                        <MoreHorizontal className="w-4 h-4 text-gray-400" />
+                                    <button className="p-1.5 hover:bg-surface-subtle rounded-lg">
+                                        <MoreHorizontal className="w-4 h-4 text-text-subtle" />
                                     </button>
                                 </div>
                             </div>
@@ -397,23 +450,23 @@ export default function ProjectDetailPage({ record, onClose }) {
                 )}
 
                 {activeTab === 'skus' && (
-                    <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+                    <div className="bg-surface rounded-xl border border-border overflow-hidden">
                         <table className="w-full">
-                            <thead className="bg-gray-50">
+                            <thead className="bg-surface-subtle">
                                 <tr>
-                                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500">SKU编码</th>
-                                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500">产品名称</th>
-                                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500">目标市场</th>
-                                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500">锁定成本</th>
+                                    <th className="px-4 py-3 text-left text-xs font-medium text-text-subtle">SKU编码</th>
+                                    <th className="px-4 py-3 text-left text-xs font-medium text-text-subtle">产品名称</th>
+                                    <th className="px-4 py-3 text-left text-xs font-medium text-text-subtle">目标市场</th>
+                                    <th className="px-4 py-3 text-left text-xs font-medium text-text-subtle">锁定成本</th>
                                 </tr>
                             </thead>
-                            <tbody className="divide-y divide-gray-100">
+                            <tbody className="divide-y divide-border-subtle">
                                 {mockSkus.map(sku => (
-                                    <tr key={sku.id} className="hover:bg-gray-50">
-                                        <td className="px-4 py-3 text-sm font-mono text-gray-600">{sku.code}</td>
-                                        <td className="px-4 py-3 text-sm font-medium text-gray-900">{sku.name}</td>
-                                        <td className="px-4 py-3 text-sm text-gray-600">{sku.market}</td>
-                                        <td className="px-4 py-3 text-sm font-medium text-gray-900">
+                                    <tr key={sku.id} className="hover:bg-surface-muted">
+                                        <td className="px-4 py-3 text-sm font-mono text-text-muted">{sku.code}</td>
+                                        <td className="px-4 py-3 text-sm font-medium text-text">{sku.name}</td>
+                                        <td className="px-4 py-3 text-sm text-text-muted">{sku.market}</td>
+                                        <td className="px-4 py-3 text-sm font-medium text-text">
                                             ¥{sku.lockedCost.toFixed(2)}
                                         </td>
                                     </tr>
@@ -426,7 +479,7 @@ export default function ProjectDetailPage({ record, onClose }) {
                 {activeTab === 'samples' && (
                     <div className="space-y-4">
                         {mockSamples.map(sample => (
-                            <div key={sample.id} className="bg-white border border-gray-200 rounded-xl p-5">
+                            <div key={sample.id} className="bg-surface border border-border rounded-xl p-5">
                                 <div className="flex items-center justify-between">
                                     <div className="flex items-center gap-4">
                                         <div className={cn(
@@ -440,12 +493,12 @@ export default function ProjectDetailPage({ record, onClose }) {
                                         </div>
                                         <div>
                                             <div className="flex items-center gap-2">
-                                                <span className="font-medium text-gray-900">{sample.description}</span>
-                                                <span className="px-2 py-0.5 bg-gray-100 text-gray-600 text-xs rounded">
+                                                <span className="font-medium text-text">{sample.description}</span>
+                                                <span className="px-2 py-0.5 bg-surface-subtle text-text-muted text-xs rounded">
                                                     {sample.type}
                                                 </span>
                                             </div>
-                                            <div className="flex items-center gap-4 mt-1 text-sm text-gray-500">
+                                            <div className="flex items-center gap-4 mt-1 text-sm text-text-subtle">
                                                 <span>存放: {sample.location}</span>
                                                 <span className={cn(
                                                     'px-2 py-0.5 rounded text-xs',
@@ -458,8 +511,8 @@ export default function ProjectDetailPage({ record, onClose }) {
                                     </div>
                                     {sample.status === '借出' && (
                                         <div className="text-right text-sm">
-                                            <p className="text-gray-600">借用人: {sample.borrower}</p>
-                                            <p className="text-gray-500 text-xs mt-1">借用时间: {sample.borrowTime}</p>
+                                            <p className="text-text-muted">借用人: {sample.borrower}</p>
+                                            <p className="text-text-subtle text-xs mt-1">借用时间: {sample.borrowTime}</p>
                                         </div>
                                     )}
                                 </div>

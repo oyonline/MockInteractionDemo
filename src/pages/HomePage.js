@@ -5,7 +5,7 @@ import {
     Package, Globe, ShoppingCart, Truck, DollarSign, 
     TestTube, Users, Settings, Bell, CheckSquare, ExternalLink,
     BookOpen, Gift, ChevronRight, Megaphone, AlertCircle, FolderKanban,
-    BarChart3, Briefcase, ClipboardList
+    BarChart3, Briefcase, ClipboardList, GitBranch
 } from 'lucide-react';
 import Button from '../components/ui/Button';
 import Card from '../components/ui/Card';
@@ -16,6 +16,7 @@ import cn from '../utils/cn';
 const mainEntries = [
     // 按指定顺序排列
     { id: 'business-analysis', name: '经营管理分析', routeName: '经营概览', icon: BarChart3, desc: '经营指标 · 数据分析 · 决策支持', color: 'bg-blue-700', lightColor: 'bg-blue-100', path: '/business-analysis/overview' },
+    { id: 'process-management', name: '流程管理', routeName: '流程概览', icon: GitBranch, desc: '流程审批 · 工作流配置 · 任务追踪', color: 'bg-indigo-600', lightColor: 'bg-indigo-100', path: '/process/overview' },
     { id: 'sales-us-eu', name: '欧美事业部', routeName: '事业部概览', icon: Globe, desc: '美国 · 欧洲销售运营', color: 'bg-rose-500', lightColor: 'bg-rose-50', path: '/sales/us/overview' },
     { id: 'sales-cn-sea', name: '亚太事业部', routeName: '事业部概览', icon: Globe, desc: '中国 · 东南亚销售运营', color: 'bg-violet-500', lightColor: 'bg-violet-50', path: '/sales/cn/overview' },
     { id: 'product', name: '产品中心', routeName: '产品概览', icon: Package, desc: 'SKU管理 · BOM · 品牌', color: 'bg-sky-500', lightColor: 'bg-sky-50', path: '/product/overview' },

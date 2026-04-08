@@ -1145,7 +1145,7 @@ export default function ProductAttributePage() {
           </div>
         </div>
 
-        <div className="grid gap-4 border-b border-border px-6 py-4 md:grid-cols-2 xl:grid-cols-4">
+        <div className="grid grid-cols-2 gap-4 border-b border-border px-6 py-4 xl:grid-cols-4">
           <StatCard title="属性总数" value={stats.total} icon={Database} tone="brand" />
           <StatCard title="已启用" value={stats.active} icon={Check} tone="success" />
           <StatCard title="必填属性" value={stats.required} icon={AlertCircle} tone="warning" />
@@ -1290,7 +1290,11 @@ export default function ProductAttributePage() {
         {/* 底部统计 */}
         <div className="p-4 border-t border-border bg-surface-muted flex items-center justify-between">
           <div className="text-sm text-text-subtle">
-            共 <span className="font-semibold text-text">{filteredAttributes.length}</span> 个属性
+            {hasActiveFilters ? (
+              <>显示 <span className="font-semibold text-text">{filteredAttributes.length}</span> / {attributes.length} 个属性</>
+            ) : (
+              <>共 <span className="font-semibold text-text">{filteredAttributes.length}</span> 个属性</>
+            )}
           </div>
           <div className="flex items-center gap-2">
             <button className="px-3 py-1 border border-border rounded-lg hover:bg-surface-subtle text-sm text-text">上一页</button>
