@@ -1,4 +1,4 @@
-/** 供应链计划 Service - Forecast Tracking */
+/** 供应链计划 Service - Forecast Tracking + Opening ITO */
 
 import {
   getMockForecastByMonth,
@@ -6,7 +6,27 @@ import {
   getMockPieData,
   getMockTopUnderperformed,
   getMockCategoryAnalysis,
+  // Opening ITO mock methods
+  getMockOpeningItoMonthOptions,
+  getMockOpeningItoBuOptions,
+  getMockOpeningItoCategoryOptions,
+  getMockOpeningItoMetricCards,
+  getMockOpeningItoBuWarehouseTable,
+  getMockOpeningItoBuCategoryTable,
+  getMockOpeningItoPieData,
+  getMockOpeningItoYearlyTrend,
+  getMockOpeningItoMonthlyTrend,
+  getMockCategoryAnalysisData,
+  getMockExcessTabs,
+  getMockExcessMetrics,
+  getMockExcessMainTable,
+  getMockExcessAgingTop10,
+  getMockExcessInventoryAge,
+  getMockExcessAnalysisData,
+  getMockInventoryAgeOver365Analysis,
 } from '../mock/supply-chain';
+import * as storage from '../utils/storage';
+import { SUPPLY_CHAIN_EXCESS_ARCHIVES } from '../utils/storageKeys';
 
 // 获取当前月份的上一个月（默认月份）
 export function getDefaultMonth() {
@@ -684,18 +704,162 @@ export function getForecastCategoryShare(query = {}) {
   };
 }
 
+// 计算上一个月（用于P-1口径分析）
+export function getPreviousMonth(monthStr) {
+  const [year, mon] = monthStr.split('-').map(Number);
+  const d = new Date(year, mon - 2, 1); // 减1个月
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+}
+
 // 获取TOP10未达成
 export function getTopUnderperformed(query) {
-  const { month = getDefaultMonth(), category = 'all', bu = 'all' } = query;
-  
-  return getMockTopUnderperformed(month, { category, bu });
+  const { month = getDefaultMonth(), category = 'all', bu = 'all', dataType = 'amount' } = query;
+
+  // 使用上一个月的数据进行分析（P-1口径）
+  const analysisMonth = getPreviousMonth(month);
+
+  const mockData = getMockTopUnderperformed(analysisMonth, { category, bu });
+
+  // 计算总偏差（用于占比计算）
+  const totalDeviation = mockData.reduce((sum, item) => {
+    const deviation = dataType === 'amount'
+      ? (item.forecastAmount - item.actualAmount)
+      : (item.forecastQty - item.actualQty);
+    return sum + Math.max(0, deviation); // 只统计未达成（正偏差）
+  }, 0);
+
+  // 增强数据格式：增加排名、占比、描述等字段
+  return mockData.map((item, index) => {
+    const deviationAmount = item.forecastAmount - item.actualAmount;
+    const deviationQty = item.forecastQty - item.actualQty;
+    const deviationRate = item.forecastAmount > 0
+      ? ((item.actualAmount - item.forecastAmount) / item.forecastAmount * 100)
+      : 0;
+
+    // 计算占比（该SKU偏差占总未达成的比例）
+    const share = totalDeviation > 0
+      ? (Math.max(0, deviationAmount) / totalDeviation * 100)
+      : 0;
+
+    return {
+      rank: index + 1,                              // 排名
+      bu: item.bu,                                  // BU
+      category: item.category,                      // 供应链类目
+      description: item.skuName,                    // 描述（skuName映射）
+      qty: item.actualQty,                          // 数量
+      amount: item.actualAmount,                    // 金额
+      deviationQty,                                 // 偏差数量
+      deviationAmount,                              // 偏差金额
+      deviationRate: deviationRate.toFixed(2),      // 偏差率
+      share: `${share.toFixed(1)}%`,               // 占比
+      skuId: item.skuId,                           // SKU ID（用于详情跳转）
+      analysisMonth,                                // 分析月份（P-1口径）
+    };
+  });
 }
 
 // 获取未达成类目分析
 export function getCategoryAnalysis(query) {
-  const { month = getDefaultMonth(), bu = 'all' } = query;
-  
-  return getMockCategoryAnalysis(month, { bu });
+  const { month = getDefaultMonth(), bu = 'all', dataType = 'amount' } = query;
+
+  // 使用上一个月的数据进行分析（P-1口径）
+  const analysisMonth = getPreviousMonth(month);
+
+  const mockData = getMockCategoryAnalysis(analysisMonth, { bu });
+
+  // 计算总偏差用于占比
+  const totalDeviation = mockData.reduce((sum, item) => sum + Math.max(0, item.totalDeviation), 0);
+
+  // 增强数据：添加排名、占比、BU维度
+  return mockData.map((item, index) => {
+    const share = totalDeviation > 0
+      ? (Math.max(0, item.totalDeviation) / totalDeviation * 100)
+      : 0;
+
+    return {
+      rank: index + 1,                              // 排名
+      category: item.category,                      // 类目
+      skuCount: item.skuCount,                      // SKU数量
+      totalDeviation: item.totalDeviation,          // 总偏差金额
+      totalDeviationQty: item.totalDeviationQty || item.totalDeviation / 1000, // 总偏差数量（估算）
+      deviationRate: item.deviationRate,           // 偏差率
+      share: `${share.toFixed(1)}%`,               // 占比
+      bu: bu !== 'all' ? bu : '多BU汇总',          // BU维度
+      analysisMonth,                                // 分析月份（P-1口径）
+    };
+  });
+}
+
+// 获取未达成类目矩阵透视数据（类目×BU矩阵）
+export function getUnderperformedMatrix(query) {
+  const { month = getDefaultMonth(), category = 'all', bu = 'all', dataType = 'amount' } = query;
+
+  // 使用上一个月的数据进行分析（P-1口径）
+  const analysisMonth = getPreviousMonth(month);
+
+  const allData = require('../mock/supply-chain').getMockForecastList();
+
+  // 筛选数据
+  let filtered = allData.filter(item => item.month === analysisMonth);
+
+  // 只取未达成的数据（actual < forecast）
+  filtered = filtered.filter(item => item.actualAmount < item.forecastAmount);
+
+  if (category && category !== 'all') {
+    filtered = filtered.filter(item => item.category === category);
+  }
+  if (bu && bu !== 'all') {
+    filtered = filtered.filter(item => item.bu === bu);
+  }
+
+  // 获取所有类目和BU（从全局数据中获取完整维度，确保矩阵完整）
+  const allCategories = [...new Set(allData.map(item => item.category))].sort();
+  const allBus = [...new Set(allData.map(item => item.bu))].sort();
+
+  // 初始化矩阵数据结构
+  const matrixData = {};
+  const columnTotals = {};
+
+  // 初始化列总计
+  allBus.forEach(b => {
+    columnTotals[b] = 0;
+  });
+
+  // 按类目和BU聚合偏差数据
+  allCategories.forEach(cat => {
+    matrixData[cat] = {};
+    let rowTotal = 0;
+
+    allBus.forEach(b => {
+      // 计算该类目+BU的偏差总和
+      const cellData = filtered.filter(item => item.category === cat && item.bu === b);
+      const deviation = cellData.reduce((sum, item) => {
+        return sum + (dataType === 'amount'
+          ? (item.forecastAmount - item.actualAmount)
+          : (item.forecastQty - item.actualQty));
+      }, 0);
+
+      matrixData[cat][b] = deviation;
+      columnTotals[b] += deviation;
+      rowTotal += deviation;
+    });
+
+    matrixData[cat].total = rowTotal;
+  });
+
+  // 计算总计
+  const grandTotal = allBus.reduce((sum, b) => sum + columnTotals[b], 0);
+
+  return {
+    categories: allCategories,        // 类目列表（行）
+    bus: allBus,                       // BU列表（列）
+    data: matrixData,                  // 矩阵数据 data[category][bu]
+    columnTotals,                     // 列总计
+    grandTotal,                       // 总计
+    month: analysisMonth,             // 分析月份（P-1口径）
+    dataType,                        // 数据类型
+    targetMonth: month,               // 目标月份（原始筛选月份）
+  };
 }
 
 /**
@@ -713,19 +877,28 @@ function formatMonthLabel(monthStr) {
  * 数据来源：复用明细页主表数据聚合逻辑
  * - 柱状系列：18个版本 Forecast（当前期数往前推18个月）
  * - 折线系列：Actual 2024、Actual 2025
- * - X轴固定 01月-12月
+ * - X轴固定 01月-12月，支持按年份切换显示
  */
 export function getOverallTrend(query) {
-  const { month = getDefaultMonth(), category = 'all', bu = 'all', dataType = 'amount' } = query;
+  const { 
+    month = getDefaultMonth(), 
+    category = 'all', 
+    bu = 'all', 
+    dataType = 'amount',
+    displayYear // 新增：指定展示年份（可选）
+  } = query;
 
   const allData = require('../mock/supply-chain').getMockForecastList();
   const [targetYear, targetMon] = month.split('-').map(Number);
+  
+  // 确定实际展示年份（优先使用传入的 displayYear，否则用 targetYear）
+  const effectiveYear = displayYear || targetYear;
 
-  // 固定月份 01-12月
+  // 固定月份 01-12月（始终展示12个月，使用 effectiveYear）
   const months = Array.from({ length: 12 }, (_, i) => ({
     monthNum: i + 1,
     monthLabel: `${String(i + 1).padStart(2, '0')}月`,
-    monthStr: `${targetYear}-${String(i + 1).padStart(2, '0')}`,
+    monthStr: `${effectiveYear}-${String(i + 1).padStart(2, '0')}`,
   }));
   const targetYearMonths = months.map(m => m.monthStr);
 
@@ -776,7 +949,8 @@ export function getOverallTrend(query) {
       500 + (stableSeedFromString(seedBase) % 1500),
       3000
     );
-    const yearFactor = 1 - ((targetYear - year) * 0.08);
+    // yearFactor 基于 effectiveYear（当前展示年份）计算，确保切换年份时数据合理性
+    const yearFactor = 1 - ((effectiveYear - year) * 0.08);
     return getStableValue(`${seedBase}-actual-${year}-${monthNum}`, baseline * yearFactor, monthNum - 1);
   };
 
@@ -843,8 +1017,17 @@ export function getOverallTrend(query) {
     });
   }
 
-  // 3. 聚合18个Forecast版本数据
-  const forecastSeries = forecastVersions.map((version) => {
+  // 3. 根据 effectiveYear 筛选相关的 forecast 版本
+  // 只保留覆盖范围包含 effectiveYear 年份月份的版本
+  const relevantForecastVersions = forecastVersions.filter((version) => {
+    return version.coverageMonths.some((monthStr) => {
+      const [year] = monthStr.split('-').map(Number);
+      return year === effectiveYear;
+    });
+  });
+
+  // 聚合相关 Forecast 版本数据
+  const forecastSeries = relevantForecastVersions.map((version) => {
     const values = months.map(({ monthStr }, idx) => {
       // 检查该月份是否在版本的覆盖范围内
       const isInCoverage = version.coverageMonths.includes(monthStr);
@@ -886,18 +1069,39 @@ export function getOverallTrend(query) {
   });
 
   // 5. 生成颜色
-  // Forecast：彩虹色渐变（18个版本从蓝色→紫色→红色→橙色→黄色→绿色）
+  // Forecast：彩虹色渐变（根据实际显示的版本数量均匀分布）
+  const totalRelevantVersions = relevantForecastVersions.length;
   const getForecastColor = (idx) => {
     // 彩虹渐变：从蓝色(200°) 到 绿色(120°)，跨越180°色环
-    const hue = 200 + (idx * 10); // 每版本增加10°，200~380°(即20°)
+    // 根据实际显示的版本数量均匀分布颜色
+    const hueStep = totalRelevantVersions > 1 ? 180 / (totalRelevantVersions - 1) : 0;
+    const hue = 200 + (idx * hueStep); // 均匀分布
     const finalHue = hue > 360 ? hue - 360 : hue; // 超过360则循环
     const saturation = 65 + (idx % 3) * 10; // 65-95%
     const lightness = 45 + (idx % 2) * 10; // 45-55%，保持中等亮度避免过深或过浅
     return `hsl(${finalHue}, ${saturation}%, ${lightness}%)`;
   };
 
+  // 6. 计算可选年份范围（根据 forecastVersions 覆盖范围）
+  const allYears = new Set();
+  forecastVersions.forEach((v) => {
+    // 从版本月份解析年份
+    const [vYear] = v.versionMonth.split('-').map(Number);
+    // 添加版本年份及其覆盖年份（通常跨2年：版本年份+覆盖到下一年）
+    allYears.add(vYear);
+    allYears.add(vYear + 1);
+  });
+  
+  // 过滤：只包含有数据且 >=2024, <=2027 的年份
+  // 注：2026.02期数的forecast版本会覆盖到2027.01，因此需要包含2027
+  const availableYears = Array.from(allYears)
+    .sort()
+    .filter(y => y >= 2024 && y <= 2027);
+
   return {
     months: months.map(m => m.monthLabel),
+    availableYears,  // 返回可选年份列表
+    currentYear: effectiveYear,  // 当前展示年份
     series: [
       ...forecastSeries.map((s, idx) => ({
         ...s,
@@ -1610,10 +1814,17 @@ export function getForecastExceptionSummary(query) {
   const allData = require('../mock/supply-chain').getMockForecastList();
 
   // 获取判断窗口的三个月份（上上期、上期、本期）
-  const [year, mon] = month.split('-').map(Number);
   const currentMonth = month;
-  const prevMonth = `${year}-${String(mon - 1).padStart(2, '0')}`;
-  const prev2Month = mon > 2 ? `${year}-${String(mon - 2).padStart(2, '0')}` : `${year - 1}-12`;
+  
+  // 使用Date对象正确计算前两个月（处理跨年）
+  const [year, mon] = month.split('-').map(Number);
+  const currentDate = new Date(year, mon - 1, 1);
+  
+  const prevDate = new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 1);
+  const prevMonth = `${prevDate.getFullYear()}-${String(prevDate.getMonth() + 1).padStart(2, '0')}`;
+  
+  const prev2Date = new Date(currentDate.getFullYear(), currentDate.getMonth() - 2, 1);
+  const prev2Month = `${prev2Date.getFullYear()}-${String(prev2Date.getMonth() + 1).padStart(2, '0')}`;
 
   const windowMonths = [prev2Month, prevMonth, currentMonth];
 
@@ -1671,9 +1882,11 @@ export function getForecastExceptionSummary(query) {
     const prev1 = getAchievement(prevMonth);
     const current = getAchievement(currentMonth);
 
-    // 判断连续两期异常：上上期->上期 或 上期->本期
-    const isAbnormal = (val) => val !== null && (parseFloat(val) > 20 || parseFloat(val) < -20);
-    const isAmountValid = (amt) => amt !== null && amt >= 3000;
+    // 判断连续两期异常：上上期->上期 或 上期->本期 (阈值从20%放宽到15%)
+    const isAbnormal = (val) => val !== null && (parseFloat(val) > 15 || parseFloat(val) < -15);
+    // 根据数据类型调整金额阈值（qty的数量级比amount小很多）
+    const minAmountThreshold = dataType === 'amount' ? 3000 : 30;
+    const isAmountValid = (amt) => amt !== null && amt >= minAmountThreshold;
 
     let isException = false;
     let exceptionType = '';
@@ -1741,4 +1954,198 @@ export function getForecastOwnerAttribution(query) {
   return {
     ownerStats: summary.ownerStats,
   };
+}
+
+// ==================== Opening & ITO Dashboard Services ====================
+
+/**
+ * 获取 Opening ITO 看板的筛选选项
+ */
+export function getOpeningItoFilterOptions() {
+  return {
+    months: getMockOpeningItoMonthOptions(),
+    bus: getMockOpeningItoBuOptions(),
+    categories: getMockOpeningItoCategoryOptions(),
+  };
+}
+
+/**
+ * 获取 Opening ITO 指标卡数据
+ * @param {Object} query - 查询参数
+ * @param {string} query.month - 月份
+ * @param {string} query.dataType - 数据类型：'amount' | 'qty'
+ * @param {boolean} query.includeRetail - 是否包含商超数据
+ */
+export function getOpeningItoMetricCards(query) {
+  return getMockOpeningItoMetricCards(query);
+}
+
+/**
+ * 获取 BU-仓位维度表格数据
+ * @param {Object} query - 查询参数
+ * @param {string} query.month - 月份
+ * @param {string} query.dataType - 数据类型：'amount' | 'qty'
+ * @param {boolean} query.includeRetail - 是否包含商超数据
+ */
+export function getOpeningItoBuWarehouseTable(query) {
+  return getMockOpeningItoBuWarehouseTable(query);
+}
+
+/**
+ * 获取 BU-类目维度表格数据
+ * @param {Object} query - 查询参数
+ * @param {string} query.month - 月份
+ * @param {string} query.dataType - 数据类型：'amount' | 'qty'
+ * @param {boolean} query.includeRetail - 是否包含商超数据
+ */
+export function getOpeningItoBuCategoryTable(query) {
+  return getMockOpeningItoBuCategoryTable(query);
+}
+
+/**
+ * 获取饼图数据
+ * @param {Object} query - 查询参数
+ * @param {string} query.month - 月份
+ * @param {string} query.dataType - 数据类型：'amount' | 'qty'
+ * @param {string} query.dimension - 维度：'category' | 'bu'
+ * @param {boolean} query.includeRetail - 是否包含商超数据
+ */
+export function getOpeningItoPieData(query) {
+  return getMockOpeningItoPieData(query);
+}
+
+/**
+ * 获取年度趋势数据（2025 vs 2026 对比）
+ * @param {Object} query - 查询参数
+ * @param {string} query.dataType - 数据类型：'amount' | 'qty'
+ * @param {boolean} query.includeRetail - 是否包含商超数据
+ */
+export function getOpeningItoYearlyTrend(query) {
+  return getMockOpeningItoYearlyTrend(query);
+}
+
+/**
+ * 获取月度趋势数据（本期期初+ITO）
+ * @param {Object} query - 查询参数
+ * @param {string} query.year - 年份：'2025' | '2026'
+ * @param {string} query.dataType - 数据类型：'amount' | 'qty'
+ * @param {boolean} query.includeRetail - 是否包含商超数据
+ */
+export function getOpeningItoMonthlyTrend(query) {
+  return getMockOpeningItoMonthlyTrend(query);
+}
+
+/**
+ * 获取类目分析数据
+ * @param {Object} query - 查询参数
+ * @param {string} query.month - 月份：'2026-03'
+ * @param {string} query.dataType - 数据类型：'amount' | 'qty'
+ * @param {boolean} query.includeRetail - 是否包含商超数据
+ */
+export function getCategoryAnalysisData(query) {
+  return getMockCategoryAnalysisData(query);
+}
+
+/**
+ * 获取 Excess 看板 BU Tabs
+ */
+export function getExcessTabs() {
+  return getMockExcessTabs();
+}
+
+/**
+ * 获取 Excess 指标卡数据
+ * @param {Object} query
+ * @param {string} query.bu - 总览 | BU
+ * @param {string} query.dataType - amount | qty
+ */
+export function getExcessMetrics(query) {
+  return getMockExcessMetrics(query);
+}
+
+/**
+ * 获取 Excess 主表数据
+ * @param {Object} query
+ * @param {string} query.bu - 总览 | BU
+ * @param {string} query.dataType - amount | qty
+ */
+export function getExcessMainTable(query) {
+  return getMockExcessMainTable(query);
+}
+
+/**
+ * 获取 >365 天 TOP10 数据
+ * @param {Object} query
+ * @param {string} query.bu - 总览 | BU
+ * @param {string} query.dataType - amount | qty
+ */
+export function getExcessAgingTop10(query) {
+  return getMockExcessAgingTop10(query);
+}
+
+/**
+ * 获取库存年龄分布
+ * @param {Object} query
+ * @param {string} query.bu - 总览 | BU
+ * @param {string} query.dataType - amount | qty
+ */
+export function getExcessInventoryAge(query) {
+  return getMockExcessInventoryAge(query);
+}
+
+/**
+ * 获取 Excess 过量分析弹窗数据
+ * @param {Object} query
+ * @param {string} query.bu - 总览 | BU
+ * @param {string} query.dataType - amount | qty
+ * @param {string} query.level1 - category | bu
+ * @param {string} query.selectedMetric - safe | excess3 | excess6 | excess12
+ */
+export function getExcessAnalysisData(query) {
+  return getMockExcessAnalysisData(query);
+}
+
+/**
+ * 库龄分析：>365 天按 BU / 类目 / 仓库汇总（全量行，不截断 TOP）
+ * @param {Object} query
+ * @param {string} query.activeBuTab - 主看板当前 BU Tab
+ * @param {string} query.dataType - amount | qty
+ * @param {string} query.dimension - bu | category | warehouse
+ */
+export function getInventoryAgeOver365Analysis(query) {
+  return getMockInventoryAgeOver365Analysis(query);
+}
+
+/**
+ * 留档：保存 Excess 看板快照
+ * @param {Object} snapshot
+ */
+export function createExcessArchive(snapshot) {
+  const currentList = storage.get(SUPPLY_CHAIN_EXCESS_ARCHIVES) || [];
+  const record = {
+    archiveId: `excess_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
+    archiveName: snapshot?.archiveName || `Excess留档 ${new Date().toLocaleString()}`,
+    createdAt: new Date().toISOString(),
+    ...snapshot,
+  };
+  const nextList = [record, ...currentList].slice(0, 100);
+  storage.set(SUPPLY_CHAIN_EXCESS_ARCHIVES, nextList);
+  return record;
+}
+
+/**
+ * 获取 Excess 留档列表（按时间倒序）
+ */
+export function getExcessArchives() {
+  const list = storage.get(SUPPLY_CHAIN_EXCESS_ARCHIVES) || [];
+  return [...list].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+}
+
+/**
+ * 按 ID 获取单条留档
+ * @param {string} archiveId
+ */
+export function getExcessArchiveById(archiveId) {
+  const list = getExcessArchives();
+  return list.find((item) => item.archiveId === archiveId) || null;
 }

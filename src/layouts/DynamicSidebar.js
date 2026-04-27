@@ -183,6 +183,8 @@ export const navConfig = {
             { name: '计划概览', path: '/supply-chain/overview' },
             { name: 'Forecast Tracking', path: '/supply-chain/forecast-tracking' },
             { name: '供应计划管理', path: '/supply-chain/supply-plan' },
+            { name: 'Excess过量看板', path: '/supply-chain/excess-dashboard' },
+            { name: '期初&ITO看板', path: '/supply-chain/opening-ito-dashboard' },
         ]
     },
     

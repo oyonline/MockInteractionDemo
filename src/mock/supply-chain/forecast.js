@@ -29,40 +29,42 @@ function generateMockData() {
   // 先生成基础数据模板（用于跨月引用）
   const baseDataTemplate = {};
 
+  // 先生成固定的SKU清单（确保36个月都有相同的SKU集合，用于连续异常判断）
+  const fixedSkuList = [];
+  let skuIndex = 0;
+  bus.forEach(bu => {
+    categories.forEach(category => {
+      // 每个BU每个类目固定生成4个SKU（不再随机）
+      for (let j = 0; j < 4; j++) {
+        const skuId = `SKU${String(skuIndex).padStart(4, '0')}`;
+        skuIndex++;
+        // 基础金额和数量（使用伪随机确保跨月一致性）
+        const baseAmount = 50000 + ((skuIndex * 12345) % 200000);
+        // qty基数放大10倍，确保在数量模式下也能满足异常判断阈值(>=30)
+        const baseQty = 1000 + ((skuIndex * 567) % 5000);
+        
+        fixedSkuList.push({
+          skuId,
+          skuName: `${category} Product ${j + 1}`,
+          category,
+          bu,
+          baseAmount,
+          baseQty,
+          skuSeed: `${bu}-${category}-${skuId}`,
+        });
+      }
+    });
+  });
+
   // 生成36个月的数据（覆盖2024、2025、2026三年，从2026-03往前推）
   for (let i = 0; i < 36; i++) {
     const month = new Date(currentMonth.getFullYear(), currentMonth.getMonth() - i, 1);
     const monthStr = `${month.getFullYear()}-${String(month.getMonth() + 1).padStart(2, '0')}`;
     baseDataTemplate[monthStr] = {};
     
-    // 每个BU每个类目生成2-5个SKU
-    bus.forEach(bu => {
-      categories.forEach(category => {
-        const skuCount = 2 + Math.floor(Math.random() * 4);
-        
-        for (let j = 0; j < skuCount; j++) {
-          const skuId = `SKU${String(Math.floor(Math.random() * 9999)).padStart(4, '0')}`;
-          // 基础金额和数量（用于保持一致性）
-          const baseAmount = 50000 + Math.random() * 200000;
-          const baseQty = 100 + Math.floor(Math.random() * 500);
-          
-          // 为每个SKU创建一个稳定的随机种子，确保跨月预测一致性
-          const skuSeed = `${bu}-${category}-${skuId}`;
-          
-          if (!baseDataTemplate[monthStr][skuSeed]) {
-            baseDataTemplate[monthStr][skuSeed] = {};
-          }
-          
-          baseDataTemplate[monthStr][skuSeed] = {
-            skuId,
-            skuName: `${category} Product ${j + 1}`,
-            category,
-            bu,
-            baseAmount,
-            baseQty,
-          };
-        }
-      });
+    // 使用固定的SKU清单填充每个月
+    fixedSkuList.forEach(sku => {
+      baseDataTemplate[monthStr][sku.skuSeed] = { ...sku };
     });
   }
   
@@ -87,8 +89,15 @@ function generateMockData() {
       const forecastAmount = Math.round(baseAmount * (0.8 + Math.random() * 0.4));
       const forecastQty = Math.round(baseQty * (0.8 + Math.random() * 0.4));
       
-      // 实际销售数据（与最新预测有一定偏差）
-      const deviationRate = (Math.random() - 0.5) * 0.4; // -20% ~ +20%
+      // 为每个SKU生成固定的偏差倾向（基于skuSeed的hash）
+      // 这样同一SKU在不同月份会有相似的偏差倾向，提高连续异常概率
+      const skuHash = skuSeed.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+      // 基础偏差倾向：-35% ~ +35% 的固定偏移（确保部分SKU必定超过±15%阈值）
+      const baseBias = ((skuHash % 70) - 35) / 100;
+      // 随机波动：-20% ~ +20%
+      const randomDeviation = (Math.random() - 0.5) * 0.4;
+      // 总偏差 = 固定倾向 + 随机波动，范围约 -55% ~ +55%
+      const deviationRate = baseBias + randomDeviation;
       const actualAmount = Math.round(forecastAmount * (1 + deviationRate));
       const actualQty = Math.round(forecastQty * (1 + deviationRate));
       
@@ -158,13 +167,23 @@ function generateMockData() {
 }
 
 export function getMockForecastList() {
+  // 数据版本号：当数据结构变化时更新，强制清除缓存重新生成
+  const DATA_VERSION = 'v3-continuous-abnormal';
+  const VERSION_KEY = `${SUPPLY_CHAIN_FORECAST}_version`;
+  
+  const storedVersion = get(VERSION_KEY);
   const stored = get(SUPPLY_CHAIN_FORECAST);
-  if (stored && Array.isArray(stored) && stored.length > 0) {
+  
+  // 如果版本匹配且数据存在，使用缓存
+  if (storedVersion === DATA_VERSION && stored && Array.isArray(stored) && stored.length > 0) {
     return stored;
   }
   
+  // 版本不匹配或数据不存在，重新生成
+  console.log('[Mock] Regenerating forecast data, version:', DATA_VERSION);
   const mockData = generateMockData();
   try {
+    set(VERSION_KEY, DATA_VERSION);
     set(SUPPLY_CHAIN_FORECAST, mockData);
   } catch (e) {
     // 忽略 localStorage quota 超限错误，直接返回 mock 数据
@@ -289,13 +308,13 @@ export function getMockTopUnderperformed(month, query = {}) {
 export function getMockCategoryAnalysis(month, query = {}) {
   const { bu } = query;
   const allData = getMockForecastList();
-  
+
   let filtered = allData.filter(item => item.month === month && item.actualAmount < item.forecastAmount);
-  
+
   if (bu && bu !== 'all') {
     filtered = filtered.filter(item => item.bu === bu);
   }
-  
+
   // 按类目聚合
   const categoryMap = {};
   filtered.forEach(item => {
@@ -304,20 +323,27 @@ export function getMockCategoryAnalysis(month, query = {}) {
         category: item.category,
         skuCount: 0,
         totalDeviation: 0,
+        totalDeviationQty: 0,
         totalForecast: 0,
+        totalForecastQty: 0,
         totalActual: 0,
+        totalActualQty: 0,
       };
     }
     categoryMap[item.category].skuCount += 1;
     categoryMap[item.category].totalDeviation += (item.forecastAmount - item.actualAmount);
+    categoryMap[item.category].totalDeviationQty += (item.forecastQty - item.actualQty);
     categoryMap[item.category].totalForecast += item.forecastAmount;
+    categoryMap[item.category].totalForecastQty += item.forecastQty;
     categoryMap[item.category].totalActual += item.actualAmount;
+    categoryMap[item.category].totalActualQty += item.actualQty;
   });
-  
+
   return Object.values(categoryMap)
     .map(item => ({
       ...item,
-      deviationRate: ((item.totalActual - item.totalForecast) / item.totalForecast * 100).toFixed(2),
+      deviationRate: ((item.totalActual - item.totalForecast) / (item.totalForecast || 1) * 100).toFixed(2),
+      deviationRateQty: ((item.totalActualQty - item.totalForecastQty) / (item.totalForecastQty || 1) * 100).toFixed(2),
     }))
     .sort((a, b) => b.totalDeviation - a.totalDeviation);
 }

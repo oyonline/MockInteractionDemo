@@ -1,7 +1,7 @@
 // src/pages/supply-chain/ForecastTrackingPage.js
 // Forecast Tracking - 预测跟踪与执行监控（重构版）
 
-import React, { useState, useEffect, useMemo, useRef } from 'react';
+import React, { useState, useEffect, useMemo, useRef, useCallback, useTransition, Suspense } from 'react';
 import {
   BarChart3,
   Download,
@@ -682,7 +682,7 @@ const CategoryShareCard = ({ title, data, dataType, emptyText }) => {
 };
 
 // 整体趋势混合图组件（柱状图 + 折线图）
-const OverallTrendMixedChart = ({ data, dataType }) => {
+const OverallTrendMixedChart = ({ data, dataType, displayYear, onYearChange }) => {
   const [hiddenSeries, setHiddenSeries] = useState({});
 
   if (!data || !data.chartData || !data.series || data.series.length === 0) {
@@ -713,12 +713,29 @@ const OverallTrendMixedChart = ({ data, dataType }) => {
   const CustomTooltip = ({ active, payload, label }) => {
     if (!active || !payload || payload.length === 0) return null;
 
+    // 过滤掉隐藏的和值为0/null的数据，只显示有实际数值的series
+    const validPayload = payload.filter((entry) => {
+      if (hiddenSeries[entry.dataKey]) return false;
+      const value = entry.value;
+      // 只显示有实际数值的数据（不为0、null、undefined）
+      return value !== null && value !== undefined && value !== 0;
+    });
+
+    // 如果没有有效数据，显示提示
+    if (validPayload.length === 0) {
+      return (
+        <div className="bg-white rounded-lg shadow-lg border border-gray-200 p-3">
+          <div className="text-sm font-medium text-gray-700 mb-2">{label}</div>
+          <div className="text-xs text-gray-400">暂无数据</div>
+        </div>
+      );
+    }
+
     return (
-      <div className="bg-white rounded-lg shadow-lg border border-gray-200 p-3">
+      <div className="bg-white rounded-lg shadow-lg border border-gray-200 p-3 max-h-80 overflow-auto">
         <div className="text-sm font-medium text-gray-700 mb-2">{label}</div>
         <div className="space-y-1">
-          {payload.map((entry, idx) => {
-            if (hiddenSeries[entry.dataKey]) return null;
+          {validPayload.map((entry, idx) => {
             const value = entry.value;
             const formatted = dataType === 'amount'
               ? `¥${(value / 10000).toFixed(2)}万`
@@ -741,7 +758,33 @@ const OverallTrendMixedChart = ({ data, dataType }) => {
 
   return (
     <div className="bg-white rounded-lg border border-gray-200 p-4">
-      <div className="text-sm font-medium text-gray-700 mb-3">整体趋势图</div>
+      {/* 标题栏 + 年份切换器 */}
+      <div className="flex items-center justify-between mb-3">
+        <div className="text-sm font-medium text-gray-700">整体趋势图</div>
+        
+        {/* Forecast年份 切换器 */}
+        {data?.availableYears && data.availableYears.length > 1 && (
+          <div className="flex items-center gap-2">
+            <span className="text-xs text-gray-500">Forecast年份</span>
+            <div className="flex items-center gap-1 bg-gray-100 rounded-lg p-0.5">
+              {data.availableYears.map((year) => (
+                <button
+                  key={year}
+                  onClick={() => onYearChange(year)}
+                  className={`px-2 py-1 text-xs rounded-md transition-colors ${
+                    displayYear === year
+                      ? 'bg-white text-gray-800 shadow-sm'
+                      : 'text-gray-500 hover:text-gray-700'
+                  }`}
+                >
+                  {year}年
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+      
       <div className="h-80">
         <ResponsiveContainer width="100%" height="100%">
           <ComposedChart data={chartData}>
@@ -792,11 +835,246 @@ const OverallTrendMixedChart = ({ data, dataType }) => {
   );
 };
 
+// ==================== TOP10未达成与类目分析组件 ====================
+
+// 复制数据到剪贴板功能
+const copyToClipboard = (data, headers, rows) => {
+  const csvRows = [
+    headers.join(','),
+    ...rows.map(row => row.map(cell => {
+      // 处理包含逗号的文本
+      const cellStr = String(cell ?? '');
+      if (cellStr.includes(',') || cellStr.includes('\n') || cellStr.includes('"')) {
+        return `"${cellStr.replace(/"/g, '""')}"`;
+      }
+      return cellStr;
+    }).join(','))
+  ];
+  const csv = csvRows.join('\n');
+
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(csv).then(() => {
+      // eslint-disable-next-line no-console
+      console.log('数据已复制到剪贴板');
+    }).catch(err => {
+      // eslint-disable-next-line no-console
+      console.error('复制失败:', err);
+    });
+  } else {
+    // 降级方案：创建临时textarea
+    const textarea = document.createElement('textarea');
+    textarea.value = csv;
+    textarea.style.position = 'fixed';
+    textarea.style.opacity = '0';
+    document.body.appendChild(textarea);
+    textarea.select();
+    try {
+      document.execCommand('copy');
+    } catch (e) {
+      // eslint-disable-next-line no-console
+      console.error('复制失败:', e);
+    }
+    document.body.removeChild(textarea);
+  }
+};
+
+// TOP10未达成表格组件（集成类目分析弹窗）
+const TopUnderperformedSection = ({ data, dataType, matrixData, month }) => {
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
+  if (!data || data.length === 0) {
+    return (
+      <div className="bg-white rounded-lg border border-gray-200 p-4">
+        <div className="flex items-center justify-between mb-3">
+          <div className="text-sm font-medium text-gray-700">TOP10未达成（供应链描述）</div>
+        </div>
+        <div className="h-40 flex items-center justify-center text-sm text-gray-400">
+          暂无数据
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <>
+      <div className="bg-white rounded-lg border border-gray-200 p-4">
+        <div className="flex items-center justify-between mb-3">
+          <div className="text-sm font-medium text-gray-700">TOP10未达成（供应链描述）</div>
+          <button
+            onClick={() => setIsModalOpen(true)}
+            className="px-3 py-1.5 bg-teal-50 text-teal-700 text-xs font-medium rounded-md hover:bg-teal-100 transition-colors"
+          >
+            类目分析
+          </button>
+        </div>
+        <div className="overflow-x-auto">
+          <table className="w-full text-xs">
+            <thead>
+              <tr className="bg-gray-50">
+                <th className="px-2 py-2 text-left font-medium text-gray-600 w-12">排名</th>
+                <th className="px-2 py-2 text-left font-medium text-gray-600">BU</th>
+                <th className="px-2 py-2 text-left font-medium text-gray-600">类目</th>
+                <th className="px-2 py-2 text-left font-medium text-gray-600">描述</th>
+                <th className="px-2 py-2 text-right font-medium text-gray-600">
+                  {dataType === 'amount' ? '金额' : '数量'}
+                </th>
+                <th className="px-2 py-2 text-right font-medium text-gray-600">偏差率</th>
+                <th className="px-2 py-2 text-right font-medium text-gray-600">占比</th>
+              </tr>
+            </thead>
+            <tbody>
+              {data.map((item, idx) => (
+                <tr key={idx} className={idx % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
+                  <td className="px-2 py-1.5 text-center">
+                    <span className={`inline-flex items-center justify-center w-5 h-5 rounded-full text-xs font-medium ${
+                      item.rank <= 3 ? 'bg-red-100 text-red-700' : 'bg-gray-100 text-gray-600'
+                    }`}>
+                      {item.rank}
+                    </span>
+                  </td>
+                  <td className="px-2 py-1.5 text-gray-700">{item.bu}</td>
+                  <td className="px-2 py-1.5 text-gray-700">{item.category}</td>
+                  <td className="px-2 py-1.5 text-gray-700 truncate max-w-40" title={item.description}>
+                    {item.description}
+                  </td>
+                  <td className="px-2 py-1.5 text-right font-mono text-gray-700">
+                    {dataType === 'amount' ? `¥${(item.amount / 10000).toFixed(2)}万` : `${(item.qty / 10000).toFixed(2)}万`}
+                  </td>
+                  <td className="px-2 py-1.5 text-right">
+                    <span className={`font-mono ${Number(item.deviationRate) < 0 ? 'text-red-600' : 'text-green-600'}`}>
+                      {item.deviationRate}%
+                    </span>
+                  </td>
+                  <td className="px-2 py-1.5 text-right font-mono text-gray-600">{item.share}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <CategoryAnalysisModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        matrixData={matrixData}
+        dataType={dataType}
+      />
+    </>
+  );
+};
+
+// 类目分析矩阵弹窗组件
+const CategoryAnalysisModal = ({ isOpen, onClose, matrixData, dataType }) => {
+  if (!isOpen || !matrixData) return null;
+
+  const { categories, bus, data, columnTotals, grandTotal, month } = matrixData;
+
+  const formatCellValue = (val) => {
+    if (val === 0 || val === null || val === undefined) return '-';
+    const formatted = dataType === 'amount' ? `¥${(val / 10000).toFixed(1)}万` : `${(val / 10000).toFixed(1)}万`;
+    return formatted;
+  };
+
+  // 数据类型标签
+  const dataTypeLabel = dataType === 'amount' ? '金额' : '数量';
+  // 格式化月份显示 (2025-02 -> 2025.02)
+  const formatMonthDisplay = (monthStr) => {
+    if (!monthStr) return '';
+    return monthStr.replace('-', '.');
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-lg shadow-xl w-full max-w-6xl max-h-[90vh] flex flex-col">
+        {/* 弹窗头部 */}
+        <div className="flex items-center justify-between px-4 py-3 border-b">
+          <div>
+            <h3 className="text-base font-semibold text-gray-800">
+              未达成类目分析 - {dataTypeLabel}（{formatMonthDisplay(month)}）
+            </h3>
+          </div>
+          <button
+            onClick={onClose}
+            className="px-3 py-1.5 text-xs text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded transition-colors"
+          >
+            关闭
+          </button>
+        </div>
+
+        {/* 矩阵表格 */}
+        <div className="flex-1 overflow-auto p-4">
+          <div className="min-w-max">
+            <table className="w-full text-xs border-collapse">
+              <thead className="sticky top-0 z-10">
+                <tr className="bg-gray-50">
+                  <th className="px-2 py-2 text-left font-medium text-gray-600 border border-gray-200 sticky left-0 bg-gray-50 z-20">
+                    类目 \\ BU
+                  </th>
+                  {bus.map(b => (
+                    <th key={b} className="px-2 py-2 text-right font-medium text-gray-600 border border-gray-200 min-w-20">
+                      {b}
+                    </th>
+                  ))}
+                  <th className="px-2 py-2 text-right font-medium text-gray-600 border border-gray-200 bg-gray-100 sticky right-0 z-20">
+                    总计
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {categories.map((cat, idx) => (
+                  <tr key={cat} className={idx % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
+                    <td className="px-2 py-1.5 font-medium text-gray-700 border border-gray-200 sticky left-0 bg-inherit z-10">
+                      {cat}
+                    </td>
+                    {bus.map(b => {
+                      const val = data[cat]?.[b] || 0;
+                      const isNegative = val < 0; // 负值表示超达成
+                      const isPositive = val > 0; // 正值表示未达成
+                      return (
+                        <td
+                          key={`${cat}-${b}`}
+                          className={`px-2 py-1.5 text-right font-mono border border-gray-200 ${
+                            isPositive ? 'bg-blue-50 text-blue-700' : isNegative ? 'bg-orange-50 text-orange-700' : 'text-gray-400'
+                          }`}
+                        >
+                          {formatCellValue(val)}
+                        </td>
+                      );
+                    })}
+                    <td className="px-2 py-1.5 text-right font-mono font-medium text-gray-700 border border-gray-200 bg-gray-100 sticky right-0 z-10">
+                      {formatCellValue(data[cat]?.total || 0)}
+                    </td>
+                  </tr>
+                ))}
+                {/* 总计行 */}
+                <tr className="bg-gray-100 font-medium sticky bottom-0 z-10">
+                  <td className="px-2 py-2 text-gray-700 border border-gray-200 sticky left-0 bg-gray-100 z-20">
+                    总计
+                  </td>
+                  {bus.map(b => (
+                    <td key={b} className="px-2 py-2 text-right font-mono text-gray-700 border border-gray-200">
+                      {formatCellValue(columnTotals[b] || 0)}
+                    </td>
+                  ))}
+                  <td className="px-2 py-2 text-right font-mono text-gray-800 border border-gray-200">
+                    {formatCellValue(grandTotal)}
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 // 主组件
 export default function ForecastTrackingPage() {
   // 状态管理
   const [activeBu, setActiveBu] = useState('all');
   const [activeView, setActiveView] = useState('overview');
+  const [isPendingView, startViewTransition] = useTransition(); // 视图切换过渡
   const [dataType, setDataType] = useState('amount');
   const [category, setCategory] = useState('all');
   const [month, setMonth] = useState(supplyChainService.getDefaultMonth());
@@ -818,6 +1096,12 @@ export default function ForecastTrackingPage() {
     currentMonth: '',
   });
   const [overallTrendData, setOverallTrendData] = useState(null);
+  const [overallDisplayYear, setOverallDisplayYear] = useState(null); // null 表示使用默认（targetYear）
+
+  // TOP10未达成与类目分析数据
+  const [topUnderperformedData, setTopUnderperformedData] = useState([]);
+  const [categorySummaryData, setCategorySummaryData] = useState([]);
+  const [underperformedMatrixData, setUnderperformedMatrixData] = useState(null);
   const [loading, setLoading] = useState(false);
 
   // Detail 视图状态
@@ -825,6 +1109,25 @@ export default function ForecastTrackingPage() {
   const [exceptionSummary, setExceptionSummary] = useState(null);
   const [ownerAttribution, setOwnerAttribution] = useState(null);
   const [detailLoading, setDetailLoading] = useState(false);
+
+  // 异常归因留言抽屉状态
+  const [commentsDrawerOpen, setCommentsDrawerOpen] = useState(false);
+  const [selectedOwner, setSelectedOwner] = useState(null);
+  // 留言数据存储（mock 内存存储）
+  const [ownerComments, setOwnerComments] = useState({});
+
+  // 视图切换处理器（使用 transition 避免卡顿）
+  const handleViewChange = useCallback((newView) => {
+    if (newView === activeView) return;
+    
+    startViewTransition(() => {
+      setActiveView(newView);
+      // 切换视图时重置Detail加载状态
+      if (newView === 'detail') {
+        setDetailLoading(true);
+      }
+    });
+  }, [activeView, startViewTransition]);
 
   // Detail 筛选状态
   const [selectedBus, setSelectedBus] = useState(['all']);
@@ -893,20 +1196,52 @@ export default function ForecastTrackingPage() {
         category,
         bu: activeBu,
         dataType,
+        displayYear: overallDisplayYear, // 传入当前选中年份
       });
       setOverallTrendData(overallTrend);
+
+      // 如果没有指定年份，使用返回的 currentYear 作为默认
+      if (!overallDisplayYear && overallTrend.currentYear) {
+        setOverallDisplayYear(overallTrend.currentYear);
+      }
+
+      // 加载TOP10未达成数据
+      const topUnderperformed = supplyChainService.getTopUnderperformed({
+        month,
+        category,
+        bu: activeBu,
+        dataType,
+      });
+      setTopUnderperformedData(topUnderperformed);
+
+      // 加载类目分析汇总数据（用于卡片展示TOP3）
+      const categoryAnalysis = supplyChainService.getCategoryAnalysis({
+        month,
+        bu: activeBu,
+        dataType,
+      });
+      setCategorySummaryData(categoryAnalysis);
+
+      // 加载类目矩阵数据（用于弹窗）
+      const matrixData = supplyChainService.getUnderperformedMatrix({
+        month,
+        category,
+        bu: activeBu,
+        dataType,
+      });
+      setUnderperformedMatrixData(matrixData);
 
       setLoading(false);
     };
 
     loadData();
-  }, [month, category, activeBu, dataType, pastPeriod, futureRange]);
+  }, [month, category, activeBu, dataType, pastPeriod, futureRange, overallDisplayYear]);
 
-  // 加载 Detail 数据
+  // 加载 Detail 数据（异步分批加载优化渲染体验）
   useEffect(() => {
     if (activeView !== 'detail') return;
 
-    const loadDetailData = () => {
+    const loadDetailData = async () => {
       setDetailLoading(true);
 
       const detailQuery = {
@@ -920,11 +1255,14 @@ export default function ForecastTrackingPage() {
         pageSize: DETAIL_PAGE_SIZE,
       };
 
-      // 主明细矩阵数据
+      // 分批异步加载 - 优先加载主数据，延迟加载次要数据
+      // 批次1: 主明细矩阵数据（最高优先级）
+      await new Promise(resolve => setTimeout(resolve, 0));
       const matrixData = supplyChainService.getForecastDetailMatrix(detailQuery);
       setDetailMatrixData(matrixData);
 
-      // 异常摘要数据
+      // 批次2: 异常摘要数据
+      await new Promise(resolve => setTimeout(resolve, 10));
       const exceptionData = supplyChainService.getForecastExceptionSummary({
         month,
         selectedBus,
@@ -932,7 +1270,8 @@ export default function ForecastTrackingPage() {
       });
       setExceptionSummary(exceptionData);
 
-      // 归因统计数据
+      // 批次3: 归因统计数据
+      await new Promise(resolve => setTimeout(resolve, 10));
       const attributionData = supplyChainService.getForecastOwnerAttribution({
         month,
         selectedBus,
@@ -1074,7 +1413,7 @@ export default function ForecastTrackingPage() {
                 isActive={activeBu === buOption.value}
                 activeView={activeView}
                 onBuClick={setActiveBu}
-                onViewChange={setActiveView}
+                onViewChange={handleViewChange}
               />
             ))}
           </div>
@@ -1292,35 +1631,56 @@ export default function ForecastTrackingPage() {
             <OverallTrendMixedChart
               data={overallTrendData}
               dataType={dataType}
+              displayYear={overallDisplayYear}
+              onYearChange={setOverallDisplayYear}
+            />
+          </div>
+
+          {/* TOP10未达成与类目分析区域 */}
+          <div className="mt-6">
+            <TopUnderperformedSection
+              data={topUnderperformedData}
+              dataType={dataType}
+              matrixData={underperformedMatrixData}
+              month={month}
             />
           </div>
         </div>
       )}
 
-      {/* 数据明细视图 */}
+      {/* 数据明细视图 - 使用 Suspense 和骨架屏优化切换体验 */}
       {activeView === 'detail' && (
-        <DetailView
-          dataType={dataType}
-          month={month}
-          monthOptions={monthOptions}
-          selectedBus={selectedBus}
-          setSelectedBus={setSelectedBus}
-          selectedCategories={selectedCategories}
-          setSelectedCategories={setSelectedCategories}
-          selectedPlanners={selectedPlanners}
-          setSelectedPlanners={setSelectedPlanners}
-          plannerOptions={PLANNER_OPTIONS}
-          descriptionKeyword={descriptionKeyword}
-          setDescriptionKeyword={setDescriptionKeyword}
-          summarySkuKeyword={summarySkuKeyword}
-          setSummarySkuKeyword={setSummarySkuKeyword}
-          detailMatrixData={detailMatrixData}
-          exceptionSummary={exceptionSummary}
-          ownerAttribution={ownerAttribution}
-          detailLoading={detailLoading}
-          currentPage={detailPage}
-          setCurrentPage={setDetailPage}
-        />
+        <Suspense fallback={<DetailViewSkeleton />}>
+          <DetailView
+            dataType={dataType}
+            month={month}
+            monthOptions={monthOptions}
+            selectedBus={selectedBus}
+            setSelectedBus={setSelectedBus}
+            selectedCategories={selectedCategories}
+            setSelectedCategories={setSelectedCategories}
+            selectedPlanners={selectedPlanners}
+            setSelectedPlanners={setSelectedPlanners}
+            plannerOptions={PLANNER_OPTIONS}
+            descriptionKeyword={descriptionKeyword}
+            setDescriptionKeyword={setDescriptionKeyword}
+            summarySkuKeyword={summarySkuKeyword}
+            setSummarySkuKeyword={setSummarySkuKeyword}
+            detailMatrixData={detailMatrixData}
+            exceptionSummary={exceptionSummary}
+            ownerAttribution={ownerAttribution}
+            detailLoading={detailLoading}
+            currentPage={detailPage}
+            setCurrentPage={setDetailPage}
+            // 异常归因抽屉
+            commentsDrawerOpen={commentsDrawerOpen}
+            setCommentsDrawerOpen={setCommentsDrawerOpen}
+            selectedOwner={selectedOwner}
+            setSelectedOwner={setSelectedOwner}
+            ownerComments={ownerComments}
+            setOwnerComments={setOwnerComments}
+          />
+        </Suspense>
       )}
     </div>
   );
@@ -1426,7 +1786,8 @@ const MultiSelectDropdown = ({ label, options, value, onChange, placeholder }) =
 };
 
 // 行数据单元格子组件
-const RowDataCells = ({ row, displayYear, yearMonths, formatNumber, formatPercent, getValueCellStyle }) => {
+// 使用React.memo缓存行数据单元格组件，避免不必要的重渲染
+const RowDataCells = React.memo(({ row, displayYear, yearMonths, formatNumber, formatPercent, getValueCellStyle }) => {
   // Actual行始终显示对应年份，其他行根据displayYear
   const rowDisplayYear = row.typeCode === 'actual' ? row.year : displayYear;
   const rowData = row.dataByYear?.[rowDisplayYear];
@@ -1497,14 +1858,60 @@ const RowDataCells = ({ row, displayYear, yearMonths, formatNumber, formatPercen
       ))}
     </>
   );
-};
+});
 
-// 明细矩阵表格组件（重构版 + 展开/收缩功能 + 年份切换）
+RowDataCells.displayName = 'RowDataCells';
+
+// 明细矩阵表格组件（重构版 + 展开/收缩功能 + 年份切换 + 性能优化）
+// DetailView 骨架屏组件
+const DetailViewSkeleton = () => (
+  <div className="h-full flex flex-col bg-gray-50 animate-pulse">
+    {/* 头部骨架 */}
+    <div className="bg-white border-b px-6 py-4">
+      <div className="flex items-center justify-between">
+        <div>
+          <div className="h-6 w-48 bg-gray-200 rounded mb-2"></div>
+          <div className="h-4 w-32 bg-gray-200 rounded"></div>
+        </div>
+        <div className="h-10 w-24 bg-gray-200 rounded"></div>
+      </div>
+    </div>
+    {/* 筛选栏骨架 */}
+    <div className="bg-white border-b px-6 py-3">
+      <div className="flex gap-3">
+        <div className="h-8 w-32 bg-gray-200 rounded"></div>
+        <div className="h-8 w-32 bg-gray-200 rounded"></div>
+        <div className="h-8 w-32 bg-gray-200 rounded"></div>
+      </div>
+    </div>
+    {/* 表格骨架 */}
+    <div className="flex-1 p-4">
+      <div className="bg-white rounded-lg border border-gray-200 h-full">
+        <div className="h-10 bg-gray-100 border-b"></div>
+        <div className="divide-y">
+          {Array.from({ length: 8 }).map((_, i) => (
+            <div key={i} className="h-12 flex items-center px-4 gap-4">
+              <div className="h-4 w-24 bg-gray-200 rounded"></div>
+              <div className="h-4 w-20 bg-gray-200 rounded"></div>
+              <div className="h-4 w-16 bg-gray-200 rounded"></div>
+              <div className="h-4 w-20 bg-gray-200 rounded"></div>
+              <div className="h-4 w-12 bg-gray-200 rounded"></div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  </div>
+);
+
 const DetailMatrixTable = ({ data, displayYear }) => {
+  // ========== 所有 Hooks 必须在最顶部，在任何条件判断之前 ==========
   // 展开的SKU列表（默认全部收缩）
   const [expandedSkus, setExpandedSkus] = useState(new Set());
+  // 分页状态：默认显示前15条SKU（减少初始渲染负担）
+  const [visibleCount, setVisibleCount] = useState(15);
 
-  // 根据 displayYear 生成年份对应的月份列
+  // 根据 displayYear 生成年份对应的月份列 - 使用useMemo缓存
   const yearMonths = useMemo(() => {
     if (!displayYear) return [];
     return Array.from({ length: 12 }, (_, i) => ({
@@ -1513,6 +1920,92 @@ const DetailMatrixTable = ({ data, displayYear }) => {
     }));
   }, [displayYear]);
 
+  // 数据变化时重置展开状态和可见数量
+  useEffect(() => {
+    setExpandedSkus(new Set());
+    setVisibleCount(15);
+  }, [data?.groups?.length, data?.pagination?.page]);
+
+  // 计算派生数据（使用useMemo缓存）
+  const groups = data?.groups || [];
+  const totalGroups = groups.length;
+  const hasMore = visibleCount < totalGroups;
+
+  // 使用useMemo缓存可见的groups，避免每次渲染都计算
+  const visibleGroups = useMemo(() => {
+    return groups.slice(0, visibleCount);
+  }, [groups, visibleCount]);
+
+  // 切换SKU展开/收缩状态 - 使用useCallback缓存函数引用
+  const toggleSku = useCallback((skuKey) => {
+    setExpandedSkus(prev => {
+      const newExpanded = new Set(prev);
+      if (newExpanded.has(skuKey)) {
+        newExpanded.delete(skuKey);
+      } else {
+        newExpanded.add(skuKey);
+      }
+      return newExpanded;
+    });
+  }, []);
+
+  // 全部展开 - 只展开可见的SKU，避免一次性展开过多导致卡顿
+  const expandAll = useCallback(() => {
+    const visibleKeys = visibleGroups.map((g) => `${g.bu}-${g.sku}`);
+    setExpandedSkus(new Set(visibleKeys));
+  }, [visibleGroups]);
+
+  // 全部收缩
+  const collapseAll = useCallback(() => {
+    setExpandedSkus(new Set());
+  }, []);
+
+  // 加载更多（每次加载15条）
+  const loadMore = useCallback(() => {
+    setVisibleCount(prev => Math.min(prev + 15, totalGroups));
+  }, [totalGroups]);
+
+  // 格式化数值 - 使用useCallback缓存
+  const formatNumber = useCallback((val) => {
+    if (val === null || val === undefined || val === '') return '-';
+    const num = parseFloat(val);
+    if (Math.abs(num) >= 10000) {
+      return `${(num / 10000).toFixed(1)}万`;
+    }
+    return `${Math.round(num)}`;
+  }, []);
+
+  // 格式化百分比 - 使用useCallback缓存
+  const formatPercent = useCallback((val) => {
+    if (val === null || val === undefined || val === '') return '-';
+    const num = parseFloat(val);
+    return `${num > 0 ? '+' : ''}${num.toFixed(1)}%`;
+  }, []);
+
+  // 根据类型获取行样式 - 使用useMemo缓存样式映射
+  const typeStyleMap = useMemo(() => ({
+    budget: 'text-gray-800 font-medium',
+    forecast: 'text-blue-600',
+    actual: 'text-green-600',
+    error: 'text-orange-600',
+    achievement: 'text-purple-600 font-medium',
+  }), []);
+
+  const getTypeStyle = useCallback((typeCode) => {
+    return typeStyleMap[typeCode] || 'text-gray-700';
+  }, [typeStyleMap]);
+
+  // 获取数值单元格样式（高亮异常值）- 使用useCallback缓存
+  const getValueCellStyle = useCallback((row, val) => {
+    if (row.typeCode === 'error' && val) {
+      const num = parseFloat(val);
+      if (num > 20) return 'text-orange-600 font-medium bg-orange-50';
+      if (num < -20) return 'text-blue-600 font-medium bg-blue-50';
+    }
+    return '';
+  }, []);
+
+  // ========== 条件渲染必须在所有 Hooks 之后 ==========
   if (!data || !data.groups || data.groups.length === 0) {
     return (
       <div className="bg-white rounded-lg border border-dashed border-gray-300 p-12">
@@ -1526,95 +2019,36 @@ const DetailMatrixTable = ({ data, displayYear }) => {
     );
   }
 
-  const { groups = [] } = data;
-
-  // 切换SKU展开/收缩状态
-  const toggleSku = (skuKey) => {
-    const newExpanded = new Set(expandedSkus);
-    if (newExpanded.has(skuKey)) {
-      newExpanded.delete(skuKey);
-    } else {
-      newExpanded.add(skuKey);
-    }
-    setExpandedSkus(newExpanded);
-  };
-
-  // 全部展开
-  const expandAll = () => {
-    const allKeys = groups.map((g) => `${g.bu}-${g.sku}`);
-    setExpandedSkus(new Set(allKeys));
-  };
-
-  // 全部收缩
-  const collapseAll = () => {
-    setExpandedSkus(new Set());
-  };
-
-  // 格式化数值
-  const formatNumber = (val) => {
-    if (val === null || val === undefined || val === '') return '-';
-    const num = parseFloat(val);
-    if (Math.abs(num) >= 10000) {
-      return `${(num / 10000).toFixed(1)}万`;
-    }
-    return `${Math.round(num)}`;
-  };
-
-  // 格式化百分比
-  const formatPercent = (val) => {
-    if (val === null || val === undefined || val === '') return '-';
-    const num = parseFloat(val);
-    return `${num > 0 ? '+' : ''}${num.toFixed(1)}%`;
-  };
-
-  // 根据类型获取行样式
-  const getTypeStyle = (typeCode, type) => {
-    switch (typeCode) {
-      case 'budget':
-        return 'text-gray-800 font-medium';
-      case 'forecast':
-        return 'text-blue-600';
-      case 'actual':
-        return 'text-green-600';
-      case 'error':
-        return 'text-orange-600';
-      case 'achievement':
-        return 'text-purple-600 font-medium';
-      default:
-        return 'text-gray-700';
-    }
-  };
-
-  // 获取数值单元格样式（高亮异常值）
-  const getValueCellStyle = (row, val) => {
-    if (row.typeCode === 'error' && val) {
-      const num = parseFloat(val);
-      if (num > 20) return 'text-orange-600 font-medium bg-orange-50';
-      if (num < -20) return 'text-blue-600 font-medium bg-blue-50';
-    }
-    return '';
-  };
-
   return (
     <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
       {/* 批量控制按钮 */}
-      <div className="flex items-center gap-2 px-4 py-2 bg-gray-50 border-b border-gray-200">
-        <span className="text-xs text-gray-500">展开控制：</span>
-        <button
-          onClick={expandAll}
-          className="px-2 py-1 text-xs bg-white border border-gray-200 rounded hover:bg-gray-50 transition-colors"
-        >
-          全部展开
-        </button>
-        <button
-          onClick={collapseAll}
-          className="px-2 py-1 text-xs bg-white border border-gray-200 rounded hover:bg-gray-50 transition-colors"
-        >
-          全部收缩
-        </button>
-        <span className="text-xs text-gray-400 ml-2">
-          已展开 {expandedSkus.size} / {groups.length} 个SKU
-        </span>
+      <div className="flex items-center justify-between px-4 py-2 bg-gray-50 border-b border-gray-200">
+        <div className="flex items-center gap-2">
+          <span className="text-xs text-gray-500">展开控制：</span>
+          <button
+            onClick={expandAll}
+            className="px-2 py-1 text-xs bg-white border border-gray-200 rounded hover:bg-gray-50 transition-colors"
+          >
+            全部展开
+          </button>
+          <button
+            onClick={collapseAll}
+            className="px-2 py-1 text-xs bg-white border border-gray-200 rounded hover:bg-gray-50 transition-colors"
+          >
+            全部收缩
+          </button>
+          <span className="text-xs text-gray-400 ml-2">
+            已展开 {expandedSkus.size} / {visibleGroups.length} 个SKU (共{totalGroups}条)
+          </span>
+        </div>
+        {hasMore && (
+          <button
+            onClick={loadMore}
+            className="px-3 py-1 text-xs bg-teal-50 text-teal-700 border border-teal-200 rounded hover:bg-teal-100 transition-colors"
+          >
+            加载更多 ({visibleCount}/{totalGroups})
+          </button>
+        )}
       </div>
 
       <div className="overflow-x-auto">
@@ -1673,7 +2107,7 @@ const DetailMatrixTable = ({ data, displayYear }) => {
 
             {/* 表体 */}
             <tbody>
-              {groups.map((group) => {
+              {visibleGroups.map((group) => {
                 const skuKey = `${group.bu}-${group.sku}`;
                 const isExpanded = expandedSkus.has(skuKey);
                 // 收缩时只显示第一行（Budget Plan）
@@ -1683,7 +2117,7 @@ const DetailMatrixTable = ({ data, displayYear }) => {
                   <React.Fragment key={skuKey}>
                     {visibleRows.map((row, rowIdx) => {
                       const isFirstRow = rowIdx === 0;
-                      const typeStyle = getTypeStyle(row.typeCode, row.type);
+                      const typeStyle = getTypeStyle(row.typeCode);
 
                       return (
                         <tr key={`${group.sku}-${row.type}`} className="hover:bg-gray-50">
@@ -1801,6 +2235,7 @@ const ExceptionSummarySection = ({ data }) => {
             <tr>
               <th className="px-3 py-2 text-left font-medium text-gray-700 border-b">BU</th>
               <th className="px-3 py-2 text-left font-medium text-gray-700 border-b">类目</th>
+              <th className="px-3 py-2 text-left font-medium text-gray-700 border-b">描述</th>
               <th className="px-3 py-2 text-left font-medium text-gray-700 border-b">SKU</th>
               <th className="px-3 py-2 text-left font-medium text-gray-700 border-b">上上期偏差</th>
               <th className="px-3 py-2 text-left font-medium text-gray-700 border-b">上期偏差</th>
@@ -1814,6 +2249,7 @@ const ExceptionSummarySection = ({ data }) => {
               <tr key={`${item.bu}-${item.sku}`} className="hover:bg-gray-50">
                 <td className="px-3 py-2 text-gray-700 border-b">{item.bu}</td>
                 <td className="px-3 py-2 text-gray-600 border-b">{item.category}</td>
+                <td className="px-3 py-2 text-gray-700 border-b max-w-[150px] truncate" title={item.description}>{item.description}</td>
                 <td className="px-3 py-2 text-gray-900 font-medium border-b">{item.sku}</td>
                 <td
                   className={`px-3 py-2 border-b ${
@@ -1851,14 +2287,14 @@ const ExceptionSummarySection = ({ data }) => {
 };
 
 // 归因统计卡组件
-const OwnerAttributionCards = ({ data }) => {
+const OwnerAttributionCards = ({ data, onOwnerClick }) => {
   if (!data || !data.ownerStats) return null;
 
   const colors = {
-    Mina: 'bg-rose-50 text-rose-600 border-rose-200',
-    Anjony: 'bg-blue-50 text-blue-600 border-blue-200',
-    Belly: 'bg-green-50 text-green-600 border-green-200',
-    Dani: 'bg-purple-50 text-purple-600 border-purple-200',
+    Mina: 'bg-rose-50 text-rose-600 border-rose-200 hover:bg-rose-100 cursor-pointer',
+    Anjony: 'bg-blue-50 text-blue-600 border-blue-200 hover:bg-blue-100 cursor-pointer',
+    Belly: 'bg-green-50 text-green-600 border-green-200 hover:bg-green-100 cursor-pointer',
+    Dani: 'bg-purple-50 text-purple-600 border-purple-200 hover:bg-purple-100 cursor-pointer',
   };
 
   return (
@@ -1866,7 +2302,8 @@ const OwnerAttributionCards = ({ data }) => {
       {data.ownerStats.map((owner) => (
         <div
           key={owner.name}
-          className={`rounded-lg border p-3 ${colors[owner.name] || 'bg-gray-50 text-gray-600 border-gray-200'}`}
+          onClick={() => onOwnerClick?.(owner)}
+          className={`rounded-lg border p-3 transition-colors ${colors[owner.name] || 'bg-gray-50 text-gray-600 border-gray-200 hover:bg-gray-100 cursor-pointer'}`}
         >
           <div className="flex items-center gap-2 mb-2">
             <User className="w-4 h-4" />
@@ -1876,6 +2313,166 @@ const OwnerAttributionCards = ({ data }) => {
           <div className="text-xs opacity-75">异常数量</div>
         </div>
       ))}
+    </div>
+  );
+};
+
+// 异常归因留言抽屉组件
+const OwnerCommentsDrawer = ({ isOpen, onClose, owner, exceptionData, comments, onUpdateComment, currentMonth }) => {
+  const [editingComment, setEditingComment] = useState('');
+  const [selectedSku, setSelectedSku] = useState(null);
+
+  // 获取当前 Owner 的所有异常 SKU
+  const ownerExceptions = useMemo(() => {
+    if (!owner || !exceptionData || !exceptionData.list) return [];
+    return exceptionData.list.filter(item => item.owner === owner.name);
+  }, [owner, exceptionData]);
+
+  // 获取上月的异常数据（用于带出借注）
+  const getPreviousMonthComment = (sku) => {
+    const prevMonth = supplyChainService.getPreviousMonth(currentMonth);
+    const key = `${sku}_${prevMonth}_${owner?.name}`;
+    return comments[key] || '';
+  };
+
+  // 获取当前评论
+  const getCurrentComment = (sku) => {
+    const key = `${sku}_${currentMonth}_${owner?.name}`;
+    return comments[key] || '';
+  };
+
+  // 开始编辑
+  const startEdit = (sku, item) => {
+    setSelectedSku(sku);
+    const existingComment = getCurrentComment(sku);
+    // 如果没有当前评论，尝试带出借注
+    if (!existingComment) {
+      const prevComment = getPreviousMonthComment(sku);
+      setEditingComment(prevComment || '');
+    } else {
+      setEditingComment(existingComment);
+    }
+  };
+
+  // 保存评论
+  const saveComment = () => {
+    if (!selectedSku || !owner) return;
+    const key = `${selectedSku}_${currentMonth}_${owner.name}`;
+    onUpdateComment(prev => ({
+      ...prev,
+      [key]: editingComment
+    }));
+    setSelectedSku(null);
+    setEditingComment('');
+  };
+
+  // 取消编辑
+  const cancelEdit = () => {
+    setSelectedSku(null);
+    setEditingComment('');
+  };
+
+  if (!isOpen || !owner) return null;
+
+  return (
+    <div className="fixed inset-0 z-50 flex justify-end">
+      {/* 遮罩层 */}
+      <div 
+        className="absolute inset-0 bg-black/20 transition-opacity" 
+        onClick={onClose}
+      />
+      
+      {/* 抽屉 */}
+      <div className="relative w-[600px] h-full bg-white shadow-xl flex flex-col animate-slide-in-right">
+        {/* 头部 */}
+        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
+          <div>
+            <h3 className="text-lg font-medium text-gray-900">{owner.name} 的异常SKU留言管理</h3>
+            <p className="text-sm text-gray-500 mt-1">共 {owner.count} 条异常记录</p>
+          </div>
+          <button 
+            onClick={onClose}
+            className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+          >
+            <svg className="w-5 h-5 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+
+        {/* 内容区 */}
+        <div className="flex-1 overflow-auto p-4">
+          <table className="w-full text-sm">
+            <thead className="bg-gray-50 sticky top-0">
+              <tr>
+                <th className="px-3 py-3 text-left font-medium text-gray-700 border-b">BU</th>
+                <th className="px-3 py-3 text-left font-medium text-gray-700 border-b">类目</th>
+                <th className="px-3 py-3 text-left font-medium text-gray-700 border-b">描述</th>
+                <th className="px-3 py-3 text-left font-medium text-gray-700 border-b">汇总SKU</th>
+                <th className="px-3 py-3 text-left font-medium text-gray-700 border-b">留言备注</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-100">
+              {ownerExceptions.map((item) => {
+                const currentComment = getCurrentComment(item.sku);
+                const prevComment = getPreviousMonthComment(item.sku);
+                const isEditing = selectedSku === item.sku;
+                const hasInherited = !currentComment && prevComment;
+
+                return (
+                  <tr key={item.sku} className="hover:bg-gray-50">
+                    <td className="px-3 py-3 text-gray-700">{item.bu}</td>
+                    <td className="px-3 py-3 text-gray-600">{item.category}</td>
+                    <td className="px-3 py-3 text-gray-700 max-w-[120px] truncate" title={item.description}>
+                      {item.description}
+                    </td>
+                    <td className="px-3 py-3 text-gray-900 font-medium">{item.sku}</td>
+                    <td className="px-3 py-3">
+                      {isEditing ? (
+                        <div className="flex gap-2">
+                          <input
+                            type="text"
+                            value={editingComment}
+                            onChange={(e) => setEditingComment(e.target.value)}
+                            placeholder={hasInherited ? "（继承自上期备注）" : "输入留言..."}
+                            className="flex-1 px-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-teal-500"
+                            autoFocus
+                          />
+                          <button
+                            onClick={saveComment}
+                            className="px-2 py-1 bg-teal-600 text-white text-xs rounded hover:bg-teal-700"
+                          >
+                            保存
+                          </button>
+                          <button
+                            onClick={cancelEdit}
+                            className="px-2 py-1 bg-gray-200 text-gray-700 text-xs rounded hover:bg-gray-300"
+                          >
+                            取消
+                          </button>
+                        </div>
+                      ) : (
+                        <div 
+                          onClick={() => startEdit(item.sku, item)}
+                          className="cursor-pointer group"
+                        >
+                          {currentComment ? (
+                            <span className="text-gray-700">{currentComment}</span>
+                          ) : hasInherited ? (
+                            <span className="text-gray-400 italic">{prevComment} <span className="text-xs text-orange-500">（上期）</span></span>
+                          ) : (
+                            <span className="text-gray-400 italic group-hover:text-teal-600">点击添加留言...</span>
+                          )}
+                        </div>
+                      )}
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      </div>
     </div>
   );
 };
@@ -1902,6 +2499,13 @@ const DetailView = ({
   detailLoading,
   currentPage,
   setCurrentPage,
+  // 异常归因抽屉相关
+  commentsDrawerOpen,
+  setCommentsDrawerOpen,
+  selectedOwner,
+  setSelectedOwner,
+  ownerComments,
+  setOwnerComments,
 }) => {
   // 导出Excel功能（mock）
   const handleExportExcel = () => {
@@ -2094,7 +2698,13 @@ const DetailView = ({
         {ownerAttribution && (
           <div className="bg-white rounded-lg border border-gray-200 p-4">
             <h3 className="text-sm font-medium text-gray-800 mb-3">异常归因统计</h3>
-            <OwnerAttributionCards data={ownerAttribution} />
+            <OwnerAttributionCards 
+              data={ownerAttribution} 
+              onOwnerClick={(owner) => {
+                setSelectedOwner(owner);
+                setCommentsDrawerOpen(true);
+              }}
+            />
           </div>
         )}
 
@@ -2103,6 +2713,17 @@ const DetailView = ({
           <ExceptionSummarySection data={exceptionSummary} />
         )}
       </div>
+
+      {/* 异常归因留言抽屉 */}
+      <OwnerCommentsDrawer
+        isOpen={commentsDrawerOpen}
+        onClose={() => setCommentsDrawerOpen(false)}
+        owner={selectedOwner}
+        exceptionData={exceptionSummary}
+        comments={ownerComments}
+        onUpdateComment={setOwnerComments}
+        currentMonth={month}
+      />
     </div>
   );
 };

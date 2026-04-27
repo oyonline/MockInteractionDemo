@@ -71,6 +71,8 @@ import LogisticsConsolidationRuleDetailPage from './pages/logistics/LogisticsCon
 import LogisticsTrialCalcPage from './pages/logistics/LogisticsTrialCalcPage';
 import ForecastTrackingPage from './pages/supply-chain/ForecastTrackingPage';
 import SupplyPlanPage from './pages/supply-chain/SupplyPlanPage';
+import OpeningItoDashboardPage from './pages/supply-chain/OpeningItoDashboardPage';
+import ExcessDashboardPage from './pages/supply-chain/ExcessDashboardPage';
 import QualityInboundPage from './pages/quality/QualityInboundPage';
 import QualityComplaintPage from './pages/quality/QualityComplaintPage';
 import QualityTaskPage from './pages/quality/QualityTaskPage';
@@ -1088,6 +1090,20 @@ function App() {
                 return (
                     <ModuleLayout>
                         <SupplyPlanPage />
+                    </ModuleLayout>
+                );
+
+            case '/supply-chain/excess-dashboard':
+                return (
+                    <ModuleLayout>
+                        <ExcessDashboardPage />
+                    </ModuleLayout>
+                );
+
+            case '/supply-chain/opening-ito-dashboard':
+                return (
+                    <ModuleLayout>
+                        <OpeningItoDashboardPage />
                     </ModuleLayout>
                 );
             

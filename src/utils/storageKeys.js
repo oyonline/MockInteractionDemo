@@ -28,3 +28,5 @@ export const LOGISTICS_CONSOLIDATION_RULES = PREFIX + 'logistics:consolidationRu
 
 // 供应链计划
 export const SUPPLY_CHAIN_FORECAST = PREFIX + 'supply-chain:forecast:v2';
+export const SUPPLY_CHAIN_OPENING_ITO = PREFIX + 'supply-chain:opening-ito';
+export const SUPPLY_CHAIN_EXCESS_ARCHIVES = PREFIX + 'supply-chain:excess:archives';
