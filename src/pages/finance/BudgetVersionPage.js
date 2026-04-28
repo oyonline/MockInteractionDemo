@@ -6,6 +6,7 @@ import {
     FileText, DollarSign, Check,
     Building2, Eye, Lock, Paperclip
 } from 'lucide-react';
+import { confirm } from '../../components/ui/ConfirmDialog';
 
 // 轻量工具：className 拼接
 const cn = (...args) => args.filter(Boolean).join(' ');
@@ -509,10 +510,16 @@ export default function BudgetVersionPage({ onOpenDetail }) {
         }
     };
 
-    const handleDelete = (itemId) => {
-        if (window.confirm('确定要删除该预算版本吗？')) {
-            setVersions(prev => prev.filter(item => item.id !== itemId));
-        }
+    const handleDelete = async (itemId) => {
+        const ok = await confirm({
+            title: '确认删除',
+            description: '确定要删除该预算版本吗？',
+            confirmText: '删除',
+            cancelText: '取消',
+            danger: true,
+        });
+        if (!ok) return;
+        setVersions(prev => prev.filter(item => item.id !== itemId));
     };
 
     const handleSave = (savedItem) => {

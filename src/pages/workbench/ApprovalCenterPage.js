@@ -13,8 +13,13 @@ import {
   CalendarClock,
 } from 'lucide-react';
 import cn from '../../utils/cn';
+import { mockStore } from '../../services/_mockStore';
+import { APPROVALS } from '../../utils/storageKeys';
 
-const approvalMock = [
+/** 内置 mock 列表：仅作 fallback。
+ *  实际数据来源：mockStore.get(APPROVALS) ?? approvalMockFallback。
+ *  通过/驳回操作在 ApprovalDetailPage 内完成并写回 mockStore。 */
+const approvalMockFallback = [
   {
     id: 'AP-202601-001',
     approvalNo: 'AP-202601-001',
@@ -405,7 +410,18 @@ export default function ApprovalCenterPage({ records = [], onOpenDetail }) {
   const [status, setStatus] = React.useState('');
   const [sourceModule, setSourceModule] = React.useState('');
 
-  const source = records && records.length > 0 ? records : approvalMock;
+  // 原型级持久化：列表数据从 mockStore 读取（含其他页面操作后的最新状态）；
+  // 没有则使用内置 fallback。每次组件重新挂载（如切回该 tab）会重新读取，
+  // 所以从 ApprovalDetailPage 通过/驳回后切回列表页可以看到状态变化。
+  const stored = React.useMemo(() => mockStore.get(APPROVALS) ?? approvalMockFallback, []);
+  // 首次挂载时把首帧 mock 数据固化到 storage（避免后续详情页操作后无 base 数据）。
+  React.useEffect(() => {
+    if (mockStore.get(APPROVALS) == null) {
+      mockStore.set(APPROVALS, approvalMockFallback);
+    }
+  }, []);
+
+  const source = records && records.length > 0 ? records : stored;
 
   const filtered = React.useMemo(() => {
     const search = keyword.trim().toLowerCase();

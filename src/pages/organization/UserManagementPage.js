@@ -6,6 +6,8 @@ import { userService } from '../../services/system';
 import TablePagination from '../../components/TablePagination';
 import ActionBar from '../../components/ActionBar';
 import UserEditPage from './UserEditPage';
+import { toast } from '../../components/ui/Toast';
+import { confirm } from '../../components/ui/ConfirmDialog';
 
 const PAGE_SIZE = 10;
 
@@ -217,10 +219,10 @@ function UserManagementPage() {
     };
     if (editingUser) {
       userService.update(editingUser.id, payload);
-      window.alert('保存成功');
+      toast.success('保存成功');
     } else {
       userService.create(payload);
-      window.alert('新增成功');
+      toast.success('新增成功');
     }
     setShowUserModal(false);
     setAppliedQuery((q) => ({ ...q }));
@@ -236,7 +238,7 @@ function UserManagementPage() {
     if (!pwdForm.newPassword.trim()) return setPwdFormError('请输入新密码');
     if (pwdForm.newPassword !== pwdForm.confirmPassword) return setPwdFormError('两次密码不一致');
     userService.resetPassword(pwdUser.id, pwdForm.newPassword);
-    window.alert('密码已重置');
+    toast.success('密码已重置');
     setShowPwdModal(false);
   };
 
@@ -244,13 +246,13 @@ function UserManagementPage() {
     setConfirmState(null);
     userService.updateStatus(user.id, nextStatus);
     setAppliedQuery((q) => ({ ...q }));
-    window.alert(nextStatus === 'enabled' ? '已启用' : '已禁用');
+    toast.success(nextStatus === 'enabled' ? '已启用' : '已禁用');
   };
   const handleRemove = (user) => {
     setConfirmState(null);
     userService.remove(user.id);
     setAppliedQuery((q) => ({ ...q }));
-    window.alert('已删除');
+    toast.success('已删除');
   };
   const runConfirm = () => {
     if (!confirmState) return;
@@ -261,21 +263,40 @@ function UserManagementPage() {
     setConfirmState(null);
   };
 
-  const batchAction = (action) => {
+  const batchAction = async (action) => {
     if (selectedIds.length === 0) return;
-    if (action === 'delete' && !window.confirm(`确定删除选中的 ${selectedIds.length} 个用户？`)) return;
-    if (action !== 'delete' && !window.confirm(`确定对选中的 ${selectedIds.length} 个用户执行${action === 'enable' ? '启用' : '禁用'}？`)) return;
+    if (action === 'delete') {
+      const ok = await confirm({
+        title: '确认批量删除',
+        description: `确定删除选中的 ${selectedIds.length} 个用户？`,
+        confirmText: '删除',
+        cancelText: '取消',
+        danger: true,
+      });
+      if (!ok) return;
+    } else {
+      const ok = await confirm({
+        title: '确认批量操作',
+        description: `确定对选中的 ${selectedIds.length} 个用户执行${action === 'enable' ? '启用' : '禁用'}？`,
+        confirmText: '确认',
+        cancelText: '取消',
+      });
+      if (!ok) return;
+    }
     userService.batchOperate({ ids: selectedIds, action: action === 'delete' ? 'delete' : action === 'enable' ? 'enable' : 'disable' });
     setSelectedIds([]);
     setAppliedQuery((q) => ({ ...q }));
-    window.alert('操作成功');
+    toast.success('操作成功');
   };
 
   const submitHandover = () => {
-    if (!handoverForm.fromUserId || !handoverForm.toUserId) return window.alert('请选择交接人与接收人');
+    if (!handoverForm.fromUserId || !handoverForm.toUserId) {
+      toast.warning('请选择交接人与接收人');
+      return;
+    }
     userService.handover({ fromUserId: handoverForm.fromUserId, toUserId: handoverForm.toUserId, scope: handoverForm.scope });
     setShowHandoverModal(false);
-    window.alert('负责人交接已提交');
+    toast.success('负责人交接已提交');
   };
 
   const totalPages = Math.max(1, Math.ceil(listData.total / PAGE_SIZE));

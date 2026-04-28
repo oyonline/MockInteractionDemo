@@ -6,6 +6,8 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { logisticsService } from '../../services';
 import ActionBar from '../../components/ActionBar';
 import TablePagination from '../../components/TablePagination';
+import { toast } from '../../components/ui/Toast';
+import { confirm } from '../../components/ui/ConfirmDialog';
 
 const PAGE_SIZE = 10;
 
@@ -85,7 +87,7 @@ function LogisticsRoutingRuleListPage({ onOpenDetail }) {
   const saveForm = () => {
     const countries = form.countriesStr.split(/[,，\s]+/).map((s) => s.trim()).filter(Boolean);
     if (countries.length === 0) {
-      window.alert('国家至少填 1 个（逗号分隔）');
+      toast.warning('国家至少填 1 个（逗号分隔）');
       return;
     }
     const channels = form.channelIds.map((cid) => ({ channelId: cid, channelPriority: 0 }));
@@ -99,17 +101,17 @@ function LogisticsRoutingRuleListPage({ onOpenDetail }) {
     if (editingRow) {
       const res = logisticsService.routingRules.update(editingRow.id, payload);
       if (res && res.ok === false) {
-        window.alert(res.message || '保存失败');
+        toast.error(res.message || '保存失败');
         return;
       }
-      window.alert('已保存');
+      toast.success('已保存');
     } else {
       const res = logisticsService.routingRules.create(payload);
       if (res && res.ok === false) {
-        window.alert(res.message || '新增失败');
+        toast.error(res.message || '新增失败');
         return;
       }
-      window.alert('已新增');
+      toast.success('已新增');
     }
     setShowFormModal(false);
     loadList();
@@ -118,14 +120,21 @@ function LogisticsRoutingRuleListPage({ onOpenDetail }) {
 
   const handleSubmit = (row) => {
     const res = logisticsService.routingRules.submit(row.id);
-    if (res && res.ok === false) { window.alert(res.message || '提交失败'); return; }
-    window.alert('已提交审批');
+    if (res && res.ok === false) { toast.error(res.message || '提交失败'); return; }
+    toast.success('已提交审批');
     loadList();
     loadStats();
   };
 
-  const handleRemove = (row) => {
-    if (!window.confirm(`确定删除规则「${row.name}」？`)) return;
+  const handleRemove = async (row) => {
+    const ok = await confirm({
+      title: '确认删除',
+      description: `确定删除规则「${row.name}」？`,
+      confirmText: '删除',
+      cancelText: '取消',
+      danger: true,
+    });
+    if (!ok) return;
     logisticsService.routingRules.remove(row.id);
     loadList();
     loadStats();
@@ -143,24 +152,24 @@ function LogisticsRoutingRuleListPage({ onOpenDetail }) {
 
   const handleImport = () => {
     let arr;
-    try { arr = JSON.parse(importText || '[]'); if (!Array.isArray(arr)) throw new Error(); } catch (e) { window.alert('请输入合法 JSON 数组'); return; }
+    try { arr = JSON.parse(importText || '[]'); if (!Array.isArray(arr)) throw new Error(); } catch (e) { toast.warning('请输入合法 JSON 数组'); return; }
     let created = 0, updated = 0;
     arr.forEach((item) => {
       const id = item.id;
       const existing = id ? logisticsService.routingRules.get(id) : null;
       if (existing) {
         const res = logisticsService.routingRules.update(id, { ...item, id: undefined });
-        if (res && res.ok === false) window.alert(res.message);
+        if (res && res.ok === false) toast.error(res.message);
         else updated++;
       } else {
         const res = logisticsService.routingRules.create(item);
-        if (res && res.ok === false) window.alert(res.message);
+        if (res && res.ok === false) toast.error(res.message);
         else created++;
       }
     });
     setShowImportModal(false);
     setImportText('');
-    window.alert(`导入完成：新增 ${created} 条，更新 ${updated} 条`);
+    toast.success(`导入完成：新增 ${created} 条，更新 ${updated} 条`);
     loadList();
     loadStats();
   };

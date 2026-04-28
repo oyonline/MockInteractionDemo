@@ -15,6 +15,7 @@ import {
   User,
   FileSpreadsheet,
 } from 'lucide-react';
+import { toast } from '../../components/ui/Toast';
 import {
   LineChart,
   Line,
@@ -2509,7 +2510,7 @@ const DetailView = ({
 }) => {
   // 导出Excel功能（mock）
   const handleExportExcel = () => {
-    alert('导出Excel功能：将导出当前筛选条件下的明细数据');
+    toast.info('导出 Excel：演示模式将导出当前筛选条件下的明细数据');
   };
 
   // 分页处理

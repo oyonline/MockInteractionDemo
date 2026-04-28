@@ -2,6 +2,7 @@
 // 企业人才库页面 - 增强版（支持面试管理和 Offer 管理）
 import React, { useState, useMemo } from 'react';
 import { parseISO, isWithinInterval } from 'date-fns';
+import { toast } from '../../components/ui/Toast';
 import {
     Search,
     Filter,
@@ -1052,7 +1053,7 @@ const EmployeeDetailDrawer = ({ employee, onClose, onScheduleInterview, onSendOf
     const handleSaveEvaluation = (data) => {
         console.log('保存评价:', data);
         // 实际应用中这里会调用 API
-        alert('评价已保存！');
+        toast.success('评价已保存');
     };
 
     return (
@@ -1623,12 +1624,12 @@ export default function EmployeeManagementPage() {
 
     const handleScheduleInterview = (data) => {
         console.log('安排面试:', data);
-        alert('面试已安排！');
+        toast.success('面试已安排');
     };
 
     const handleSendOffer = (data) => {
         console.log('发送Offer:', data);
-        alert('Offer已发送！');
+        toast.success('Offer 已发送');
     };
 
     return (

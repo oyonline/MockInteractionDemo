@@ -5,6 +5,8 @@ import { Search, Plus, RotateCcw, Edit2, Power, PowerOff } from 'lucide-react';
 import { settingsEnum } from '../../services/settings';
 import TablePagination from '../../components/TablePagination';
 import ActionBar from '../../components/ActionBar';
+import { toast } from '../../components/ui/Toast';
+import { confirm } from '../../components/ui/ConfirmDialog';
 
 const PAGE_SIZE = 10;
 
@@ -101,26 +103,33 @@ const SettingsEnumRulePage = () => {
     };
     if (editingId) {
       settingsEnum.update(editingId, payload);
-      window.alert('保存成功');
+      toast.success('保存成功');
     } else {
       settingsEnum.create(payload);
-      window.alert('新增成功');
+      toast.success('新增成功');
     }
     closeModal();
     loadList();
   };
 
-  const handleRemove = (row) => {
-    if (!window.confirm(`确定删除规则「${row.name}」？`)) return;
+  const handleRemove = async (row) => {
+    const ok = await confirm({
+      title: '确认删除',
+      description: `确定删除规则「${row.name}」？`,
+      confirmText: '删除',
+      cancelText: '取消',
+      danger: true,
+    });
+    if (!ok) return;
     settingsEnum.remove(row.id);
     loadList();
-    window.alert('已删除');
+    toast.success('已删除');
   };
 
   const handleToggle = (row) => {
     settingsEnum.toggle(row.id);
     loadList();
-    window.alert(row.status === 'enabled' ? '已停用' : '已启用');
+    toast.success(row.status === 'enabled' ? '已停用' : '已启用');
   };
 
   const handleMove = (row, direction) => {
@@ -128,12 +137,19 @@ const SettingsEnumRulePage = () => {
     loadList();
   };
 
-  const handleReset = () => {
-    if (!window.confirm('确定重置为初始 mock 数据？当前规则将被覆盖。')) return;
+  const handleReset = async () => {
+    const ok = await confirm({
+      title: '确认重置',
+      description: '确定重置为初始 mock 数据？当前规则将被覆盖。',
+      confirmText: '重置',
+      cancelText: '取消',
+      danger: true,
+    });
+    if (!ok) return;
     settingsEnum.reset();
     setCurrentPage(1);
     loadList(1);
-    window.alert('已重置');
+    toast.success('已重置');
   };
 
   const resetFilters = () => {

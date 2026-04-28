@@ -6,6 +6,8 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { logisticsService } from '../../services';
 import ActionBar from '../../components/ActionBar';
 import TablePagination from '../../components/TablePagination';
+import { toast } from '../../components/ui/Toast';
+import { confirm } from '../../components/ui/ConfirmDialog';
 
 const PAGE_SIZE = 10;
 
@@ -72,15 +74,15 @@ function LogisticsDeclarationListPage({ onOpenDetail }) {
 
   const saveForm = () => {
     const { skuCode, skuName, hsCode, status } = form;
-    if (!hsCode?.trim()) { window.alert('请选择 HSCode'); return; }
-    if (!logisticsService.hsCodes.get(hsCode)) { window.alert('所选 HSCode 不存在，请重新选择'); return; }
-    if (!skuName?.trim()) { window.alert('请填写 SKU 名称'); return; }
+    if (!hsCode?.trim()) { toast.warning('请选择 HSCode'); return; }
+    if (!logisticsService.hsCodes.get(hsCode)) { toast.warning('所选 HSCode 不存在，请重新选择'); return; }
+    if (!skuName?.trim()) { toast.warning('请填写 SKU 名称'); return; }
     if (editingRow) {
       logisticsService.declarations.update(editingRow.skuId, { skuName: skuName.trim(), hsCode: hsCode.trim(), status });
-      window.alert('已保存');
+      toast.success('已保存');
     } else {
       logisticsService.declarations.create({ skuCode: skuCode.trim() || undefined, skuName: skuName.trim(), hsCode: hsCode.trim(), status });
-      window.alert('已新增');
+      toast.success('已新增');
     }
     setShowFormModal(false);
     loadList();
@@ -89,16 +91,23 @@ function LogisticsDeclarationListPage({ onOpenDetail }) {
 
   const handleSubmit = (row) => {
     const res = logisticsService.declarations.submit(row.skuId);
-    if (res && res.ok === false) { window.alert(res.message || '提交失败'); return; }
-    window.alert('已提交审批');
+    if (res && res.ok === false) { toast.error(res.message || '提交失败'); return; }
+    toast.success('已提交审批');
     loadList();
     loadStats();
   };
 
-  const handleRemove = (row) => {
-    if (!window.confirm(`确定删除申报「${row.skuName}」？`)) return;
+  const handleRemove = async (row) => {
+    const ok = await confirm({
+      title: '确认删除',
+      description: `确定删除申报「${row.skuName}」？`,
+      confirmText: '删除',
+      cancelText: '取消',
+      danger: true,
+    });
+    if (!ok) return;
     const res = logisticsService.declarations.remove(row.skuId);
-    if (res && res.ok === false) { window.alert(res.message || '删除失败'); return; }
+    if (res && res.ok === false) { toast.error(res.message || '删除失败'); return; }
     loadList();
     loadStats();
   };
@@ -115,7 +124,7 @@ function LogisticsDeclarationListPage({ onOpenDetail }) {
 
   const handleImport = () => {
     let arr;
-    try { arr = JSON.parse(importText || '[]'); if (!Array.isArray(arr)) throw new Error(); } catch (e) { window.alert('请输入合法 JSON 数组'); return; }
+    try { arr = JSON.parse(importText || '[]'); if (!Array.isArray(arr)) throw new Error(); } catch (e) { toast.warning('请输入合法 JSON 数组'); return; }
     let created = 0, updated = 0;
     arr.forEach((item) => {
       const pk = item.skuId;
@@ -125,7 +134,7 @@ function LogisticsDeclarationListPage({ onOpenDetail }) {
     });
     setShowImportModal(false);
     setImportText('');
-    window.alert(`导入完成：新增 ${created} 条，更新 ${updated} 条`);
+    toast.success(`导入完成：新增 ${created} 条，更新 ${updated} 条`);
     loadList();
     loadStats();
   };

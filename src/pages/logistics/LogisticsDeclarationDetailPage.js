@@ -4,6 +4,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { logisticsService } from '../../services';
+import { toast } from '../../components/ui/Toast';
 
 const APPROVAL_LABEL = { draft: '草稿', pending: '待审批', approved: '已通过', rejected: '已驳回' };
 
@@ -38,30 +39,30 @@ function LogisticsDeclarationDetailPage({ tab }) {
 
   const saveForm = () => {
     if (!id) return;
-    if (!form.hsCode?.trim()) { window.alert('请选择 HSCode'); return; }
-    if (!logisticsService.hsCodes.get(form.hsCode)) { window.alert('所选 HSCode 不存在'); return; }
+    if (!form.hsCode?.trim()) { toast.warning('请选择 HSCode'); return; }
+    if (!logisticsService.hsCodes.get(form.hsCode)) { toast.warning('所选 HSCode 不存在'); return; }
     logisticsService.declarations.update(id, { skuName: form.skuName, hsCode: form.hsCode, status: form.status });
-    window.alert('已保存');
+    toast.success('已保存');
     refresh();
   };
 
   const handleSubmit = () => {
     const res = logisticsService.declarations.submit(id);
-    if (res && res.ok === false) window.alert(res.message || '提交失败');
+    if (res && res.ok === false) toast.error(res.message || '提交失败');
     else refresh();
   };
 
   const handleWithdraw = () => {
     const res = logisticsService.declarations.withdraw(id);
-    if (res && res.ok === false) window.alert(res.message || '撤回失败');
+    if (res && res.ok === false) toast.error(res.message || '撤回失败');
     else refresh();
   };
 
   const openRemark = (action) => { setRemarkAction(action); setRemarkText(''); setShowRemarkModal(true); };
 
   const submitRemark = () => {
-    if (remarkAction === 'approve') { const res = logisticsService.declarations.approve(id, remarkText); if (res && res.ok === false) window.alert(res.message || '操作失败'); }
-    else if (remarkAction === 'reject') { const res = logisticsService.declarations.reject(id, remarkText); if (res && res.ok === false) window.alert(res.message || '操作失败'); }
+    if (remarkAction === 'approve') { const res = logisticsService.declarations.approve(id, remarkText); if (res && res.ok === false) toast.error(res.message || '操作失败'); }
+    else if (remarkAction === 'reject') { const res = logisticsService.declarations.reject(id, remarkText); if (res && res.ok === false) toast.error(res.message || '操作失败'); }
     setShowRemarkModal(false);
     refresh();
   };

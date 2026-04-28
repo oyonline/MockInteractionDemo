@@ -4,6 +4,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { logisticsService } from '../../services';
+import { toast } from '../../components/ui/Toast';
 
 const APPROVAL_LABEL = { draft: '草稿', pending: '待审批', approved: '已通过', rejected: '已驳回' };
 const VENDOR_TABS = [
@@ -120,27 +121,27 @@ function LogisticsVendorDetailPage({ tab }) {
       remark: form.remark || undefined,
       bankInfo,
     });
-    window.alert('已保存');
+    toast.success('已保存');
     refresh();
   };
 
   const handleSubmit = () => {
     const res = logisticsService.vendors.submit(id);
-    if (res && res.ok === false) window.alert(res.message || '提交失败');
+    if (res && res.ok === false) toast.error(res.message || '提交失败');
     else refresh();
   };
 
   const handleWithdraw = () => {
     const res = logisticsService.vendors.withdraw(id);
-    if (res && res.ok === false) window.alert(res.message || '撤回失败');
+    if (res && res.ok === false) toast.error(res.message || '撤回失败');
     else refresh();
   };
 
   const openRemark = (action) => { setRemarkAction(action); setRemarkText(''); setShowRemarkModal(true); };
 
   const submitRemark = () => {
-    if (remarkAction === 'approve') { const res = logisticsService.vendors.approve(id, remarkText); if (res && res.ok === false) window.alert(res.message); }
-    else if (remarkAction === 'reject') { const res = logisticsService.vendors.reject(id, remarkText); if (res && res.ok === false) window.alert(res.message); }
+    if (remarkAction === 'approve') { const res = logisticsService.vendors.approve(id, remarkText); if (res && res.ok === false) toast.error(res.message); }
+    else if (remarkAction === 'reject') { const res = logisticsService.vendors.reject(id, remarkText); if (res && res.ok === false) toast.error(res.message); }
     setShowRemarkModal(false);
     refresh();
   };

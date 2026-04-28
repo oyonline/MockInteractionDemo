@@ -5,6 +5,7 @@ import {
     Search, Plus, Download, Upload, Edit2, Trash2, X, Save,
     Tag, Folder, Package, TrendingUp, AlertCircle, Star, Zap, Clock, Check
 } from 'lucide-react';
+import { confirm } from '../../components/ui/ConfirmDialog';
 
 // 轻量工具：className 拼接
 const cn = (...args) => args.filter(Boolean).join(' ');
@@ -405,10 +406,16 @@ export default function ProductTagPage() {
         setIsDrawerOpen(true);
     };
 
-    const handleDeleteTag = (tagId) => {
-        if (window.confirm('确定要删除该标签吗？')) {
-            setTags(prev => prev.filter(t => t.id !== tagId));
-        }
+    const handleDeleteTag = async (tagId) => {
+        const ok = await confirm({
+            title: '确认删除',
+            description: '确定要删除该标签吗？',
+            confirmText: '删除',
+            cancelText: '取消',
+            danger: true,
+        });
+        if (!ok) return;
+        setTags(prev => prev.filter(t => t.id !== tagId));
     };
 
     const handleSaveTag = (savedTag) => {

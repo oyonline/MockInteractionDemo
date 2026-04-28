@@ -6,6 +6,7 @@ import {
     Check, AlertCircle, Building2, DollarSign, Percent, Calendar,
     TrendingUp, Divide, CheckCircle2, XCircle, Clock
 } from 'lucide-react';
+import { confirm } from '../../components/ui/ConfirmDialog';
 
 const cn = (...args) => args.filter(Boolean).join(' ');
 
@@ -780,10 +781,16 @@ export default function AllocationRulePage() {
         setIsDrawerOpen(true);
     };
 
-    const handleDelete = (ruleId) => {
-        if (window.confirm('确定要删除该分摊规则吗？')) {
-            setRules(prev => prev.filter(r => r.id !== ruleId));
-        }
+    const handleDelete = async (ruleId) => {
+        const ok = await confirm({
+            title: '确认删除',
+            description: '确定要删除该分摊规则吗？',
+            confirmText: '删除',
+            cancelText: '取消',
+            danger: true,
+        });
+        if (!ok) return;
+        setRules(prev => prev.filter(r => r.id !== ruleId));
     };
 
     const handleSave = (savedRule) => {

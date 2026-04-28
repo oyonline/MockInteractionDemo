@@ -1,6 +1,7 @@
 // src/pages/SkuDetailPage.simple.js
 import React, { useEffect, useRef, useState } from 'react';
 import { ChevronRight, ChevronDown, MousePointer2, RotateCcw, Move, Circle, ArrowDown } from 'lucide-react';
+import { toast } from '../../components/ui/Toast';
 
 /* ========= 小工具 ========= */
 function cx(...args) {
@@ -53,7 +54,7 @@ function ProductInfoGrid({ record }) {
     const handleUploadClick = () => fileInputRef.current?.click();
     const handleFileChange = (e) => {
         if (e.target.files?.[0]) {
-            alert(`图片上传模拟成功：${e.target.files[0].name}`);
+            toast.success(`图片上传成功（演示模式）：${e.target.files[0].name}`);
         }
     };
 
@@ -544,12 +545,12 @@ function SpecialInstructions() {
         // ✅ 重新编号成 1..N，继续与右侧 partsData 对齐
         const reindexed = filtered.map((m, i) => ({ ...m, id: i + 1 }));
         setMarkers(reindexed);
-        alert(`已删除标记 #${id}`);
+        toast.success(`已删除标记 #${id}`);
     };
 
     const clearMarkers = () => {
         setMarkers([]);
-        alert('已清空所有标记点');
+        toast.success('已清空所有标记点');
     };
 
     const toggleExpand = (idx) => {
@@ -797,7 +798,7 @@ function ProcurementInfoTab({ record }) {
     ];
 
     const handleSetMain = (name, currentMainName) => {
-        alert(`确认将「${name}」设为该SKU的主供应商？\n原主供应商「${currentMainName}」将变为备选供应商。`);
+        toast.info(`演示功能：将「${name}」设为该SKU的主供应商，原主供应商「${currentMainName}」将变为备选供应商。`);
     };
 
     const mainSupplierName = suppliers.find((s) => s.role === '主供应商')?.name || '';
@@ -811,7 +812,7 @@ function ProcurementInfoTab({ record }) {
                         <h3 className="font-bold text-gray-800">供应商管理</h3>
                     </div>
                     <button
-                        onClick={() => alert('打开供应商选择弹窗（演示占位）')}
+                        onClick={() => toast.info('演示功能：打开供应商选择弹窗')}
                         className="bg-blue-600 text-white text-xs px-3 py-1.5 rounded hover:bg-blue-700 transition-colors"
                     >
                         + 关联新供应商
@@ -878,14 +879,14 @@ function ProcurementInfoTab({ record }) {
                                 )}
                                 {s.disabled && (
                                     <button
-                                        onClick={() => alert(`确认重新启用「${s.name}」为备选供应商？`)}
+                                        onClick={() => toast.info(`演示功能：重新启用「${s.name}」为备选供应商`)}
                                         className="text-xs text-gray-500 hover:text-gray-700 font-medium"
                                     >
                                         重新启用
                                     </button>
                                 )}
                                 <button
-                                    onClick={() => alert('跳转供应商详情页（演示占位）')}
+                                    onClick={() => toast.info('演示功能：跳转供应商详情页')}
                                     className="text-xs text-gray-500 hover:text-gray-700 font-medium"
                                 >
                                     查看详情
@@ -1441,7 +1442,7 @@ function CommentsTab({ record }) {
                 />
                 <div className="flex justify-end mt-2">
                     <button
-                        onClick={() => alert('发表评论（演示占位）')}
+                        onClick={() => toast.info('演示功能：发表评论')}
                         className="bg-blue-600 text-white text-xs px-4 py-2 rounded hover:bg-blue-700 transition-colors"
                     >
                         发表评论

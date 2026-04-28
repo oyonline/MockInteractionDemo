@@ -21,6 +21,7 @@ import Badge from '../../components/ui/Badge';
 import Button from '../../components/ui/Button';
 import Card from '../../components/ui/Card';
 import RichTextContent from '../../components/ui/RichTextContent';
+import { toast } from '../../components/ui/Toast';
 import cn from '../../utils/cn';
 
 // --------------- 类型配置 ---------------
@@ -96,7 +97,7 @@ export default function AnnouncementDetailPage({ record, onClose }) {
     // 处理下载附件（模拟）
     const handleDownload = (fileName) => {
         // 模拟下载提示
-        alert(`开始下载：${fileName}`);
+        toast.info(`开始下载：${fileName}（演示功能）`);
     };
 
     // 处理打印
@@ -108,9 +109,9 @@ export default function AnnouncementDetailPage({ record, onClose }) {
     const handleShare = () => {
         if (navigator.clipboard) {
             navigator.clipboard.writeText(window.location.href);
-            alert('链接已复制到剪贴板');
+            toast.success('链接已复制到剪贴板');
         } else {
-            alert('分享功能演示');
+            toast.info('分享功能：原型演示模式');
         }
     };
 

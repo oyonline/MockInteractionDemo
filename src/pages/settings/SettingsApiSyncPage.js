@@ -5,6 +5,8 @@ import { Search, RotateCcw, RefreshCw, FileText, Eye, Copy } from 'lucide-react'
 import { settingsSync } from '../../services/settings';
 import TablePagination from '../../components/TablePagination';
 import ActionBar from '../../components/ActionBar';
+import { toast } from '../../components/ui/Toast';
+import { confirm } from '../../components/ui/ConfirmDialog';
 
 const PAGE_SIZE = 10;
 const DETAILS_MAX = 20;
@@ -54,7 +56,7 @@ function copyResultText(row) {
     if (row.lastResult.details.length > DETAILS_MAX) text += '\n（仅展示前' + DETAILS_MAX + '条）';
   }
   if (navigator.clipboard && navigator.clipboard.writeText) {
-    navigator.clipboard.writeText(text).then(() => window.alert('已复制到剪贴板')).catch(() => window.alert('复制失败'));
+    navigator.clipboard.writeText(text).then(() => toast.success('已复制到剪贴板')).catch(() => toast.error('复制失败'));
   } else {
     window.prompt('复制以下内容', text);
   }
@@ -93,7 +95,7 @@ const SettingsApiSyncPage = ({ onOpenTab }) => {
       loadList();
       setRunningId(null);
       const summary = getResultSummary(job.lastResult);
-      window.alert(summary);
+      toast.info(summary);
     }).catch(() => {
       setRunningId(null);
     });
@@ -111,8 +113,15 @@ const SettingsApiSyncPage = ({ onOpenTab }) => {
     setRetryMode('failed');
   };
 
-  const handleReset = () => {
-    if (!window.confirm('确定重置为初始 mock 数据？当前任务状态将被覆盖。')) return;
+  const handleReset = async () => {
+    const ok = await confirm({
+      title: '确认重置',
+      description: '确定重置为初始 mock 数据？当前任务状态将被覆盖。',
+      confirmText: '重置',
+      cancelText: '取消',
+      danger: true,
+    });
+    if (!ok) return;
     settingsSync.reset();
     setCurrentPage(1);
     loadList(1);
@@ -122,7 +131,7 @@ const SettingsApiSyncPage = ({ onOpenTab }) => {
     if (onOpenTab) {
       onOpenTab({ id: 'settings-log-' + Date.now(), name: '系统日志', path: '/settings/log' });
     } else {
-      window.alert('请从侧栏进入「系统设置 → 系统日志」查看同步记录。');
+      toast.info('请从侧栏进入「系统设置 → 系统日志」查看同步记录。');
     }
   };
 

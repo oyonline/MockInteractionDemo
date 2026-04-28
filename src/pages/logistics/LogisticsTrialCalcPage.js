@@ -5,6 +5,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { logisticsService } from '../../services';
+import { toast } from '../../components/ui/Toast';
 
 const MAIN_TABS = [{ key: 'platform', label: '平台备货试算' }, { key: 'overseas', label: '海外仓备货试算' }];
 const RESULT_TABS = [{ key: 'order', label: '订单' }, { key: 'sku', label: 'sku' }];
@@ -110,7 +111,7 @@ function LogisticsTrialCalcPage() {
   const handleStartCalc = () => {
     const hasEmptySku = rows.some((r) => !r.skuId || !String(r.skuId).trim());
     if (hasEmptySku) {
-      window.alert('请先选择SKU');
+      toast.warning('请先选择SKU');
       return;
     }
     const list = [];
@@ -152,7 +153,7 @@ function LogisticsTrialCalcPage() {
       arr = JSON.parse(importText || '[]');
       if (!Array.isArray(arr)) throw new Error();
     } catch (e) {
-      window.alert('请输入合法 JSON 数组');
+      toast.warning('请输入合法 JSON 数组');
       return;
     }
     const next = arr.length
@@ -211,7 +212,7 @@ function LogisticsTrialCalcPage() {
         <div className="flex items-center gap-2">
           <button type="button" onClick={addRow} className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm hover:bg-blue-700">添加SKU</button>
           <button type="button" onClick={() => setShowImportModal(true)} className="px-4 py-2 border border-gray-300 rounded-lg text-sm hover:bg-gray-50">导入</button>
-          <button type="button" onClick={() => window.alert('原型占位：设置费用')} className="px-4 py-2 border border-gray-300 rounded-lg text-sm hover:bg-gray-50">设置费用</button>
+          <button type="button" onClick={() => toast.info('演示功能：设置费用将在 V2 支持')} className="px-4 py-2 border border-gray-300 rounded-lg text-sm hover:bg-gray-50">设置费用</button>
         </div>
         <div className="flex items-center gap-2">
           <button type="button" onClick={handleStartCalc} className="px-4 py-2 bg-green-600 text-white rounded-lg text-sm hover:bg-green-700">开始试算</button>
@@ -318,7 +319,7 @@ function LogisticsTrialCalcPage() {
             <button
               key={t.key}
               type="button"
-              onClick={() => { if (t.key === 'sku') window.alert('原型占位'); setResultTab(t.key); }}
+              onClick={() => { if (t.key === 'sku') toast.info('演示功能：SKU 维度结果将在 V2 支持'); setResultTab(t.key); }}
               className={`px-4 py-2 text-sm font-medium border-b-2 ${resultTab === t.key ? 'border-blue-600 text-blue-600' : 'border-transparent text-gray-600 hover:text-gray-800'}`}
             >
               {t.label}

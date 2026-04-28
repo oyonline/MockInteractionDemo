@@ -6,6 +6,8 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { logisticsService } from '../../services';
 import ActionBar from '../../components/ActionBar';
 import TablePagination from '../../components/TablePagination';
+import { toast } from '../../components/ui/Toast';
+import { confirm } from '../../components/ui/ConfirmDialog';
 
 const PAGE_SIZE = 10;
 
@@ -85,15 +87,15 @@ function LogisticsChannelListPage({ onOpenDetail }) {
 
   const saveForm = () => {
     const { vendorId, code, name, status } = form;
-    if (!vendorId?.trim()) { window.alert('请选择物流商'); return; }
-    if (!logisticsService.vendors.get(vendorId)) { window.alert('所选物流商不存在，请重新选择'); return; }
-    if (!name?.trim()) { window.alert('请填写渠道名称'); return; }
+    if (!vendorId?.trim()) { toast.warning('请选择物流商'); return; }
+    if (!logisticsService.vendors.get(vendorId)) { toast.warning('所选物流商不存在，请重新选择'); return; }
+    if (!name?.trim()) { toast.warning('请填写渠道名称'); return; }
     if (editingRow) {
       logisticsService.channels.update(editingRow.id, { vendorId, code: code.trim(), name: name.trim(), status });
-      window.alert('已保存');
+      toast.success('已保存');
     } else {
       logisticsService.channels.create({ vendorId, code: code.trim(), name: name.trim(), status });
-      window.alert('已新增');
+      toast.success('已新增');
     }
     setShowFormModal(false);
     loadList();
@@ -102,16 +104,23 @@ function LogisticsChannelListPage({ onOpenDetail }) {
 
   const handleSubmit = (row) => {
     const res = logisticsService.channels.submit(row.id);
-    if (res && res.ok === false) { window.alert(res.message || '提交失败'); return; }
-    window.alert('已提交审批');
+    if (res && res.ok === false) { toast.error(res.message || '提交失败'); return; }
+    toast.success('已提交审批');
     loadList();
     loadStats();
   };
 
-  const handleRemove = (row) => {
-    if (!window.confirm(`确定删除渠道「${row.name}」？`)) return;
+  const handleRemove = async (row) => {
+    const ok = await confirm({
+      title: '确认删除',
+      description: `确定删除渠道「${row.name}」？`,
+      confirmText: '删除',
+      cancelText: '取消',
+      danger: true,
+    });
+    if (!ok) return;
     const res = logisticsService.channels.remove(row.id);
-    if (res && res.ok === false) { window.alert(res.message || '删除失败'); return; }
+    if (res && res.ok === false) { toast.error(res.message || '删除失败'); return; }
     loadList();
     loadStats();
   };
@@ -128,7 +137,7 @@ function LogisticsChannelListPage({ onOpenDetail }) {
 
   const handleImport = () => {
     let arr;
-    try { arr = JSON.parse(importText || '[]'); if (!Array.isArray(arr)) throw new Error(); } catch (e) { window.alert('请输入合法 JSON 数组'); return; }
+    try { arr = JSON.parse(importText || '[]'); if (!Array.isArray(arr)) throw new Error(); } catch (e) { toast.warning('请输入合法 JSON 数组'); return; }
     let created = 0, updated = 0;
     arr.forEach((item) => {
       const id = item.id;
@@ -138,7 +147,7 @@ function LogisticsChannelListPage({ onOpenDetail }) {
     });
     setShowImportModal(false);
     setImportText('');
-    window.alert(`导入完成：新增 ${created} 条，更新 ${updated} 条`);
+    toast.success(`导入完成：新增 ${created} 条，更新 ${updated} 条`);
     loadList();
     loadStats();
   };

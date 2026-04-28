@@ -4,6 +4,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { logisticsService } from '../../services';
+import { toast } from '../../components/ui/Toast';
 
 const APPROVAL_LABEL = { draft: '草稿', pending: '待审批', approved: '已通过', rejected: '已驳回' };
 
@@ -68,32 +69,32 @@ function LogisticsConsolidationRuleDetailPage({ tab }) {
 
   const saveForm = () => {
     if (!id) return;
-    if (!form.country?.trim()) { window.alert('国家必填'); return; }
+    if (!form.country?.trim()) { toast.warning('国家必填'); return; }
     const boundaries = { country: form.country.trim(), platform: form.platform?.trim() || undefined, vendorId: form.vendorId || undefined, channelId: form.channelId || undefined, taxIncluded: form.taxIncluded || undefined };
     const strategy = { maxOrdersPerBatch: Number(form.maxOrdersPerBatch) || 50, cutoffHourLocal: form.cutoffHourLocal === '' ? undefined : Number(form.cutoffHourLocal) };
     const res = logisticsService.consolidationRules.update(id, { name: form.name.trim(), boundaries, strategy, weight: Number(form.weight) || 0, status: form.status });
-    if (res && res.ok === false) { window.alert(res.message || '保存失败'); return; }
-    window.alert('已保存');
+    if (res && res.ok === false) { toast.error(res.message || '保存失败'); return; }
+    toast.success('已保存');
     refresh();
   };
 
   const handleSubmit = () => {
     const res = logisticsService.consolidationRules.submit(id);
-    if (res && res.ok === false) window.alert(res.message || '提交失败');
+    if (res && res.ok === false) toast.error(res.message || '提交失败');
     else refresh();
   };
 
   const handleWithdraw = () => {
     const res = logisticsService.consolidationRules.withdraw(id);
-    if (res && res.ok === false) window.alert(res.message || '撤回失败');
+    if (res && res.ok === false) toast.error(res.message || '撤回失败');
     else refresh();
   };
 
   const openRemark = (action) => { setRemarkAction(action); setRemarkText(''); setShowRemarkModal(true); };
 
   const submitRemark = () => {
-    if (remarkAction === 'approve') { const res = logisticsService.consolidationRules.approve(id, remarkText); if (res && res.ok === false) window.alert(res.message); }
-    else if (remarkAction === 'reject') { const res = logisticsService.consolidationRules.reject(id, remarkText); if (res && res.ok === false) window.alert(res.message); }
+    if (remarkAction === 'approve') { const res = logisticsService.consolidationRules.approve(id, remarkText); if (res && res.ok === false) toast.error(res.message); }
+    else if (remarkAction === 'reject') { const res = logisticsService.consolidationRules.reject(id, remarkText); if (res && res.ok === false) toast.error(res.message); }
     setShowRemarkModal(false);
     refresh();
   };

@@ -5,6 +5,7 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { logisticsService } from '../../services';
+import { toast } from '../../components/ui/Toast';
 
 const APPROVAL_LABEL = { draft: '草稿', pending: '待审批', approved: '已通过', rejected: '已驳回' };
 
@@ -122,12 +123,12 @@ function LogisticsChannelDetailPage({ tab }) {
 
   const handleSave = () => {
     if (!id || !draft) return;
-    if (!draft.name || !String(draft.name).trim()) { window.alert('渠道名称不能为空'); return; }
+    if (!draft.name || !String(draft.name).trim()) { toast.warning('渠道名称不能为空'); return; }
     const countries = Array.isArray(draft.countries) ? draft.countries : [];
-    if (countries.length === 0) { window.alert('支持国家至少填 1 个'); return; }
+    if (countries.length === 0) { toast.warning('支持国家至少填 1 个'); return; }
     const rateRules = draft.rateRules || [];
     for (let i = 0; i < rateRules.length; i++) {
-      if (!rateRules[i].effectiveDate) { window.alert(`运费规则第 ${i + 1} 条生效日期必填`); return; }
+      if (!rateRules[i].effectiveDate) { toast.warning(`运费规则第 ${i + 1} 条生效日期必填`); return; }
     }
     const patch = deepClone(draft);
     delete patch.id;
@@ -136,33 +137,33 @@ function LogisticsChannelDetailPage({ tab }) {
     delete patch.updatedAt;
     delete patch.approvalStatus;
     logisticsService.channels.update(id, patch);
-    window.alert('保存成功');
+    toast.success('保存成功');
     loadRecord();
   };
 
   const handleCancel = () => {
     if (!record) return;
     setDraft(buildDefaultDraft(record));
-    window.alert('已撤销修改');
+    toast.info('已撤销修改');
   };
 
   const handleSubmit = () => {
     const res = logisticsService.channels.submit(id);
-    if (res && res.ok === false) window.alert(res.message || '提交失败');
+    if (res && res.ok === false) toast.error(res.message || '提交失败');
     else loadRecord();
   };
 
   const handleWithdraw = () => {
     const res = logisticsService.channels.withdraw(id);
-    if (res && res.ok === false) window.alert(res.message || '撤回失败');
+    if (res && res.ok === false) toast.error(res.message || '撤回失败');
     else loadRecord();
   };
 
   const openRemark = (action) => { setRemarkAction(action); setRemarkText(''); setShowRemarkModal(true); };
 
   const submitRemark = () => {
-    if (remarkAction === 'approve') { const res = logisticsService.channels.approve(id, remarkText); if (res && res.ok === false) window.alert(res.message); }
-    else if (remarkAction === 'reject') { const res = logisticsService.channels.reject(id, remarkText); if (res && res.ok === false) window.alert(res.message); }
+    if (remarkAction === 'approve') { const res = logisticsService.channels.approve(id, remarkText); if (res && res.ok === false) toast.error(res.message); }
+    else if (remarkAction === 'reject') { const res = logisticsService.channels.reject(id, remarkText); if (res && res.ok === false) toast.error(res.message); }
     setShowRemarkModal(false);
     loadRecord();
   };
@@ -419,7 +420,7 @@ function renderProductSurchargesTab(draft, setDraft) {
         <h2 className="text-base font-medium text-gray-800 border-l-4 border-blue-600 pl-2">产品附加费</h2>
         <div className="flex gap-2">
           <button type="button" onClick={addRow} className="px-3 py-1.5 bg-blue-600 text-white rounded text-sm hover:bg-blue-700">新增行</button>
-          <button type="button" onClick={() => window.alert('原型占位：后续支持JSON导入')} className="px-3 py-1.5 border border-gray-300 rounded text-sm hover:bg-gray-50">批量导入</button>
+          <button type="button" onClick={() => toast.info('演示功能：批量导入将在 V2 支持')} className="px-3 py-1.5 border border-gray-300 rounded text-sm hover:bg-gray-50">批量导入</button>
         </div>
       </div>
       <div className="overflow-x-auto">

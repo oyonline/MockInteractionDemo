@@ -12,6 +12,7 @@ import Card from '../../components/ui/Card';
 import DrawerShell from '../../components/ui/DrawerShell';
 import ModalShell from '../../components/ui/ModalShell';
 import TableShell from '../../components/ui/TableShell';
+import { confirm } from '../../components/ui/ConfirmDialog';
 import cn from '../../utils/cn';
 
 // --------------- 部门数据（用于选择归属部门） ---------------
@@ -642,10 +643,16 @@ export default function CostCenterPage() {
         setIsChangeLogOpen(true);
     };
 
-    const handleDelete = (itemId) => {
-        if (window.confirm('确定要删除该成本中心吗？')) {
-            setCostCenters(prev => prev.filter(item => item.id !== itemId));
-        }
+    const handleDelete = async (itemId) => {
+        const ok = await confirm({
+            title: '确认删除',
+            description: '确定要删除该成本中心吗？',
+            confirmText: '删除',
+            cancelText: '取消',
+            danger: true,
+        });
+        if (!ok) return;
+        setCostCenters(prev => prev.filter(item => item.id !== itemId));
     };
 
     const handleSave = (savedItem) => {

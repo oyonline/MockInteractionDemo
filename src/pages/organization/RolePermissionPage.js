@@ -6,6 +6,8 @@
 
 import React, { useEffect, useState, useMemo } from 'react';
 import { rolePermissionService } from '../../services/system';
+import { toast } from '../../components/ui/Toast';
+import { confirm } from '../../components/ui/ConfirmDialog';
 
 const TABS = [
   { key: 'users', label: '角色用户' },
@@ -168,13 +170,13 @@ function RolePermissionPage() {
   const handleSave = () => {
     if (!selectedRoleId) return;
     rolePermissionService.updateRolePermissions(selectedRoleId, permissions);
-    window.alert('保存成功');
+    toast.success('保存成功');
   };
 
   const handleReset = () => {
     if (!selectedRoleId) return;
     setPermissions(rolePermissionService.getRolePermissions(selectedRoleId));
-    window.alert('已重置为上次保存状态');
+    toast.info('已重置为上次保存状态');
   };
 
   const handleRefresh = () => {
@@ -191,7 +193,10 @@ function RolePermissionPage() {
 
   const handleAddRole = () => {
     const name = (newRoleName || '').trim();
-    if (!name) return window.alert('请输入角色名称');
+    if (!name) {
+      toast.warning('请输入角色名称');
+      return;
+    }
     const nextRole = rolePermissionService.createRole(name);
     setShowAddModal(false);
     setNewRoleName('');
@@ -199,16 +204,30 @@ function RolePermissionPage() {
     setSelectedRoleId(nextRole.id);
   };
 
-  const handleRemoveRoleUser = (u) => {
-    if (!window.confirm(`确定移除用户「${u.realName || u.username}」？`)) return;
+  const handleRemoveRoleUser = async (u) => {
+    const ok = await confirm({
+      title: '确认移除',
+      description: `确定移除用户「${u.realName || u.username}」？`,
+      confirmText: '移除',
+      cancelText: '取消',
+      danger: true,
+    });
+    if (!ok) return;
     const nextRoleUsers = rolePermissionService.removeRoleUsers(selectedRoleId, [u.id]);
     setRoleUsers(nextRoleUsers);
     setSelectedUserIds((prev) => prev.filter((id) => id !== u.id));
   };
 
-  const handleBatchRemoveRoleUsers = () => {
+  const handleBatchRemoveRoleUsers = async () => {
     if (selectedUserIds.length === 0) return;
-    if (!window.confirm(`确定移除当前选中的 ${selectedUserIds.length} 个用户？`)) return;
+    const ok = await confirm({
+      title: '确认批量移除',
+      description: `确定移除当前选中的 ${selectedUserIds.length} 个用户？`,
+      confirmText: '批量移除',
+      cancelText: '取消',
+      danger: true,
+    });
+    if (!ok) return;
     const nextRoleUsers = rolePermissionService.removeRoleUsers(selectedRoleId, selectedUserIds);
     setRoleUsers(nextRoleUsers);
     setSelectedUserIds([]);
@@ -217,19 +236,19 @@ function RolePermissionPage() {
   const handleSaveFieldPermission = () => {
     if (!selectedRoleId) return;
     rolePermissionService.updateFieldPermissions(selectedRoleId, fieldPerms);
-    window.alert('已保存');
+    toast.success('已保存');
   };
 
   const handleSaveDataPermission = () => {
     if (!selectedRoleId) return;
     rolePermissionService.updateDataPermissions(selectedRoleId, { scope: dataScope, perms: dataPerms });
-    window.alert('已保存');
+    toast.success('已保存');
   };
 
   const handleResetFieldPermission = () => {
     if (!selectedRoleId) return;
     setFieldPerms(rolePermissionService.getFieldPermissions(selectedRoleId));
-    window.alert('已重置为上次保存状态');
+    toast.info('已重置为上次保存状态');
   };
 
   const handleResetDataPermission = () => {
@@ -237,7 +256,7 @@ function RolePermissionPage() {
     const next = rolePermissionService.getDataPermissions(selectedRoleId);
     setDataScope(next.scope);
     setDataPerms(next.perms);
-    window.alert('已重置为上次保存状态');
+    toast.info('已重置为上次保存状态');
   };
 
   const setFieldPerm = (fieldId, optionId) => {
@@ -525,7 +544,7 @@ function RolePermissionPage() {
                       <div className="flex items-center gap-2">
                         <button
                           type="button"
-                          onClick={() => window.alert('请在“用户管理 > 编辑用户信息”中分配角色后，再回到当前页查看角色成员。')}
+                          onClick={() => toast.info('请在「用户管理 > 编辑用户信息」中分配角色后，再回到当前页查看角色成员。')}
                           className="px-4 py-2 text-sm bg-blue-600 text-white rounded-md hover:bg-blue-700"
                         >
                           添加用户

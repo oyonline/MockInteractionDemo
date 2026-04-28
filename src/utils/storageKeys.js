@@ -30,3 +30,12 @@ export const LOGISTICS_CONSOLIDATION_RULES = PREFIX + 'logistics:consolidationRu
 export const SUPPLY_CHAIN_FORECAST = PREFIX + 'supply-chain:forecast:v2';
 export const SUPPLY_CHAIN_OPENING_ITO = PREFIX + 'supply-chain:opening-ito';
 export const SUPPLY_CHAIN_EXCESS_ARCHIVES = PREFIX + 'supply-chain:excess:archives';
+
+// 销售预测页（原型级状态持久化：版本管理、推送状态）
+export const SALES_FORECAST_PAGE_STATE = PREFIX + 'sales:forecast-page-state';
+
+// 工作台 - 审批中心（审批单整体列表，含通过/驳回后的状态与时间线）
+export const APPROVALS = PREFIX + 'approvals';
+
+// 供应链计划 - 供应计划列表（基于销售预测生成的 mock 计划）
+export const SUPPLY_PLANS = PREFIX + 'supply-chain:supply-plans';

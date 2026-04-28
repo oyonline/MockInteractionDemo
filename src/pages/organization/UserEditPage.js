@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import { ChevronDown, ChevronUp } from 'lucide-react';
 import { userService } from '../../services/system';
+import { toast } from '../../components/ui/Toast';
 
 const TABS = [
   { key: 'roles', label: '角色' },
@@ -58,7 +59,7 @@ function UserEditPage({ userId, onBack }) {
       permissions: { ...permissions },
     };
     userService.updateUser(userId, patch);
-    window.alert('已保存');
+    toast.success('已保存');
     if (onBack) onBack();
   };
 

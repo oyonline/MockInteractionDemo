@@ -7,6 +7,8 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { logisticsService } from '../../services';
 import ActionBar from '../../components/ActionBar';
 import TablePagination from '../../components/TablePagination';
+import { toast } from '../../components/ui/Toast';
+import { confirm } from '../../components/ui/ConfirmDialog';
 
 const PAGE_SIZE = 10;
 
@@ -101,15 +103,15 @@ function LogisticsVendorListPage({ onOpenDetail }) {
   const saveForm = () => {
     const { code, name, shortName, status } = form;
     if (!name?.trim()) {
-      window.alert('请填写物流商名称');
+      toast.warning('请填写物流商名称');
       return;
     }
     if (editingVendor) {
       logisticsService.vendors.update(editingVendor.id, { code: code.trim(), name: name.trim(), shortName: shortName.trim(), status });
-      window.alert('已保存');
+      toast.success('已保存');
     } else {
       logisticsService.vendors.create({ code: code.trim(), name: name.trim(), shortName: shortName.trim(), status });
-      window.alert('已新增');
+      toast.success('已新增');
     }
     setShowFormModal(false);
     loadList();
@@ -119,19 +121,26 @@ function LogisticsVendorListPage({ onOpenDetail }) {
   const handleSubmit = (row) => {
     const res = logisticsService.vendors.submit(row.id);
     if (res && res.ok === false) {
-      window.alert(res.message || '提交失败');
+      toast.error(res.message || '提交失败');
       return;
     }
-    window.alert('已提交审批');
+    toast.success('已提交审批');
     loadList();
     loadStats();
   };
 
-  const handleRemove = (row) => {
-    if (!window.confirm(`确定删除物流商「${row.name}」？`)) return;
+  const handleRemove = async (row) => {
+    const ok = await confirm({
+      title: '确认删除',
+      description: `确定删除物流商「${row.name}」？`,
+      confirmText: '删除',
+      cancelText: '取消',
+      danger: true,
+    });
+    if (!ok) return;
     const res = logisticsService.vendors.remove(row.id);
     if (res && res.ok === false) {
-      window.alert(res.message || '删除失败');
+      toast.error(res.message || '删除失败');
       return;
     }
     loadList();
@@ -154,7 +163,7 @@ function LogisticsVendorListPage({ onOpenDetail }) {
       arr = JSON.parse(importText || '[]');
       if (!Array.isArray(arr)) throw new Error('需为数组');
     } catch (e) {
-      window.alert('请输入合法 JSON 数组');
+      toast.warning('请输入合法 JSON 数组');
       return;
     }
     let created = 0;
@@ -172,7 +181,7 @@ function LogisticsVendorListPage({ onOpenDetail }) {
     });
     setShowImportModal(false);
     setImportText('');
-    window.alert(`导入完成：新增 ${created} 条，更新 ${updated} 条`);
+    toast.success(`导入完成：新增 ${created} 条，更新 ${updated} 条`);
     loadList();
     loadStats();
   };

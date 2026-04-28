@@ -4,6 +4,7 @@ import React, { useState, useCallback, useEffect } from 'react';
 import { Search, RotateCcw, Trash2, Eye } from 'lucide-react';
 import { settingsLog } from '../../services/settings';
 import TablePagination from '../../components/TablePagination';
+import { confirm } from '../../components/ui/ConfirmDialog';
 
 const PAGE_SIZE = 10;
 
@@ -39,15 +40,29 @@ const SettingsLogPage = () => {
     loadList();
   }, [loadList]);
 
-  const handleClear = () => {
-    if (!window.confirm('确定清空所有日志？')) return;
+  const handleClear = async () => {
+    const ok = await confirm({
+      title: '确认清空',
+      description: '确定清空所有日志？',
+      confirmText: '清空',
+      cancelText: '取消',
+      danger: true,
+    });
+    if (!ok) return;
     settingsLog.clear();
     setCurrentPage(1);
     loadList(1);
   };
 
-  const handleReset = () => {
-    if (!window.confirm('确定重置为初始 mock 数据？当前日志将被覆盖。')) return;
+  const handleReset = async () => {
+    const ok = await confirm({
+      title: '确认重置',
+      description: '确定重置为初始 mock 数据？当前日志将被覆盖。',
+      confirmText: '重置',
+      cancelText: '取消',
+      danger: true,
+    });
+    if (!ok) return;
     settingsLog.reset();
     setCurrentPage(1);
     loadList(1);

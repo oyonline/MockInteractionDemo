@@ -18,6 +18,20 @@ import {
   ArrowUpRight,
 } from 'lucide-react';
 import cn from '../../utils/cn';
+import { toast } from '../../components/ui/Toast';
+import { confirm } from '../../components/ui/ConfirmDialog';
+import { mockStore } from '../../services/_mockStore';
+import { APPROVALS } from '../../utils/storageKeys';
+
+/** 待审批的复合状态：当前流程未到终态。 */
+const isPendingApproval = (status = '') => status.startsWith('pending');
+
+/** 当前时间字符串（与 mock 数据风格一致：YYYY-MM-DD HH:mm） */
+function nowStr() {
+  const d = new Date();
+  const pad = (n) => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
 
 const DIM_TYPES = {
   DEPT_CUSTGROUP_CUST_EXPENSE: 'dept-custgroup-cust-expense',
@@ -122,41 +136,164 @@ function AttachmentIcon({ type }) {
   return 'PDF';
 }
 
+const FALLBACK_RECORD = {
+  approvalNo: '-',
+  title: '待办审批详情',
+  submitter: '-',
+  submitDept: '-',
+  expenseDept: '-',
+  sourceModule: '财务',
+  currentNode: '待处理',
+  priority: 'medium',
+  deadlineAt: '-',
+  updatedAt: '-',
+  customerGroup: '-',
+  paymentReason: '-',
+  accountingDimension: null,
+  budgetSubjectCode: '',
+  amount: 0,
+  currency: 'CNY',
+  paymentMethod: '-',
+  paymentEntity: '-',
+  expectedPaymentDate: '-',
+  receiverName: '-',
+  receiverAccount: '-',
+  receiverBank: '-',
+  status: 'pending_accounting',
+  hasAttachment: false,
+  attachments: [],
+  submitDate: '-',
+  budgetVersion: '-',
+  budgetUsageRate: 0,
+  budgetTotal: 0,
+  budgetUsed: 0,
+  kingdeePayableNo: '',
+  approvalFlow: [],
+  summary: '',
+};
+
+/** 通过：把所有 pending 节点标记为 approved，整体状态设 completed。
+ *  纳入"演示环境：审批通过"备注，便于在时间线上看到操作记录。 */
+function applyApprove(rec) {
+  const ts = nowStr();
+  const approvalFlow = (rec.approvalFlow || []).map((step) =>
+    step.result === 'pending'
+      ? { ...step, result: 'approved', timestamp: ts, remark: step.remark || '演示环境：审批通过' }
+      : step
+  );
+  return {
+    ...rec,
+    status: 'completed',
+    currentNode: '已完成',
+    approvedAt: ts,
+    updatedAt: ts,
+    approvalFlow,
+  };
+}
+
+/** 驳回：把第一个 pending 节点标记为 rejected，整体状态设 rejected。 */
+function applyReject(rec, reason = '演示环境：审批驳回') {
+  const ts = nowStr();
+  let firstPendingHit = false;
+  const approvalFlow = (rec.approvalFlow || []).map((step) => {
+    if (!firstPendingHit && step.result === 'pending') {
+      firstPendingHit = true;
+      return { ...step, result: 'rejected', timestamp: ts, remark: reason };
+    }
+    return step;
+  });
+  return {
+    ...rec,
+    status: 'rejected',
+    currentNode: '已驳回',
+    rejectedAt: ts,
+    updatedAt: ts,
+    approvalFlow,
+  };
+}
+
 export default function ApprovalDetailPage({ record, onBack }) {
-  const r = record || {
-    approvalNo: '-',
-    title: '待办审批详情',
-    submitter: '-',
-    submitDept: '-',
-    expenseDept: '-',
-    sourceModule: '财务',
-    currentNode: '待处理',
-    priority: 'medium',
-    deadlineAt: '-',
-    updatedAt: '-',
-    customerGroup: '-',
-    paymentReason: '-',
-    accountingDimension: null,
-    budgetSubjectCode: '',
-    amount: 0,
-    currency: 'CNY',
-    paymentMethod: '-',
-    paymentEntity: '-',
-    expectedPaymentDate: '-',
-    receiverName: '-',
-    receiverAccount: '-',
-    receiverBank: '-',
-    status: 'pending_accounting',
-    hasAttachment: false,
-    attachments: [],
-    submitDate: '-',
-    budgetVersion: '-',
-    budgetUsageRate: 0,
-    budgetTotal: 0,
-    budgetUsed: 0,
-    kingdeePayableNo: '',
-    approvalFlow: [],
-    summary: '',
+  // 优先从 mockStore 读取该单据的最新状态（来自上次审批后的写入）；
+  // 没有命中则用 props.record，再没有用 fallback。这样切回详情页能看到最新结果。
+  const computeInitial = React.useCallback(() => {
+    const stored = mockStore.get(APPROVALS) || [];
+    if (record && record.id) {
+      const hit = stored.find((x) => x.id === record.id);
+      if (hit) return hit;
+    }
+    return record || FALLBACK_RECORD;
+  }, [record]);
+
+  const [r, setR] = React.useState(computeInitial);
+
+  // props.record 变化时（如父级打开不同审批单）重新初始化本地 state
+  React.useEffect(() => {
+    setR(computeInitial());
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [record?.id]);
+
+  const isPending = isPendingApproval(r.status);
+
+  /** 把单条修改后的 record 写回 mockStore 列表中对应位置。 */
+  const persistRecord = React.useCallback((updated) => {
+    if (!updated?.id) return;
+    mockStore.update(
+      APPROVALS,
+      (prev) => {
+        const list = Array.isArray(prev) ? prev : [];
+        const idx = list.findIndex((x) => x.id === updated.id);
+        if (idx === -1) return [updated, ...list];
+        const next = list.slice();
+        next[idx] = updated;
+        return next;
+      },
+      []
+    );
+  }, []);
+
+  const handleApprove = async () => {
+    if (!isPending) {
+      toast.warning('当前状态不可执行通过操作');
+      return;
+    }
+    const ok = await confirm({
+      title: '确认通过',
+      description: `确定通过审批单「${r.title}」？通过后将进入下一节点或完成审批。`,
+      confirmText: '通过',
+      cancelText: '取消',
+    });
+    if (!ok) return;
+    try {
+      const next = applyApprove(r);
+      setR(next);
+      persistRecord(next);
+      toast.success('审批已通过');
+    } catch (err) {
+      toast.error('操作失败：审批通过未能保存');
+    }
+  };
+
+  const handleReject = async () => {
+    if (!isPending) {
+      toast.warning('当前状态不可执行驳回操作');
+      return;
+    }
+    const ok = await confirm({
+      title: '确认驳回',
+      description: `确定驳回审批单「${r.title}」？驳回后申请人需重新提交。`,
+      confirmText: '驳回',
+      cancelText: '取消',
+      danger: true,
+    });
+    if (!ok) return;
+    try {
+      const next = applyReject(r);
+      setR(next);
+      persistRecord(next);
+      toast.success('审批已驳回');
+    } catch (err) {
+      toast.error('操作失败：审批驳回未能保存');
+    }
   };
 
   const dimensionType = r.accountingDimension || getDimensionTypeBySubjectCode(r.budgetSubjectCode);
@@ -198,7 +335,31 @@ export default function ApprovalDetailPage({ record, onBack }) {
                 <StatusBadge status={r.status} />
                 <PriorityBadge priority={r.priority} />
                 <Badge className="border-border bg-surface-subtle text-text-muted">{r.sourceModule || '财务'}</Badge>
-                <button className="inline-flex h-10 items-center rounded-xl border border-border bg-surface px-4 text-sm font-medium text-text transition-colors hover:border-border-strong hover:bg-surface-subtle">
+                {isPending && (
+                  <>
+                    <button
+                      type="button"
+                      onClick={handleReject}
+                      className="inline-flex h-10 items-center rounded-xl border border-danger-100 bg-danger-50 px-4 text-sm font-medium text-danger-700 transition-colors hover:bg-danger-100"
+                    >
+                      <XCircle className="mr-2 h-4 w-4" />
+                      驳回
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleApprove}
+                      className="inline-flex h-10 items-center rounded-xl bg-success-600 px-4 text-sm font-medium text-white transition-colors hover:bg-success-700"
+                    >
+                      <CheckCircle2 className="mr-2 h-4 w-4" />
+                      通过
+                    </button>
+                  </>
+                )}
+                <button
+                  type="button"
+                  onClick={() => toast.info('演示功能：导出 PDF')}
+                  className="inline-flex h-10 items-center rounded-xl border border-border bg-surface px-4 text-sm font-medium text-text transition-colors hover:border-border-strong hover:bg-surface-subtle"
+                >
                   <Download className="mr-2 h-4 w-4" />
                   导出PDF
                 </button>

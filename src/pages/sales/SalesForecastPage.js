@@ -1,10 +1,13 @@
 // src/pages/SalesForecastPage.js
 import React, { useState, useMemo, useCallback, useEffect } from 'react';
 import {
-  Search, ChevronRight, ChevronDown, Lock, Check, 
+  Search, ChevronRight, ChevronDown, Lock, Check,
   Package, Layers, BarChart3, AlertCircle,
   Calendar, Eye, EyeOff, TrendingUp, DollarSign, Boxes, Clock, Star, Tag, Info
 } from 'lucide-react';
+import { toast } from '../../components/ui/Toast';
+import { mockStore } from '../../services/_mockStore';
+import { SALES_FORECAST_PAGE_STATE } from '../../utils/storageKeys';
 
 // ============================================
 // Mock 数据生成 - 版本管理（2026年数据）
@@ -270,7 +273,15 @@ const SalesForecastPage = ({ data, openTab }) => {
   }, [currentMonth, currentYear]);
 
   // 版本管理 State
-  const [allVersions, setAllVersions] = useState(() => generateMockVersions());
+  // 原型级持久化：优先从 localStorage 读取上一次推送/编辑后的快照；
+  // 没有则用 mock 初始数据（首帧后由下方 useEffect 自动写回 storage 固化）。
+  const [allVersions, setAllVersions] = useState(() => mockStore.get(SALES_FORECAST_PAGE_STATE) ?? generateMockVersions());
+
+  // allVersions 变动时同步到 localStorage，保证刷新后状态保留。
+  // 含初始挂载时的一次写入：把首帧 mock 数据固化下来，避免 generateMockVersions 中的随机数据每次刷新都变动。
+  useEffect(() => {
+    mockStore.set(SALES_FORECAST_PAGE_STATE, allVersions);
+  }, [allVersions]);
   
   // 从 props.data 获取初始值（新开标签时传入）
   const initialDept = data?.dept || 'US';
@@ -369,47 +380,62 @@ const SalesForecastPage = ({ data, openTab }) => {
 
   // 保存草稿（覆盖当前版本）
   const saveDraft = () => {
+    if (!currentVersionData) {
+      toast.warning('当前没有可保存的版本');
+      return;
+    }
     const key = `${currentDept}_${currentMonthPeriod}`;
-    
+
+    let didSave = false;
     setAllVersions(prev => {
       const monthData = prev[key];
       if (!monthData) return prev;
-      
+
+      didSave = true;
       return {
         ...prev,
         [key]: {
           ...monthData,
-          versions: monthData.versions.map(v => 
-            v.id === currentVersionData.id 
+          versions: monthData.versions.map(v =>
+            v.id === currentVersionData.id
               ? { ...v, forecastData: JSON.parse(JSON.stringify(forecastData)) }
               : v
           )
         }
       };
     });
-    
+
+    if (!didSave) {
+      toast.error('保存失败：未找到对应月份的版本数据');
+      return;
+    }
     setHasUnsavedChanges(false);
-    alert('保存成功');
+    toast.success('保存成功');
   };
 
   // 确认发布（草稿 → 已推送计划）
   const publishToPlan = () => {
-    if (!currentVersionData) return;
+    if (!currentVersionData) {
+      toast.warning('当前没有可推送的版本');
+      return;
+    }
 
     const key = `${currentDept}_${currentMonthPeriod}`;
-    
+
+    let didPublish = false;
     setAllVersions(prev => {
       const monthData = prev[key];
       if (!monthData) return prev;
-      
+
+      didPublish = true;
       return {
         ...prev,
         [key]: {
           ...monthData,
-          versions: monthData.versions.map(v => 
-            v.id === currentVersionData.id 
-              ? { 
-                  ...v, 
+          versions: monthData.versions.map(v =>
+            v.id === currentVersionData.id
+              ? {
+                  ...v,
                   type: 'pending',
                   name: '已推送计划',
                   status: 'pending_plan',
@@ -423,7 +449,11 @@ const SalesForecastPage = ({ data, openTab }) => {
     });
 
     setShowPublishModal(false);
-    alert('已推送至计划确认');
+    if (!didPublish) {
+      toast.error('推送失败：未找到对应月份的版本数据');
+      return;
+    }
+    toast.success('已推送至计划确认');
   };
 
   // 切换版本（新开标签页）

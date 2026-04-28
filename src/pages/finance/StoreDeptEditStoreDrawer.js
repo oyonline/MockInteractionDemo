@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { Store, Globe, Building2, Target, CheckCircle2, X } from 'lucide-react';
+import { toast } from '../../components/ui/Toast';
 
 // 下拉数据
 const departments = [
@@ -77,7 +78,7 @@ export default function StoreDeptEditStoreDrawer({ isOpen, onClose, store, onSav
     const handleSave = () => {
         if (!formData) return;
         if (!formData.storeId || !formData.storeName || !formData.effectiveDate) {
-            alert('请填写必填项：店铺ID、店铺名称、生效日期');
+            toast.warning('请填写必填项：店铺ID、店铺名称、生效日期');
             return;
         }
         onSave?.(formData);

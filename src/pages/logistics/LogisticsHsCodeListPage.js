@@ -6,6 +6,8 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { logisticsService } from '../../services';
 import ActionBar from '../../components/ActionBar';
 import TablePagination from '../../components/TablePagination';
+import { toast } from '../../components/ui/Toast';
+import { confirm } from '../../components/ui/ConfirmDialog';
 
 const PAGE_SIZE = 10;
 
@@ -70,14 +72,14 @@ function LogisticsHsCodeListPage({ onOpenDetail }) {
 
   const saveForm = () => {
     const { hsCode, nameCn, nameEn, status } = form;
-    if (!hsCode?.trim()) { window.alert('请填写 HS 编码'); return; }
+    if (!hsCode?.trim()) { toast.warning('请填写 HS 编码'); return; }
     if (editingRow) {
       logisticsService.hsCodes.update(editingRow.hsCode, { nameCn: nameCn.trim(), nameEn: nameEn.trim(), status });
-      window.alert('已保存');
+      toast.success('已保存');
     } else {
-      if (logisticsService.hsCodes.get(hsCode.trim())) { window.alert('该 HS 编码已存在'); return; }
+      if (logisticsService.hsCodes.get(hsCode.trim())) { toast.warning('该 HS 编码已存在'); return; }
       logisticsService.hsCodes.create({ hsCode: hsCode.trim(), nameCn: nameCn.trim(), nameEn: nameEn.trim(), status });
-      window.alert('已新增');
+      toast.success('已新增');
     }
     setShowFormModal(false);
     loadList();
@@ -86,17 +88,24 @@ function LogisticsHsCodeListPage({ onOpenDetail }) {
 
   const handleSubmit = (row) => {
     const res = logisticsService.hsCodes.submit(row.hsCode);
-    if (res && res.ok === false) { window.alert(res.message || '提交失败'); return; }
-    window.alert('已提交审批');
+    if (res && res.ok === false) { toast.error(res.message || '提交失败'); return; }
+    toast.success('已提交审批');
     loadList();
     loadStats();
   };
 
-  const handleRemove = (row) => {
-    if (!window.confirm(`确定删除 HS 编码「${row.hsCode}」？`)) return;
+  const handleRemove = async (row) => {
+    const ok = await confirm({
+      title: '确认删除',
+      description: `确定删除 HS 编码「${row.hsCode}」？`,
+      confirmText: '删除',
+      cancelText: '取消',
+      danger: true,
+    });
+    if (!ok) return;
     const res = logisticsService.hsCodes.remove(row.hsCode);
     if (res && res.ok === false) {
-      window.alert(res.message || '删除失败');
+      toast.error(res.message || '删除失败');
       return;
     }
     loadList();
@@ -115,7 +124,7 @@ function LogisticsHsCodeListPage({ onOpenDetail }) {
 
   const handleImport = () => {
     let arr;
-    try { arr = JSON.parse(importText || '[]'); if (!Array.isArray(arr)) throw new Error(); } catch (e) { window.alert('请输入合法 JSON 数组'); return; }
+    try { arr = JSON.parse(importText || '[]'); if (!Array.isArray(arr)) throw new Error(); } catch (e) { toast.warning('请输入合法 JSON 数组'); return; }
     let created = 0, updated = 0;
     arr.forEach((item) => {
       const pk = item.hsCode;
@@ -125,7 +134,7 @@ function LogisticsHsCodeListPage({ onOpenDetail }) {
     });
     setShowImportModal(false);
     setImportText('');
-    window.alert(`导入完成：新增 ${created} 条，更新 ${updated} 条`);
+    toast.success(`导入完成：新增 ${created} 条，更新 ${updated} 条`);
     loadList();
     loadStats();
   };

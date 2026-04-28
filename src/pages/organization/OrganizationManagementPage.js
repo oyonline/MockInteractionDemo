@@ -1,6 +1,7 @@
 import React from 'react';
 // 可选：如果不想装 lucide-react，删除这一行和下面 JSX 里的图标标签即可
 import { ChevronRight, ChevronDown } from 'lucide-react';
+import { toast } from '../../components/ui/Toast';
 
 /** ---------------- Mock 数据 ---------------- */
 const initialDepartments = [
@@ -107,7 +108,7 @@ export default function OrganizationManagementPageSimple() {
     if (!selectedDepartment) return;
     setDepartments((prev) => prev.map((d) => (d.id === selectedDepartment.id ? selectedDepartment : d)));
     setDrawerOpen(false);
-    alert('已保存修改');
+    toast.success('已保存修改');
   };
 
   const handleAdd = () => {

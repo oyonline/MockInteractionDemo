@@ -5,6 +5,8 @@ import { RotateCcw, Save } from 'lucide-react';
 import { settingsBasic } from '../../services/settings';
 import Button from '../../components/ui/Button';
 import Card from '../../components/ui/Card';
+import { toast } from '../../components/ui/Toast';
+import { confirm } from '../../components/ui/ConfirmDialog';
 
 const GROUP_ORDER = ['通用', '物流', '销售', '财务'];
 
@@ -31,14 +33,21 @@ const SettingsBasicPage = () => {
   const handleSave = () => {
     settingsBasic.save(list);
     setInitialSnapshot(JSON.stringify(list.map(({ key, value }) => ({ key, value }))));
-    window.alert('保存成功');
+    toast.success('保存成功');
   };
 
-  const handleReset = () => {
-    if (!window.confirm('确定恢复为默认配置？当前修改将丢失。')) return;
+  const handleReset = async () => {
+    const ok = await confirm({
+      title: '恢复默认配置',
+      description: '确定恢复为默认配置？当前修改将丢失。',
+      confirmText: '恢复默认',
+      cancelText: '取消',
+      danger: true,
+    });
+    if (!ok) return;
     settingsBasic.reset();
     load();
-    window.alert('已恢复默认');
+    toast.success('已恢复默认');
   };
 
   const byGroup = list.reduce((acc, item) => {

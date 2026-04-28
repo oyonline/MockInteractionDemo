@@ -10,6 +10,7 @@ import {
 } from 'lucide-react';
 import HomePage from './pages/HomePage';
 import ProcessManagementPage from './pages/process/ProcessManagementPage';
+import BusinessAnalysisPage from './pages/business/BusinessAnalysisPage';
 import ProcessTemplateListPage from './pages/process/ProcessTemplateListPage';
 import ProcessTemplateDetailPage from './pages/process/ProcessTemplateDetailPage';
 import ProcessTemplateEditPage from './pages/process/ProcessTemplateEditPage';
@@ -32,6 +33,7 @@ import ExpenseCategoryPage from './pages/finance/ExpenseCategoryPage';
 import OrganizationManagementPage from './pages/organization/OrganizationManagementPage';
 import UserManagementPage from './pages/organization/UserManagementPage';
 import RolePermissionPage from './pages/organization/RolePermissionPage';
+import OrganizationOverviewPage from './pages/overview/OrganizationOverviewPage';
 import PlaceholderPage from './pages/PlaceholderPage';
 import SlowMovingAnalysisPage from './pages/sales/SlowMovingAnalysisPage';
 import SkuDetailPage from './pages/product/SkuDetailPage.simple';
@@ -111,6 +113,8 @@ import RecruitmentManagementPage from './pages/hr/RecruitmentManagementPage';
 import AnnouncementDetailPage from './pages/announcement/AnnouncementDetailPage';
 import ModuleLayout from './layouts/ModuleLayout';
 import DynamicSidebar, { navConfig } from './layouts/DynamicSidebar';
+import { ToastContainer } from './components/ui/Toast';
+import { ConfirmDialogHost } from './components/ui/ConfirmDialog';
 
 // 导航配置已移至 DynamicSidebar.js
 
@@ -538,7 +542,7 @@ function App() {
             case '/organization/overview':
                 return (
                     <ModuleLayout>
-                        <PlaceholderPage pageName="组织概览" path={tab.path} />
+                        <OrganizationOverviewPage onNavigate={handleNavigate} />
                     </ModuleLayout>
                 );
             
@@ -944,7 +948,7 @@ function App() {
             case '/business-analysis/overview':
                 return (
                     <ModuleLayout>
-                        <PlaceholderPage pageName="经营概览" path={tab.path} />
+                        <BusinessAnalysisPage />
                     </ModuleLayout>
                 );
             // 流程管理
@@ -1310,6 +1314,10 @@ function App() {
                     {renderTabContent(activeTab)}
                 </main>
             </div>
+
+            {/* 全局通用容器：Toast 反馈 + 确认弹窗。挂在根节点，所有页面都可调用。 */}
+            <ToastContainer />
+            <ConfirmDialogHost />
         </div>
     );
 }

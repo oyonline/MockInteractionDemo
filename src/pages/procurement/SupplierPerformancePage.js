@@ -7,6 +7,7 @@ import {
     Clock, AlertTriangle, Target, Shield, Truck, Users, Plus,
     Star, FileText, Edit3, Eye, RotateCcw
 } from 'lucide-react';
+import { toast } from '../../components/ui/Toast';
 
 const cn = (...args) => args.filter(Boolean).join(' ');
 
@@ -177,7 +178,7 @@ export default function SupplierPerformancePage({ data, onClose }) {
 
     const handleSave = () => {
         setIsEditing(false);
-        alert('评估已保存！');
+        toast.success('评估已保存');
     };
 
     const handleCancel = () => {
@@ -196,18 +197,18 @@ export default function SupplierPerformancePage({ data, onClose }) {
         if (status === 'draft') {
             setStatus('pending');
             setIsEditing(false);
-            alert('评估已提交审核！');
+            toast.success('评估已提交审核');
         }
     };
 
     const handleApprove = () => {
         setStatus('confirmed');
-        alert('审核已通过！');
+        toast.success('审核已通过');
     };
 
     const handleReject = () => {
         setStatus('draft');
-        alert('已退回修改');
+        toast.info('已退回修改');
     };
 
     const handleFileSelect = () => {

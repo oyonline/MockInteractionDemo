@@ -21,6 +21,7 @@ import {
     TrendingUp,
     DollarSign
 } from 'lucide-react';
+import { toast } from '../../components/ui/Toast';
 
 const cn = (...args) => args.filter(Boolean).join(' ');
 
@@ -219,14 +220,14 @@ export default function HrOrganizationPage() {
             setDepartments((prev) => [...prev, selectedDepartment]);
         }
         setDrawerOpen(false);
-        alert('已保存修改');
+        toast.success('已保存修改');
     };
 
     // 删除部门
     const handleDelete = (dept, e) => {
         e.stopPropagation();
         if (hasChildren(dept.code)) {
-            alert('该部门下有子部门，无法删除！');
+            toast.warning('该部门下有子部门，无法删除！');
             return;
         }
         setShowDeleteConfirm(dept);
@@ -236,7 +237,7 @@ export default function HrOrganizationPage() {
         if (showDeleteConfirm) {
             setDepartments((prev) => prev.filter((d) => d.id !== showDeleteConfirm.id));
             setShowDeleteConfirm(null);
-            alert('部门已删除');
+            toast.success('部门已删除');
         }
     };
 

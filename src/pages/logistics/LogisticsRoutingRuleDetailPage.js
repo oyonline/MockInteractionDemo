@@ -4,6 +4,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { logisticsService } from '../../services';
+import { toast } from '../../components/ui/Toast';
 
 const APPROVAL_LABEL = { draft: '草稿', pending: '待审批', approved: '已通过', rejected: '已驳回' };
 
@@ -60,7 +61,7 @@ function LogisticsRoutingRuleDetailPage({ tab }) {
   const saveForm = () => {
     if (!id) return;
     const countries = form.countriesStr.split(/[,，\s]+/).map((s) => s.trim()).filter(Boolean);
-    if (countries.length === 0) { window.alert('国家至少填 1 个'); return; }
+    if (countries.length === 0) { toast.warning('国家至少填 1 个'); return; }
     const channels = form.channelIds.map((cid) => ({ channelId: cid, channelPriority: 0 }));
     const payload = {
       name: form.name.trim(),
@@ -70,28 +71,28 @@ function LogisticsRoutingRuleDetailPage({ tab }) {
       channels,
     };
     const res = logisticsService.routingRules.update(id, payload);
-    if (res && res.ok === false) { window.alert(res.message || '保存失败'); return; }
-    window.alert('已保存');
+    if (res && res.ok === false) { toast.error(res.message || '保存失败'); return; }
+    toast.success('已保存');
     refresh();
   };
 
   const handleSubmit = () => {
     const res = logisticsService.routingRules.submit(id);
-    if (res && res.ok === false) window.alert(res.message || '提交失败');
+    if (res && res.ok === false) toast.error(res.message || '提交失败');
     else refresh();
   };
 
   const handleWithdraw = () => {
     const res = logisticsService.routingRules.withdraw(id);
-    if (res && res.ok === false) window.alert(res.message || '撤回失败');
+    if (res && res.ok === false) toast.error(res.message || '撤回失败');
     else refresh();
   };
 
   const openRemark = (action) => { setRemarkAction(action); setRemarkText(''); setShowRemarkModal(true); };
 
   const submitRemark = () => {
-    if (remarkAction === 'approve') { const res = logisticsService.routingRules.approve(id, remarkText); if (res && res.ok === false) window.alert(res.message); }
-    else if (remarkAction === 'reject') { const res = logisticsService.routingRules.reject(id, remarkText); if (res && res.ok === false) window.alert(res.message); }
+    if (remarkAction === 'approve') { const res = logisticsService.routingRules.approve(id, remarkText); if (res && res.ok === false) toast.error(res.message); }
+    else if (remarkAction === 'reject') { const res = logisticsService.routingRules.reject(id, remarkText); if (res && res.ok === false) toast.error(res.message); }
     setShowRemarkModal(false);
     refresh();
   };

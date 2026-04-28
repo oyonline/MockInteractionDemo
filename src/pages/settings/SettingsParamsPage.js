@@ -4,6 +4,7 @@ import React, { useState, useCallback, useEffect } from 'react';
 import { Search, Plus, RotateCcw, Edit2, Trash2, Power, PowerOff } from 'lucide-react';
 import { settingsParams } from '../../services/settings';
 import TablePagination from '../../components/TablePagination';
+import { confirm } from '../../components/ui/ConfirmDialog';
 
 const PAGE_SIZE = 10;
 
@@ -96,8 +97,15 @@ const SettingsParamsPage = () => {
     loadList();
   };
 
-  const handleRemove = (item) => {
-    if (!window.confirm(`确定删除参数 "${item.key}"？`)) return;
+  const handleRemove = async (item) => {
+    const ok = await confirm({
+      title: '确认删除',
+      description: `确定删除参数 "${item.key}"？`,
+      confirmText: '删除',
+      cancelText: '取消',
+      danger: true,
+    });
+    if (!ok) return;
     settingsParams.remove(item.id);
     loadList();
   };
@@ -108,8 +116,15 @@ const SettingsParamsPage = () => {
     loadList();
   };
 
-  const handleReset = () => {
-    if (!window.confirm('确定重置为初始 mock 数据？当前数据将被覆盖。')) return;
+  const handleReset = async () => {
+    const ok = await confirm({
+      title: '确认重置',
+      description: '确定重置为初始 mock 数据？当前数据将被覆盖。',
+      confirmText: '重置',
+      cancelText: '取消',
+      danger: true,
+    });
+    if (!ok) return;
     settingsParams.reset();
     setCurrentPage(1);
     loadList(1);

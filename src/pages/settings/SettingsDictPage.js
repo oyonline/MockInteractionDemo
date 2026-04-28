@@ -5,6 +5,8 @@ import { Plus, RotateCcw, Edit2, Trash2, Power, PowerOff } from 'lucide-react';
 import { settingsDict } from '../../services/settings';
 import TablePagination from '../../components/TablePagination';
 import ActionBar from '../../components/ActionBar';
+import { toast } from '../../components/ui/Toast';
+import { confirm } from '../../components/ui/ConfirmDialog';
 
 const PAGE_SIZE = 10;
 
@@ -101,29 +103,36 @@ const SettingsDictPage = () => {
     }
     setShowTypeModal(false);
     loadTypes();
-    window.alert('保存成功');
+    toast.success('保存成功');
   };
 
-  const handleRemoveType = (t) => {
+  const handleRemoveType = async (t) => {
     const { total } = settingsDict.listItems({ typeId: t.id });
-    if (!window.confirm(`确定删除类型「${t.typeName}」？将级联删除 ${total} 个字典项。`)) return;
+    const ok = await confirm({
+      title: '确认删除',
+      description: `确定删除类型「${t.typeName}」？将级联删除 ${total} 个字典项。`,
+      confirmText: '删除',
+      cancelText: '取消',
+      danger: true,
+    });
+    if (!ok) return;
     settingsDict.removeType(t.id);
     if (selectedTypeId === t.id) setSelectedTypeId(null);
     loadTypes();
     loadItems();
-    window.alert('已删除');
+    toast.success('已删除');
   };
 
   const handleToggleType = (t) => {
     settingsDict.toggleType(t.id);
     loadTypes();
     if (selectedTypeId === t.id) loadItems();
-    window.alert( t.status === 'enabled' ? '已停用' : '已启用');
+    toast.success(t.status === 'enabled' ? '已停用' : '已启用');
   };
 
   const openItemCreate = () => {
     if (selectedTypeDisabled) {
-      window.alert('当前类型已停用，无法新增字典项');
+      toast.warning('当前类型已停用，无法新增字典项');
       return;
     }
     setItemForm({ label: '', value: '', sort: 100 });
@@ -134,7 +143,7 @@ const SettingsDictPage = () => {
 
   const openItemEdit = (item) => {
     if (selectedTypeDisabled) {
-      window.alert('当前类型已停用，无法编辑');
+      toast.warning('当前类型已停用，无法编辑');
       return;
     }
     setItemForm({ label: item.label || '', value: item.value || '', sort: item.sort != null ? item.sort : 100 });
@@ -169,35 +178,49 @@ const SettingsDictPage = () => {
     }
     setShowItemModal(false);
     loadItems();
-    window.alert('保存成功');
+    toast.success('保存成功');
   };
 
-  const handleRemoveItem = (item) => {
-    if (!window.confirm(`确定删除字典项「${item.label}」？`)) return;
+  const handleRemoveItem = async (item) => {
+    const ok = await confirm({
+      title: '确认删除',
+      description: `确定删除字典项「${item.label}」？`,
+      confirmText: '删除',
+      cancelText: '取消',
+      danger: true,
+    });
+    if (!ok) return;
     settingsDict.removeItem(item.id);
     loadItems();
-    window.alert('已删除');
+    toast.success('已删除');
   };
 
   const handleToggleItem = (item) => {
     if (selectedTypeDisabled) {
-      window.alert('当前类型已停用，无法操作');
+      toast.warning('当前类型已停用，无法操作');
       return;
     }
     settingsDict.toggleItem(item.id);
     loadItems();
-    window.alert(item.status === 'enabled' ? '已停用' : '已启用');
+    toast.success(item.status === 'enabled' ? '已停用' : '已启用');
   };
 
-  const handleReset = () => {
-    if (!window.confirm('确定重置为初始 mock 数据？当前数据将被覆盖。')) return;
+  const handleReset = async () => {
+    const ok = await confirm({
+      title: '确认重置',
+      description: '确定重置为初始 mock 数据？当前数据将被覆盖。',
+      confirmText: '重置',
+      cancelText: '取消',
+      danger: true,
+    });
+    if (!ok) return;
     settingsDict.reset();
     setSelectedTypeId(null);
     loadTypes();
     setItemsList([]);
     setItemsTotal(0);
     setItemPage(1);
-    window.alert('已重置');
+    toast.success('已重置');
   };
 
   const totalPages = Math.max(1, Math.ceil(itemsTotal / PAGE_SIZE));
