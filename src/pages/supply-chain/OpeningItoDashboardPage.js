@@ -91,6 +91,62 @@ const formatRate = (val) => {
   return `${sign}${val.toFixed(2)}%`;
 };
 
+const formatItoDays = (itoValue) => {
+  const safe = Number(itoValue) || 0;
+  return Math.round(safe * 30);
+};
+
+const RADIAN = Math.PI / 180;
+const renderPieOuterLabel = (dataType, totalValue) => (props) => {
+  const {
+    cx,
+    cy,
+    midAngle,
+    outerRadius,
+    percent,
+    name,
+    value,
+  } = props;
+  const sin = Math.sin(-RADIAN * midAngle);
+  const cos = Math.cos(-RADIAN * midAngle);
+  const sx = cx + (outerRadius + 4) * cos;
+  const sy = cy + (outerRadius + 4) * sin;
+  const mx = cx + (outerRadius + 18) * cos;
+  const my = cy + (outerRadius + 18) * sin;
+  const ex = mx + (cos >= 0 ? 18 : -18);
+  const ey = my;
+  const textAnchor = cos >= 0 ? 'start' : 'end';
+  const displayPercent = `${((percent || 0) * 100).toFixed(1)}%`;
+  const displayValue = formatValue(value, dataType);
+
+  if (!value || !totalValue) return null;
+
+  return (
+    <g>
+      <path d={`M${sx},${sy}L${mx},${my}L${ex},${ey}`} stroke="#94A3B8" fill="none" strokeWidth={1} />
+      <circle cx={ex} cy={ey} r={1.5} fill="#94A3B8" />
+      <text
+        x={ex + (cos >= 0 ? 4 : -4)}
+        y={ey - 2}
+        textAnchor={textAnchor}
+        fill="#374151"
+        fontSize={11}
+      >
+        {name}
+      </text>
+      <text
+        x={ex + (cos >= 0 ? 4 : -4)}
+        y={ey + 12}
+        textAnchor={textAnchor}
+        fill="#6B7280"
+        fontSize={10}
+      >
+        {displayValue} / {displayPercent}
+      </text>
+    </g>
+  );
+};
+
 // ==================== 组件 ====================
 
 // Portal Tooltip 容器
@@ -304,7 +360,10 @@ const MetricCard = ({ title, value, momRate, yoyRate, isTotal, dataType, type = 
         ) : (
           <>
             {/* ITO 卡片：显示本期值、较上月差值、较上年差值 */}
-            <div className="text-2xl font-bold text-gray-900">{safeValue.toFixed(2)}</div>
+            <div className="flex items-baseline gap-1">
+              <span className="text-2xl font-bold text-gray-900">{safeValue.toFixed(2)}</span>
+              <span className="text-sm text-gray-500">（{formatItoDays(safeValue)}天）</span>
+            </div>
             <div className="mt-2 flex items-center gap-3">
               <div className="flex items-center gap-1">
                 <span className="text-xs text-gray-500 whitespace-nowrap">较上月</span>
@@ -369,8 +428,14 @@ const OpeningItoDashboardPage = () => {
 
   // 分析弹窗数据
   const [yearlyTrendData, setYearlyTrendData] = useState(null);
-  const [monthlyTrendData, setMonthlyTrendData] = useState(null);
+  const [buComparisonData, setBuComparisonData] = useState(null);
   const [categoryAnalysisData, setCategoryAnalysisData] = useState(null);
+  const openingPieTotal = useMemo(() => {
+    return (pieData?.openingDistribution || []).reduce((sum, item) => sum + (item.value || 0), 0);
+  }, [pieData]);
+  const salesPieTotal = useMemo(() => {
+    return (pieData?.salesDistribution || []).reduce((sum, item) => sum + (item.value || 0), 0);
+  }, [pieData]);
 
   // 加载筛选选项
   useEffect(() => {
@@ -429,15 +494,15 @@ const OpeningItoDashboardPage = () => {
       });
       setYearlyTrendData(yearlyData);
 
-      // 加载月度趋势数据（2026）
-      const monthlyData = supplyChainService.getOpeningItoMonthlyTrend({
-        year: '2026',
+      // 加载本期各BU对比数据（仅用于Total展示）
+      const comparisonData = supplyChainService.getOpeningItoBuComparison({
+        month: selectedMonth,
         dataType,
         includeRetail,
       });
-      setMonthlyTrendData(monthlyData);
+      setBuComparisonData(comparisonData);
     }
-  }, [analysisModalOpen, dataType, includeRetail]);
+  }, [analysisModalOpen, selectedMonth, dataType, includeRetail]);
 
   // 加载类目分析弹窗数据
   useEffect(() => {
@@ -701,14 +766,14 @@ const OpeningItoDashboardPage = () => {
                     <th className="px-4 py-2 text-left font-medium text-gray-600 border-b sticky left-0 bg-gray-50 z-10"></th>
                     <th className="px-3 py-2 text-center font-medium text-gray-600 border-b">共享仓</th>
                     <th className="px-3 py-2 text-center font-medium text-gray-600 border-b">业务仓</th>
-                    <th className="px-3 py-2 text-center font-medium text-gray-600 border-b">总计</th>
-                    <th className="px-3 py-2 text-center font-medium text-gray-600 border-b">共享仓</th>
+                    <th className="px-3 py-2 text-center font-medium text-gray-600 border-b border-r-2 border-gray-300">总计</th>
+                    <th className="px-3 py-2 text-center font-medium text-gray-600 border-b border-l-2 border-gray-300">共享仓</th>
                     <th className="px-3 py-2 text-center font-medium text-gray-600 border-b">业务仓</th>
-                    <th className="px-3 py-2 text-center font-medium text-gray-600 border-b">总计</th>
-                    <th className="px-3 py-2 text-center font-medium text-gray-600 border-b">共享仓</th>
+                    <th className="px-3 py-2 text-center font-medium text-gray-600 border-b border-r-2 border-gray-300">总计</th>
+                    <th className="px-3 py-2 text-center font-medium text-gray-600 border-b border-l-2 border-gray-300">共享仓</th>
                     <th className="px-3 py-2 text-center font-medium text-gray-600 border-b">业务仓</th>
-                    <th className="px-3 py-2 text-center font-medium text-gray-600 border-b">总计</th>
-                    <th className="px-3 py-2 text-center font-medium text-gray-600 border-b">共享仓</th>
+                    <th className="px-3 py-2 text-center font-medium text-gray-600 border-b border-r-2 border-gray-300">总计</th>
+                    <th className="px-3 py-2 text-center font-medium text-gray-600 border-b border-l-2 border-gray-300">共享仓</th>
                     <th className="px-3 py-2 text-center font-medium text-gray-600 border-b">业务仓</th>
                     <th className="px-3 py-2 text-center font-medium text-gray-600 border-b">总计</th>
                   </tr>
@@ -725,20 +790,20 @@ const OpeningItoDashboardPage = () => {
                       <td className="px-3 py-3 text-gray-700 border-b text-right">
                         {formatValue(row.bizCurrent, dataType)}
                       </td>
-                      <td className="px-3 py-3 text-gray-900 font-medium border-b text-right">
+                      <td className="px-3 py-3 text-gray-900 font-medium border-b border-r-2 border-gray-200 text-right">
                         {formatValue(row.totalCurrent, dataType)}
                       </td>
-                      <td className="px-3 py-3 text-gray-500 border-b text-right">
+                      <td className="px-3 py-3 text-gray-500 border-b border-l-2 border-gray-200 text-right">
                         {formatValue(row.sharedLastMonth, dataType)}
                       </td>
                       <td className="px-3 py-3 text-gray-500 border-b text-right">
                         {formatValue(row.bizLastMonth, dataType)}
                       </td>
-                      <td className="px-3 py-3 text-gray-500 border-b text-right">
+                      <td className="px-3 py-3 text-gray-500 border-b border-r-2 border-gray-200 text-right">
                         {formatValue(row.totalLastMonth, dataType)}
                       </td>
                       <td
-                        className={`px-3 py-3 border-b text-right ${
+                        className={`px-3 py-3 border-b border-l-2 border-gray-200 text-right ${
                           row.sharedMomDiff >= 0 ? 'text-red-600' : 'text-green-600'
                         }`}
                       >
@@ -754,7 +819,7 @@ const OpeningItoDashboardPage = () => {
                         {formatValue(Math.abs(row.bizMomDiff), dataType)}
                       </td>
                       <td
-                        className={`px-3 py-3 border-b text-right font-medium ${
+                        className={`px-3 py-3 border-b border-r-2 border-gray-200 text-right font-medium ${
                           row.totalMomDiff >= 0 ? 'text-red-600' : 'text-green-600'
                         }`}
                       >
@@ -762,7 +827,7 @@ const OpeningItoDashboardPage = () => {
                         {formatValue(Math.abs(row.totalMomDiff), dataType)}
                       </td>
                       <td
-                        className={`px-3 py-3 border-b text-right ${
+                        className={`px-3 py-3 border-b border-l-2 border-gray-200 text-right ${
                           row.sharedMomRate >= 0 ? 'text-red-600' : 'text-green-600'
                         }`}
                       >
@@ -796,20 +861,20 @@ const OpeningItoDashboardPage = () => {
                       <td className="px-3 py-3 text-gray-900 border-b text-right">
                         {formatValue(tableData.summaryRow.bizCurrent, dataType)}
                       </td>
-                      <td className="px-3 py-3 text-gray-900 border-b text-right">
+                      <td className="px-3 py-3 text-gray-900 border-b border-r-2 border-gray-200 text-right">
                         {formatValue(tableData.summaryRow.totalCurrent, dataType)}
                       </td>
-                      <td className="px-3 py-3 text-gray-700 border-b text-right">
+                      <td className="px-3 py-3 text-gray-700 border-b border-l-2 border-gray-200 text-right">
                         {formatValue(tableData.summaryRow.sharedLastMonth, dataType)}
                       </td>
                       <td className="px-3 py-3 text-gray-700 border-b text-right">
                         {formatValue(tableData.summaryRow.bizLastMonth, dataType)}
                       </td>
-                      <td className="px-3 py-3 text-gray-700 border-b text-right">
+                      <td className="px-3 py-3 text-gray-700 border-b border-r-2 border-gray-200 text-right">
                         {formatValue(tableData.summaryRow.totalLastMonth, dataType)}
                       </td>
                       <td
-                        className={`px-3 py-3 border-b text-right ${
+                        className={`px-3 py-3 border-b border-l-2 border-gray-200 text-right ${
                           tableData.summaryRow.sharedMomDiff >= 0 ? 'text-red-600' : 'text-green-600'
                         }`}
                       >
@@ -825,7 +890,7 @@ const OpeningItoDashboardPage = () => {
                         {formatValue(Math.abs(tableData.summaryRow.bizMomDiff), dataType)}
                       </td>
                       <td
-                        className={`px-3 py-3 border-b text-right ${
+                        className={`px-3 py-3 border-b border-r-2 border-gray-200 text-right ${
                           tableData.summaryRow.totalMomDiff >= 0 ? 'text-red-600' : 'text-green-600'
                         }`}
                       >
@@ -833,7 +898,7 @@ const OpeningItoDashboardPage = () => {
                         {formatValue(Math.abs(tableData.summaryRow.totalMomDiff), dataType)}
                       </td>
                       <td
-                        className={`px-3 py-3 border-b text-right ${
+                        className={`px-3 py-3 border-b border-l-2 border-gray-200 text-right ${
                           tableData.summaryRow.sharedMomRate >= 0 ? 'text-red-600' : 'text-green-600'
                         }`}
                       >
@@ -950,19 +1015,21 @@ const OpeningItoDashboardPage = () => {
             <div className="grid grid-cols-2 gap-8">
               {/* 期初库存占比 */}
               <div>
-                <h4 className="text-sm font-medium text-gray-700 mb-4 text-center">期初库存占比</h4>
+                <h4 className="text-sm font-medium text-gray-700 mb-4 text-center">本期期初库存占比</h4>
                 <div className="h-[300px]">
                   <ResponsiveContainer width="100%" height="100%">
                     <RechartsPieChart>
                       <Pie
                         data={pieData?.openingDistribution || []}
-                        cx="40%"
+                        cx="50%"
                         cy="50%"
                         innerRadius={60}
-                        outerRadius={100}
+                        outerRadius={82}
                         paddingAngle={2}
                         dataKey="value"
                         nameKey="name"
+                        labelLine={false}
+                        label={renderPieOuterLabel(dataType, openingPieTotal)}
                       >
                         {(pieData?.openingDistribution || []).map((entry, index) => (
                           <Cell key={`cell-${index}`} fill={PIE_COLORS[index % PIE_COLORS.length]} />
@@ -978,12 +1045,6 @@ const OpeningItoDashboardPage = () => {
                           return [`${formatValue(value, dataType)} (${percent}%)`, name];
                         }}
                       />
-                      <Legend
-                        layout="vertical"
-                        align="right"
-                        verticalAlign="middle"
-                        wrapperStyle={{ fontSize: '12px' }}
-                      />
                     </RechartsPieChart>
                   </ResponsiveContainer>
                 </div>
@@ -991,19 +1052,21 @@ const OpeningItoDashboardPage = () => {
 
               {/* 实销占比 */}
               <div>
-                <h4 className="text-sm font-medium text-gray-700 mb-4 text-center">实销占比</h4>
+                <h4 className="text-sm font-medium text-gray-700 mb-4 text-center">上期占比分析</h4>
                 <div className="h-[300px]">
                   <ResponsiveContainer width="100%" height="100%">
                     <RechartsPieChart>
                       <Pie
                         data={pieData?.salesDistribution || []}
-                        cx="40%"
+                        cx="50%"
                         cy="50%"
                         innerRadius={60}
-                        outerRadius={100}
+                        outerRadius={82}
                         paddingAngle={2}
                         dataKey="value"
                         nameKey="name"
+                        labelLine={false}
+                        label={renderPieOuterLabel(dataType, salesPieTotal)}
                       >
                         {(pieData?.salesDistribution || []).map((entry, index) => (
                           <Cell key={`cell-${index}`} fill={PIE_COLORS[index % PIE_COLORS.length]} />
@@ -1018,12 +1081,6 @@ const OpeningItoDashboardPage = () => {
                           const percent = total ? ((value / total) * 100).toFixed(2) : '0.00';
                           return [`${formatValue(value, dataType)} (${percent}%)`, name];
                         }}
-                      />
-                      <Legend
-                        layout="vertical"
-                        align="right"
-                        verticalAlign="middle"
-                        wrapperStyle={{ fontSize: '12px' }}
                       />
                     </RechartsPieChart>
                   </ResponsiveContainer>
@@ -1042,7 +1099,7 @@ const OpeningItoDashboardPage = () => {
           dataType={dataType}
           includeRetail={includeRetail}
           yearlyTrendData={yearlyTrendData}
-          monthlyTrendData={monthlyTrendData}
+          buComparisonData={buComparisonData}
         />
       )}
 
@@ -1070,7 +1127,7 @@ const OpeningItoAnalysisModal = ({
   dataType,
   includeRetail,
   yearlyTrendData,
-  monthlyTrendData,
+  buComparisonData,
   onBuChange,
 }) => {
   // BU 列表
@@ -1106,23 +1163,7 @@ const OpeningItoAnalysisModal = ({
 
   // 处理BU选择变化
   const handleBuChange = (bu) => {
-    let newSelection;
-    if (bu === 'Total') {
-      newSelection = selectedBus.includes('Total') ? [] : ['Total'];
-    } else {
-      if (selectedBus.includes(bu)) {
-        newSelection = selectedBus.filter((b) => b !== bu);
-        if (newSelection.length === 0) {
-          newSelection = ['Total'];
-        }
-      } else {
-        if (selectedBus.includes('Total')) {
-          newSelection = [bu];
-        } else {
-          newSelection = [...selectedBus, bu];
-        }
-      }
-    }
+    const newSelection = [bu];
     setSelectedBus(newSelection);
     if (onBuChange) {
       onBuChange(newSelection);
@@ -1137,6 +1178,7 @@ const OpeningItoAnalysisModal = ({
     }
     return `${value.toFixed(0)}`;
   };
+  const selectedBuValue = selectedBus[0] || 'Total';
 
   // 图表1数据：合并2025和2026数据
   const chart1Data = yearlyTrendData?.months.map((month, index) => ({
@@ -1147,9 +1189,9 @@ const OpeningItoAnalysisModal = ({
     ito2026: yearlyTrendData.data2026[index]?.ito || 0,
   })) || [];
 
-  // 图表2数据
-  const chart2Data = monthlyTrendData?.data.map((item) => ({
-    month: `${item.month}月`,
+  // 图表2数据：本期各BU对比
+  const chart2Data = buComparisonData?.rows?.map((item) => ({
+    bu: item.bu,
     opening: item.opening,
     ito: item.ito,
   })) || [];
@@ -1259,6 +1301,13 @@ const OpeningItoAnalysisModal = ({
                       name="2025年 ITO"
                       stroke="#6B7280"
                       strokeWidth={2}
+                      dot={{ r: 4 }}
+                      label={{
+                        position: 'top',
+                        fill: '#6B7280',
+                        fontSize: 10,
+                        formatter: (value) => (value === null || value === undefined ? '' : Number(value).toFixed(2)),
+                      }}
                     />
                   {/* 2026 ITO - 绿色线 */}
                     <Line
@@ -1268,6 +1317,13 @@ const OpeningItoAnalysisModal = ({
                       name="2026年 ITO"
                       stroke="#10B981"
                       strokeWidth={2}
+                      dot={{ r: 4 }}
+                      label={{
+                        position: 'top',
+                        fill: '#10B981',
+                        fontSize: 10,
+                        formatter: (value) => (value === null || value === undefined ? '' : Number(value).toFixed(2)),
+                      }}
                     />
                 </ComposedChart>
               </ResponsiveContainer>
@@ -1277,65 +1333,72 @@ const OpeningItoAnalysisModal = ({
             </p>
           </div>
 
-          {/* 图表2：本期期初 & ITO */}
+          {/* 图表2：本期各BU对比 */}
           <div className="bg-white border border-gray-200 rounded-lg p-4">
             <h3 className="text-base font-medium text-gray-800 mb-4">
-              本期期初 & ITO（2026年）
+              本期各BU期初 & ITO对比
             </h3>
-            <div className="h-[350px]">
-              <ResponsiveContainer width="100%" height="100%">
-                <ComposedChart data={chart2Data} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" />
-                  <XAxis dataKey="month" tick={{ fontSize: 12 }} />
-                  <YAxis
-                    yAxisId="left"
-                    tick={{ fontSize: 12 }}
-                    tickFormatter={(value) =>
-                      dataType === 'amount' ? `${(value / 10000).toFixed(0)}万` : value
-                    }
-                  />
-                  <YAxis
-                    yAxisId="right"
-                    orientation="right"
-                    tick={{ fontSize: 12 }}
-                    tickFormatter={(value) => value.toFixed(2)}
-                  />
-                  <RechartsTooltip
-                    formatter={(value, name) => {
-                      if (name.includes('期初')) {
-                        return [formatValue(value), name];
-                      }
-                      return [value.toFixed(2), name];
-                    }}
-                  />
-                  <Legend
-                    wrapperStyle={{ cursor: 'pointer' }}
-                  />
-
-                  {/* 本期期初 - 蓝色柱 */}
-                    <Bar
-                      yAxisId="left"
-                      dataKey="opening"
-                      name="本期期初"
-                      fill="#3B82F6"
-                      radius={[4, 4, 0, 0]}
-                    />
-                  {/* 本期 ITO - 绿色线 */}
-                    <Line
-                      yAxisId="right"
-                      type="monotone"
-                      dataKey="ito"
-                      name="本期 ITO"
-                      stroke="#10B981"
-                      strokeWidth={2}
-                      dot={{ r: 4 }}
-                    />
-                </ComposedChart>
-              </ResponsiveContainer>
-            </div>
-            <p className="text-xs text-gray-500 mt-2 text-center">
-              点击图例可隐藏/显示对应数据系列
-            </p>
+            {selectedBuValue === 'Total' ? (
+              <>
+                <div className="h-[350px]">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <ComposedChart data={chart2Data} margin={{ top: 20, right: 30, left: 20, bottom: 35 }}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" />
+                      <XAxis dataKey="bu" tick={{ fontSize: 11 }} interval={0} angle={-20} textAnchor="end" />
+                      <YAxis
+                        yAxisId="left"
+                        tick={{ fontSize: 12 }}
+                        tickFormatter={(value) =>
+                          dataType === 'amount' ? `${(value / 10000).toFixed(0)}万` : value
+                        }
+                      />
+                      <YAxis
+                        yAxisId="right"
+                        orientation="right"
+                        tick={{ fontSize: 12 }}
+                        tickFormatter={(value) => value.toFixed(2)}
+                      />
+                      <RechartsTooltip
+                        formatter={(value, name) => {
+                          if (name.includes('期初')) {
+                            return [formatValue(value), name];
+                          }
+                          return [value.toFixed(2), name];
+                        }}
+                      />
+                      <Legend wrapperStyle={{ cursor: 'pointer' }} />
+                      <Bar
+                        yAxisId="left"
+                        dataKey="opening"
+                        name="本期期初"
+                        fill="#3B82F6"
+                        radius={[4, 4, 0, 0]}
+                      />
+                      <Line
+                        yAxisId="right"
+                        type="monotone"
+                        dataKey="ito"
+                        name="本期 ITO"
+                        stroke="#10B981"
+                        strokeWidth={2}
+                        dot={{ r: 4 }}
+                        label={{
+                          position: 'top',
+                          fill: '#10B981',
+                          fontSize: 10,
+                          formatter: (value) => (value === null || value === undefined ? '' : Number(value).toFixed(2)),
+                        }}
+                      />
+                    </ComposedChart>
+                  </ResponsiveContainer>
+                </div>
+                <p className="text-xs text-gray-500 mt-2 text-center">点击图例可隐藏/显示对应数据系列</p>
+              </>
+            ) : (
+              <div className="h-[220px] rounded-lg border border-dashed border-gray-300 bg-gray-50 flex items-center justify-center text-sm text-gray-500">
+                当前选择具体BU，不展示“各BU对比图”；切换为 BU：Total 可查看。
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -1354,7 +1417,8 @@ const CategoryAnalysisModal = ({
   includeRetail,
   data,
 }) => {
-  if (!isOpen) return null;
+  const [categoryHoverDrilldown, setCategoryHoverDrilldown] = useState(null);
+  const hoverTimerRef = useRef(null);
 
   const formatValue = (value) => {
     if (value === null || value === undefined) return '-';
@@ -1363,6 +1427,43 @@ const CategoryAnalysisModal = ({
     }
     return `${value.toLocaleString()}`;
   };
+
+  const clearHoverTimer = () => {
+    if (!hoverTimerRef.current) return;
+    clearTimeout(hoverTimerRef.current);
+    hoverTimerRef.current = null;
+  };
+
+  const scheduleHideDrilldown = () => {
+    clearHoverTimer();
+    hoverTimerRef.current = setTimeout(() => {
+      setCategoryHoverDrilldown(null);
+    }, 120);
+  };
+
+  const handleCategoryHover = (category, bu, event) => {
+    clearHoverTimer();
+    const res = supplyChainService.getCategoryDescriptionTop10({
+      month,
+      category,
+      bu,
+      dataType,
+      includeRetail,
+    });
+    const panelWidth = 560;
+    const panelHeight = 360;
+    const margin = 16;
+    const left = Math.max(margin, Math.min(event.clientX + 16, window.innerWidth - panelWidth - margin));
+    const top = Math.max(margin, Math.min(event.clientY + 12, window.innerHeight - panelHeight - margin));
+    setCategoryHoverDrilldown({
+      category,
+      bu,
+      rows: res?.rows || [],
+      position: { left, top },
+    });
+  };
+
+  if (!isOpen) return null;
 
   // BU列表（不含Retail如果includeRetail为false）
   const buList = [
@@ -1504,7 +1605,14 @@ const CategoryAnalysisModal = ({
                         {item.bu}
                       </td>
                       <td className="px-4 py-3 text-gray-900 border-b">
-                        {item.category}
+                        <button
+                          type="button"
+                          onMouseEnter={(event) => handleCategoryHover(item.category, item.bu, event)}
+                          onMouseLeave={scheduleHideDrilldown}
+                          className="text-left text-blue-600 hover:text-blue-700 hover:underline"
+                        >
+                          {item.category}
+                        </button>
                       </td>
                       <td className="px-4 py-3 text-right text-red-600 font-medium border-b">
                         +{formatValue(item.value)}
@@ -1527,6 +1635,55 @@ const CategoryAnalysisModal = ({
           </div>
         </div>
       </div>
+
+      {categoryHoverDrilldown && (
+        <div
+          className="fixed z-[80] w-[560px] max-w-[92vw] bg-white rounded-xl border border-gray-200 shadow-2xl"
+          style={{
+            left: categoryHoverDrilldown.position.left,
+            top: categoryHoverDrilldown.position.top,
+          }}
+          onMouseEnter={clearHoverTimer}
+          onMouseLeave={scheduleHideDrilldown}
+        >
+          <div className="px-4 py-3 border-b border-gray-200 bg-gray-50 rounded-t-xl">
+            <h4 className="text-sm font-semibold text-gray-900">
+              描述TOP10：{categoryHoverDrilldown.category}（{categoryHoverDrilldown.bu}）
+            </h4>
+          </div>
+          <div className="max-h-[320px] overflow-auto rounded-b-xl">
+            <table className="w-full text-sm">
+              <thead className="bg-gray-50 sticky top-0">
+                <tr>
+                  <th className="px-3 py-2 text-center font-medium text-gray-700 border-b w-[60px]">序号</th>
+                  <th className="px-3 py-2 text-left font-medium text-gray-700 border-b">描述</th>
+                  <th className="px-3 py-2 text-right font-medium text-gray-700 border-b">
+                    {dataType === 'amount' ? '金额（正值）' : '数量（正值）'}
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {categoryHoverDrilldown.rows.map((row, index) => (
+                  <tr key={`${row.description}-${index}`} className="hover:bg-gray-50">
+                    <td className="px-3 py-2 border-b text-center text-gray-900">{index + 1}</td>
+                    <td className="px-3 py-2 border-b text-gray-800">{row.description}</td>
+                    <td className="px-3 py-2 border-b text-right text-red-600 font-medium">
+                      +{formatValue(row.positiveValue)}
+                    </td>
+                  </tr>
+                ))}
+                {categoryHoverDrilldown.rows.length === 0 && (
+                  <tr>
+                    <td colSpan={3} className="px-3 py-6 border-b text-center text-gray-500">
+                      暂无增加项
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

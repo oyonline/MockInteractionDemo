@@ -30,6 +30,9 @@ export const LOGISTICS_CONSOLIDATION_RULES = PREFIX + 'logistics:consolidationRu
 export const SUPPLY_CHAIN_FORECAST = PREFIX + 'supply-chain:forecast:v2';
 export const SUPPLY_CHAIN_OPENING_ITO = PREFIX + 'supply-chain:opening-ito';
 export const SUPPLY_CHAIN_EXCESS_ARCHIVES = PREFIX + 'supply-chain:excess:archives';
+export const SUPPLY_CHAIN_EXCESS_TOP10_NOTES = PREFIX + 'supply-chain:excess:top10-notes';
+/** 销量预计管理（独立数据域，与 Forecast Tracking 分离） */
+export const SUPPLY_CHAIN_SALES_FORECAST_V1 = PREFIX + 'supply-chain:sales-forecast:v1';
 
 // 销售预测页（原型级状态持久化：版本管理、推送状态）
 export const SALES_FORECAST_PAGE_STATE = PREFIX + 'sales:forecast-page-state';

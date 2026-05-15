@@ -75,6 +75,7 @@ import ForecastTrackingPage from './pages/supply-chain/ForecastTrackingPage';
 import SupplyPlanPage from './pages/supply-chain/SupplyPlanPage';
 import OpeningItoDashboardPage from './pages/supply-chain/OpeningItoDashboardPage';
 import ExcessDashboardPage from './pages/supply-chain/ExcessDashboardPage';
+import SalesForecastManagementPage from './pages/supply-chain/SalesForecastManagementPage';
 import QualityInboundPage from './pages/quality/QualityInboundPage';
 import QualityComplaintPage from './pages/quality/QualityComplaintPage';
 import QualityTaskPage from './pages/quality/QualityTaskPage';
@@ -1094,6 +1095,12 @@ function App() {
                 return (
                     <ModuleLayout>
                         <SupplyPlanPage />
+                    </ModuleLayout>
+                );
+            case '/supply-chain/sales-forecast':
+                return (
+                    <ModuleLayout>
+                        <SalesForecastManagementPage />
                     </ModuleLayout>
                 );
 

@@ -36,6 +36,7 @@ const STATUS_TONE = {
 
 const SUB_ENTRIES = [
   { id: 'forecast-tracking', name: 'Forecast Tracking', desc: '预测跟踪与执行偏差监控', icon: TrendingUp,    path: '/supply-chain/forecast-tracking', tone: 'brand' },
+  { id: 'sales-forecast-mgmt', name: '销量预计管理', desc: 'Forecast 期数与 BU 校验、安全库存规则', icon: BarChart3, path: '/supply-chain/sales-forecast', tone: 'primary' },
   { id: 'supply-plan',       name: '供应计划',          desc: '基于预测生成补货建议',     icon: ClipboardList, path: '/supply-chain/supply-plan',       tone: 'success' },
   { id: 'opening-ito',       name: 'Opening ITO',       desc: '期初库存与周转看板',       icon: Boxes,         path: '/supply-chain/opening-ito-dashboard', tone: 'primary' },
   { id: 'excess',            name: 'Excess 库存',       desc: '过量库存风险与库龄分析',   icon: AlertTriangle, path: '/supply-chain/excess-dashboard',  tone: 'danger' },

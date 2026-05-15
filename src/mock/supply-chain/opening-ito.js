@@ -752,6 +752,50 @@ export function getMockOpeningItoMonthlyTrend(query) {
 }
 
 /**
+ * 获取本期各BU期初&ITO对比
+ * @param {Object} query
+ * @param {string} query.month - 月份
+ * @param {string} query.dataType - amount | qty
+ * @param {boolean} query.includeRetail
+ */
+export function getMockOpeningItoBuComparison(query = {}) {
+  const { month = '2026-03', dataType = 'amount', includeRetail = true } = query;
+  const allData = getMockOpeningItoList();
+  let monthData = allData.filter((item) => item.month === month);
+  monthData = filterRetailData(monthData, includeRetail);
+
+  const buMap = new Map();
+  monthData.forEach((item) => {
+    if (!buMap.has(item.bu)) {
+      buMap.set(item.bu, {
+        bu: item.bu,
+        opening: 0,
+        itoWeightedSum: 0,
+        itoWeight: 0,
+      });
+    }
+    const row = buMap.get(item.bu);
+    const openingValue = dataType === 'amount' ? item.openingAmount : item.openingQty;
+    row.opening += openingValue;
+    row.itoWeightedSum += item.ito * openingValue;
+    row.itoWeight += openingValue;
+  });
+
+  const rows = Array.from(buMap.values())
+    .map((item) => ({
+      bu: item.bu,
+      opening: Math.round(item.opening),
+      ito: item.itoWeight > 0 ? Number((item.itoWeightedSum / item.itoWeight).toFixed(2)) : 0,
+    }))
+    .sort((a, b) => b.opening - a.opening);
+
+  return {
+    rows,
+    meta: { month, dataType, includeRetail },
+  };
+}
+
+/**
  * 获取类目分析数据
  * @param {Object} query - 查询参数
  * @param {string} query.month - 月份：'2026-03'
@@ -853,5 +897,78 @@ export function getMockCategoryAnalysisData(query) {
       includeRetail,
       buList,
     },
+  };
+}
+
+/**
+ * 类目下钻：描述 TOP10（mock）
+ * @param {Object} query
+ * @param {string} query.month
+ * @param {string} query.category
+ * @param {string} query.dataType - amount | qty
+ * @param {boolean} query.includeRetail
+ * @param {string} [query.bu]
+ */
+export function getMockCategoryDescriptionTop10(query = {}) {
+  const {
+    month = '2026-03',
+    category = '',
+    dataType = 'amount',
+    includeRetail = true,
+    bu,
+  } = query;
+  if (!category) return { rows: [] };
+
+  const allData = getMockOpeningItoList();
+  let monthData = allData.filter((item) => item.month === month && item.category === category);
+  monthData = filterRetailData(monthData, includeRetail);
+  if (bu) {
+    monthData = monthData.filter((item) => item.bu === bu);
+  }
+
+  const currentTotal = monthData.reduce((sum, item) => {
+    return sum + (dataType === 'amount' ? item.openingAmount : item.openingQty);
+  }, 0);
+  const previousTotal = monthData.reduce((sum, item) => {
+    return sum + (dataType === 'amount' ? item.lastMonthOpeningAmount : item.lastMonthOpeningQty);
+  }, 0);
+
+  const labels = [
+    '渠道备货款',
+    '常规补货款',
+    '活动促销款',
+    '清仓去化款',
+    '新品导入款',
+    '组合装',
+    '礼盒装',
+    '长尾SKU',
+    '区域定制款',
+    '平台专供款',
+  ];
+
+  const weights = labels.map((_, idx) => stableRandom((idx + 1) * 97 + category.length * 23, 0.06, 0.16));
+  const weightTotal = weights.reduce((sum, w) => sum + w, 0) || 1;
+
+  const rows = labels.map((label, idx) => {
+    const ratio = weights[idx] / weightTotal;
+    const currentValue = Math.round(currentTotal * ratio);
+    const previousValue = Math.round(previousTotal * ratio * stableRandom((idx + 1) * 53, 0.88, 1.12));
+    const diffValue = currentValue - previousValue;
+    const momRate = previousValue === 0 ? 0 : (diffValue / previousValue) * 100;
+    return {
+      description: `${category}${label}`,
+      currentValue,
+      previousValue,
+      diffValue,
+      positiveValue: Math.max(0, diffValue),
+      momRate: Number(momRate.toFixed(2)),
+    };
+  });
+
+  return {
+    rows: rows
+      .filter((item) => item.positiveValue > 0)
+      .sort((a, b) => b.positiveValue - a.positiveValue)
+      .slice(0, 10),
   };
 }

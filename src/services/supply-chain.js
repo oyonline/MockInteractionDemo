@@ -16,17 +16,32 @@ import {
   getMockOpeningItoPieData,
   getMockOpeningItoYearlyTrend,
   getMockOpeningItoMonthlyTrend,
+  getMockOpeningItoBuComparison,
   getMockCategoryAnalysisData,
+  getMockCategoryDescriptionTop10,
   getMockExcessTabs,
   getMockExcessMetrics,
   getMockExcessMainTable,
   getMockExcessAgingTop10,
   getMockExcessInventoryAge,
+  getMockExcessInventoryAgeComparison,
+  getMockExcessInventoryAgeWarehouseDrilldown,
   getMockExcessAnalysisData,
   getMockInventoryAgeOver365Analysis,
+  getMockInventoryAgeOver365DrilldownTop10,
+  generateDefaultPeriods,
+  generateBaseRows,
+  generateMonthlyForRow,
+  getForecastMonthKeys,
+  generatePlanSuggestForRow,
+  BU_VALUES,
 } from '../mock/supply-chain';
 import * as storage from '../utils/storage';
-import { SUPPLY_CHAIN_EXCESS_ARCHIVES } from '../utils/storageKeys';
+import {
+  SUPPLY_CHAIN_EXCESS_ARCHIVES,
+  SUPPLY_CHAIN_EXCESS_TOP10_NOTES,
+  SUPPLY_CHAIN_SALES_FORECAST_V1,
+} from '../utils/storageKeys';
 
 // 获取当前月份的上一个月（默认月份）
 export function getDefaultMonth() {
@@ -2035,6 +2050,10 @@ export function getOpeningItoMonthlyTrend(query) {
   return getMockOpeningItoMonthlyTrend(query);
 }
 
+export function getOpeningItoBuComparison(query) {
+  return getMockOpeningItoBuComparison(query);
+}
+
 /**
  * 获取类目分析数据
  * @param {Object} query - 查询参数
@@ -2044,6 +2063,10 @@ export function getOpeningItoMonthlyTrend(query) {
  */
 export function getCategoryAnalysisData(query) {
   return getMockCategoryAnalysisData(query);
+}
+
+export function getCategoryDescriptionTop10(query) {
+  return getMockCategoryDescriptionTop10(query);
 }
 
 /**
@@ -2093,6 +2116,14 @@ export function getExcessInventoryAge(query) {
   return getMockExcessInventoryAge(query);
 }
 
+export function getExcessInventoryAgeComparison(query) {
+  return getMockExcessInventoryAgeComparison(query);
+}
+
+export function getExcessInventoryAgeWarehouseDrilldown(query) {
+  return getMockExcessInventoryAgeWarehouseDrilldown(query);
+}
+
 /**
  * 获取 Excess 过量分析弹窗数据
  * @param {Object} query
@@ -2114,6 +2145,18 @@ export function getExcessAnalysisData(query) {
  */
 export function getInventoryAgeOver365Analysis(query) {
   return getMockInventoryAgeOver365Analysis(query);
+}
+
+/**
+ * 库龄分析下钻：类目/仓库 -> 描述 TOP10
+ * @param {Object} query
+ * @param {string[]} query.bus
+ * @param {string} query.dataType - amount | qty
+ * @param {string} query.dimension - category | warehouse
+ * @param {string} query.dimensionName - 维度值
+ */
+export function getInventoryAgeOver365DrilldownTop10(query) {
+  return getMockInventoryAgeOver365DrilldownTop10(query);
 }
 
 /**
@@ -2148,4 +2191,657 @@ export function getExcessArchives() {
 export function getExcessArchiveById(archiveId) {
   const list = getExcessArchives();
   return list.find((item) => item.archiveId === archiveId) || null;
+}
+
+/**
+ * 获取 Excess TOP10 备注月份选项（最近12个月，含当前月）
+ */
+export function getExcessTop10MonthOptions() {
+  const now = new Date();
+  const options = [];
+  for (let i = 0; i < 12; i++) {
+    const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+    const value = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+    options.push({
+      value,
+      label: `${d.getFullYear()}年${d.getMonth() + 1}月`,
+    });
+  }
+  return options;
+}
+
+/**
+ * 获取指定月份、指定行的 TOP10 备注
+ * @param {Object} query
+ * @param {string} query.month - yyyy-MM
+ * @param {string[]} query.rowKeys
+ */
+export function getExcessTop10Notes(query = {}) {
+  const { month, rowKeys = [] } = query;
+  if (!month || rowKeys.length === 0) return {};
+  const all = storage.get(SUPPLY_CHAIN_EXCESS_TOP10_NOTES) || {};
+  const monthData = all[month] || {};
+  return rowKeys.reduce((acc, rowKey) => {
+    acc[rowKey] = monthData[rowKey] || {
+      planReason: '',
+      actionSuggestion: '',
+      operationFeedback: '',
+      updatedAt: '',
+    };
+    return acc;
+  }, {});
+}
+
+/**
+ * 新增/更新指定月份、指定行的 TOP10 备注
+ * @param {Object} payload
+ * @param {string} payload.month - yyyy-MM
+ * @param {string} payload.rowKey
+ * @param {Object} payload.patch
+ */
+export function upsertExcessTop10Note(payload = {}) {
+  const { month, rowKey, patch = {} } = payload;
+  if (!month || !rowKey) return null;
+
+  const all = storage.get(SUPPLY_CHAIN_EXCESS_TOP10_NOTES) || {};
+  const monthData = all[month] || {};
+  const previous = monthData[rowKey] || {
+    planReason: '',
+    actionSuggestion: '',
+    operationFeedback: '',
+    updatedAt: '',
+  };
+
+  const nextRecord = {
+    ...previous,
+    ...patch,
+    updatedAt: new Date().toISOString(),
+  };
+
+  const nextAll = {
+    ...all,
+    [month]: {
+      ...monthData,
+      [rowKey]: nextRecord,
+    },
+  };
+  storage.set(SUPPLY_CHAIN_EXCESS_TOP10_NOTES, nextAll);
+  return nextRecord;
+}
+
+// --- 销量预计管理（独立） ---
+const SF_STATUS = Object.freeze({
+  待下推: '待下推',
+  校验中: '校验中',
+  已驳回: '已驳回',
+  已确认: '已确认',
+});
+
+export { SF_STATUS as SALES_FORECAST_BU_STATUS };
+
+/** 安全库存可选天数（与产品规则保持一致） */
+export const SAFETY_STOCK_DAY_OPTIONS = Object.freeze([15, 30, 45, 60, 90, 120]);
+
+/** 安全库存层级（与 SKU 产品层级一致） */
+export const SAFETY_STOCK_LEVELS = Object.freeze(['A', 'B', 'C', 'D', 'E', 'F']);
+
+/** 月份模式枚举 */
+export const SAFETY_STOCK_MONTH_MODES = Object.freeze({
+  WHOLE_YEAR: 'whole_year',
+  SINGLE: 'single',
+  MULTI: 'multi',
+});
+
+function sfSummarizePeriodStatuses(statusByBu = {}) {
+  const vals = BU_VALUES.map((bu) => statusByBu[bu] || SF_STATUS.待下推);
+  const all = (s) => vals.every((v) => v === s);
+  const some = (s) => vals.some((v) => v === s);
+  if (all(SF_STATUS.已确认)) return '全部已确认';
+  if (all(SF_STATUS.待下推)) return '全部待下推';
+  if (some(SF_STATUS.已驳回)) return '含驳回';
+  if (some(SF_STATUS.已确认)) return '部分确认';
+  if (some(SF_STATUS.待下推)) return '含待下推';
+  return SF_STATUS.校验中;
+}
+
+/** 确保每期、每个固定 BU 都有状态槽位 */
+function sfEnsurePeriodBuStatus(store) {
+  const periods = sfMergePeriods(store);
+  const periodBuStatus = { ...(store.periodBuStatus || {}) };
+  let changed = false;
+  periods.forEach((p) => {
+    if (!periodBuStatus[p.id]) {
+      periodBuStatus[p.id] = {};
+      changed = true;
+    }
+    BU_VALUES.forEach((bu) => {
+      if (periodBuStatus[p.id][bu] == null || periodBuStatus[p.id][bu] === '') {
+        periodBuStatus[p.id][bu] = SF_STATUS.待下推;
+        changed = true;
+      }
+    });
+  });
+  if (!changed) return store;
+  const next = { ...store, periodBuStatus };
+  sfSaveStore(next);
+  return next;
+}
+
+/** 旧数据无存 periodBuStatus 时视为已全部接入，全部为校验中（避免存量演示一片空白） */
+function sfMigrateLegacyPeriodBuStatusIfNeeded(store) {
+  if (store.periodBuStatus != null && typeof store.periodBuStatus === 'object') return store;
+  const periods = sfMergePeriods(store);
+  const periodBuStatus = {};
+  periods.forEach((p) => {
+    periodBuStatus[p.id] = {};
+    BU_VALUES.forEach((bu) => {
+      periodBuStatus[p.id][bu] = SF_STATUS.校验中;
+    });
+  });
+  const next = { ...store, periodBuStatus };
+  sfSaveStore(next);
+  return next;
+}
+
+function sfGetBuStatus(store, periodId, bu) {
+  return store.periodBuStatus?.[periodId]?.[bu] || SF_STATUS.待下推;
+}
+
+function sfDefaultStore() {
+  const periods = generateDefaultPeriods();
+  const periodBuStatus = {};
+  periods.forEach((p) => {
+    periodBuStatus[p.id] = {};
+    BU_VALUES.forEach((bu) => {
+      periodBuStatus[p.id][bu] = SF_STATUS.待下推;
+    });
+  });
+  return {
+    periods,
+    selectedPeriodId: periods[0]?.id || null,
+    monthlyOverrides: {},
+    deletedRowIds: [],
+    extraPeriods: [],
+    removedPeriodIds: [],
+    operationLogs: [],
+    periodBuStatus,
+  };
+}
+
+function sfLoadStore() {
+  let raw = storage.get(SUPPLY_CHAIN_SALES_FORECAST_V1);
+  if (!raw || !Array.isArray(raw.periods)) {
+    raw = sfDefaultStore();
+    storage.set(SUPPLY_CHAIN_SALES_FORECAST_V1, raw);
+  }
+  if (!Array.isArray(raw.removedPeriodIds)) {
+    raw = { ...raw, removedPeriodIds: [] };
+    storage.set(SUPPLY_CHAIN_SALES_FORECAST_V1, raw);
+  }
+  if (!raw.selectedPeriodId && raw.periods[0]) {
+    raw.selectedPeriodId = raw.periods[0].id;
+    storage.set(SUPPLY_CHAIN_SALES_FORECAST_V1, raw);
+  }
+  let next = sfMigrateLegacyPeriodBuStatusIfNeeded(raw);
+  next = sfEnsurePeriodBuStatus(next);
+  return next;
+}
+
+function sfSaveStore(next) {
+  storage.set(SUPPLY_CHAIN_SALES_FORECAST_V1, next);
+}
+
+function sfMergePeriods(store) {
+  const byYm = new Map();
+  [...store.periods, ...(store.extraPeriods || [])].forEach((p) => {
+    if (!p?.forecastYm) return;
+    byYm.set(p.forecastYm, p);
+  });
+  const removed = new Set(store.removedPeriodIds || []);
+  return Array.from(byYm.values())
+    .filter((p) => !removed.has(p.id))
+    .sort((a, b) => (a.forecastYm < b.forecastYm ? 1 : -1));
+}
+
+function sfAppendLog(store, entry) {
+  const logs = Array.isArray(store.operationLogs) ? [...store.operationLogs] : [];
+  logs.unshift({
+    id: `sf-log-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+    at: new Date().toISOString(),
+    ...entry,
+  });
+  return { ...store, operationLogs: logs.slice(0, 200) };
+}
+
+export function getSalesForecastPeriods() {
+  const store = sfLoadStore();
+  const periods = sfMergePeriods(store);
+  const periodBadgeById = {};
+  periods.forEach((p) => {
+    periodBadgeById[p.id] = sfSummarizePeriodStatuses(store.periodBuStatus[p.id] || {});
+  });
+  return { periods, selectedPeriodId: store.selectedPeriodId, periodBadgeById };
+}
+
+export function setSalesForecastSelectedPeriod(periodId) {
+  const store = sfLoadStore();
+  sfSaveStore({ ...store, selectedPeriodId: periodId });
+}
+
+export function addSalesForecastPeriod(payload) {
+  const { forecastYm, creator = 'Kerr' } = payload || {};
+  if (!forecastYm || !/^\d{4}-\d{2}$/.test(forecastYm)) return null;
+  const store = sfLoadStore();
+  const id = `sf-period-${forecastYm}`;
+  if (sfMergePeriods(store).some((p) => p.id === id)) {
+    return { ok: false, message: '该期数已存在' };
+  }
+  const period = {
+    id,
+    forecastYm,
+    createdAt: new Date().toISOString(),
+    creator,
+  };
+  const extraPeriods = [...(store.extraPeriods || []), period];
+  const periodBuStatus = { ...(store.periodBuStatus || {}) };
+  periodBuStatus[id] = {};
+  BU_VALUES.forEach((bu) => {
+    periodBuStatus[id][bu] = SF_STATUS.待下推;
+  });
+  let next = {
+    ...store,
+    extraPeriods,
+    selectedPeriodId: id,
+    periodBuStatus,
+  };
+  next = sfAppendLog(next, { action: '新增期数', detail: forecastYm });
+  sfSaveStore(next);
+  return { ok: true, period };
+}
+
+/**
+ * 删除指定期数（至少保留 1 个；当前选中被删时自动切到剩余期数）
+ */
+export function deleteSalesForecastPeriod(periodId) {
+  if (!periodId) {
+    return { ok: false, message: '未选择要删除的期数' };
+  }
+  const store = sfLoadStore();
+  const periods = sfMergePeriods(store);
+  if (periods.length <= 1) {
+    return { ok: false, message: '至少保留一个 Forecast 期数' };
+  }
+  if (!periods.some((p) => p.id === periodId)) {
+    return { ok: false, message: '期数不存在或已删除' };
+  }
+
+  const removedPeriodIds = [...new Set([...(store.removedPeriodIds || []), periodId])];
+  const periodBuStatus = { ...(store.periodBuStatus || {}) };
+  delete periodBuStatus[periodId];
+
+  let selectedPeriodId = store.selectedPeriodId;
+  if (selectedPeriodId === periodId) {
+    const remaining = periods.filter((p) => p.id !== periodId);
+    selectedPeriodId = remaining[0]?.id || null;
+  }
+
+  let next = { ...store, removedPeriodIds, selectedPeriodId, periodBuStatus };
+  next = sfAppendLog(next, { action: '删除期数', detail: periodId });
+  sfSaveStore(next);
+  return { ok: true };
+}
+
+export function refreshSalesForecastData() {
+  const fresh = sfDefaultStore();
+  const next = sfAppendLog(fresh, { action: '重置演示数据', detail: '期数与 SKU 恢复初始种子' });
+  sfSaveStore(next);
+  return getSalesForecastPeriods();
+}
+
+function sfRowMonthly(store, periodId, anchorYm, rowId) {
+  const base = generateMonthlyForRow(anchorYm, rowId);
+  const ov = store.monthlyOverrides?.[periodId]?.[rowId] || {};
+  const out = { ...base };
+  Object.keys(ov).forEach((k) => {
+    if (ov[k] !== undefined && ov[k] !== null) out[k] = ov[k];
+  });
+  return out;
+}
+
+export function querySalesForecastRows(query = {}) {
+  const store = sfLoadStore();
+  const periods = sfMergePeriods(store);
+  const period = periods.find((p) => p.id === store.selectedPeriodId) || periods[0];
+  if (!period) {
+    return {
+      monthKeys: [],
+      planSuggestMonthKeys: [],
+      total: 0,
+      rows: [],
+      period: null,
+      pendingPush: false,
+      currentBuStatus: null,
+    };
+  }
+  const anchorYm = period.forecastYm;
+  const monthKeys = getForecastMonthKeys(anchorYm, 18);
+  const planSuggestMonthKeys = getForecastMonthKeys(anchorYm, 5);
+
+  const {
+    buTab = 'all',
+    productLevel = '',
+    shipAttr = '',
+    productAttr = '',
+    newOld = '',
+    staffName = '',
+    skuKeyword = '',
+    page = 1,
+    pageSize = 20,
+  } = query;
+
+  if (buTab && buTab !== 'all') {
+    const st = sfGetBuStatus(store, period.id, buTab);
+    if (st === SF_STATUS.待下推) {
+      return {
+        period,
+        monthKeys,
+        planSuggestMonthKeys,
+        total: 0,
+        rows: [],
+        page: Number(page),
+        pageSize: Number(pageSize),
+        pendingPush: true,
+        currentBuStatus: st,
+      };
+    }
+  }
+
+  let list = generateBaseRows().filter((r) => !(store.deletedRowIds || []).includes(r.id));
+
+  if (!buTab || buTab === 'all') {
+    list = list.filter((r) => sfGetBuStatus(store, period.id, r.bu) !== SF_STATUS.待下推);
+  } else {
+    list = list.filter((r) => r.bu === buTab);
+  }
+  if (productLevel) {
+    list = list.filter((r) => r.productLevel === productLevel);
+  }
+  if (shipAttr) {
+    list = list.filter((r) => r.shipAttr === shipAttr);
+  }
+  if (productAttr) {
+    list = list.filter((r) => r.productAttr === productAttr);
+  }
+  if (newOld) {
+    list = list.filter((r) => r.newOld === newOld);
+  }
+  if (staffName) {
+    list = list.filter((r) => r.staffName === staffName);
+  }
+  if (skuKeyword && String(skuKeyword).trim()) {
+    const kw = String(skuKeyword).trim().toLowerCase();
+    list = list.filter((r) => r.sku.toLowerCase().includes(kw));
+  }
+
+  const total = list.length;
+  const start = (Number(page) - 1) * Number(pageSize);
+  const slice = list.slice(start, start + Number(pageSize));
+
+  const rows = slice.map((r) => ({
+    ...r,
+    monthly: sfRowMonthly(store, period.id, anchorYm, r.id),
+    planSuggestQty: generatePlanSuggestForRow(anchorYm, r.id),
+  }));
+
+  return {
+    period,
+    monthKeys,
+    planSuggestMonthKeys,
+    total,
+    rows,
+    page: Number(page),
+    pageSize: Number(pageSize),
+    pendingPush: false,
+    currentBuStatus:
+      buTab && buTab !== 'all' ? sfGetBuStatus(store, period.id, buTab) : null,
+  };
+}
+
+export function updateSalesForecastRowMonthly(payload = {}) {
+  const { rowId, monthlyPatch = {} } = payload;
+  if (!rowId) return null;
+  const store = sfLoadStore();
+  const periods = sfMergePeriods(store);
+  const period = periods.find((p) => p.id === store.selectedPeriodId) || periods[0];
+  if (!period) return null;
+  const periodId = period.id;
+  const anchorYm = period.forecastYm;
+  const base = generateMonthlyForRow(anchorYm, rowId);
+  const prevOv = store.monthlyOverrides?.[periodId]?.[rowId] || {};
+  const merged = { ...base, ...prevOv, ...monthlyPatch };
+  const monthlyOverrides = { ...(store.monthlyOverrides || {}) };
+  monthlyOverrides[periodId] = { ...(monthlyOverrides[periodId] || {}), [rowId]: merged };
+  let next = { ...store, monthlyOverrides };
+  next = sfAppendLog(next, { action: '编辑Forecast', detail: rowId });
+  sfSaveStore(next);
+  return merged;
+}
+
+export function deleteSalesForecastRow(rowId) {
+  if (!rowId) return false;
+  const store = sfLoadStore();
+  const deletedRowIds = [...new Set([...(store.deletedRowIds || []), rowId])];
+  let next = { ...store, deletedRowIds };
+  next = sfAppendLog(next, { action: '删除行', detail: rowId });
+  sfSaveStore(next);
+  return true;
+}
+
+export function batchDeleteSalesForecastRows(rowIds = []) {
+  if (!rowIds.length) return false;
+  const store = sfLoadStore();
+  const deletedRowIds = [...new Set([...(store.deletedRowIds || []), ...rowIds])];
+  let next = { ...store, deletedRowIds };
+  next = sfAppendLog(next, { action: '批量删除', detail: `${rowIds.length} 条` });
+  sfSaveStore(next);
+  return true;
+}
+
+export function getSalesForecastOperationLogs() {
+  const store = sfLoadStore();
+  return store.operationLogs || [];
+}
+
+export function getSalesForecastFilterOptions() {
+  const all = generateBaseRows();
+  const uniq = (key) => [...new Set(all.map((r) => r[key]).filter(Boolean))].sort();
+  return {
+    productLevels: ['A', 'B', 'C', 'D', 'E', 'F'],
+    shipAttrs: ['海标', '空标', '空海标'],
+    productAttrs: ['春夏款', '冬季款', '全年款', '特殊款'],
+    newOlds: uniq('newOld'),
+    staffNames: uniq('staffName'),
+  };
+}
+
+/** 当前期数下各 BU 状态（中文），用于 Tab 角标 */
+export function getSalesForecastBuStatusesForPeriod(periodId) {
+  const store = sfLoadStore();
+  const m = store.periodBuStatus?.[periodId] || {};
+  const out = {};
+  BU_VALUES.forEach((bu) => {
+    out[bu] = m[bu] || SF_STATUS.待下推;
+  });
+  return out;
+}
+
+/** 模拟 BU 下推/上传成功 → 「校验中」（来源：待下推、已驳回） */
+export function simulateSalesForecastBuPush(periodId, bu) {
+  if (!periodId || !bu || !BU_VALUES.includes(bu)) {
+    return { ok: false, message: '参数无效' };
+  }
+  const store = sfLoadStore();
+  const cur = sfGetBuStatus(store, periodId, bu);
+  if (cur !== SF_STATUS.待下推 && cur !== SF_STATUS.已驳回) {
+    return { ok: false, message: `当前为「${cur}」，无需重复接入` };
+  }
+  const periodBuStatus = {
+    ...store.periodBuStatus,
+    [periodId]: { ...store.periodBuStatus?.[periodId], [bu]: SF_STATUS.校验中 },
+  };
+  let next = { ...store, periodBuStatus };
+  next = sfAppendLog(next, { action: 'BU数据接入', detail: `${periodId}｜${bu}` });
+  sfSaveStore(next);
+  return { ok: true };
+}
+
+/** 校验通过 → 「已确认」 */
+export function salesForecastVerifyPass(periodId, bu) {
+  if (!periodId || !bu || !BU_VALUES.includes(bu)) {
+    return { ok: false, message: '参数无效' };
+  }
+  const store = sfLoadStore();
+  const cur = sfGetBuStatus(store, periodId, bu);
+  if (cur !== SF_STATUS.校验中) {
+    return { ok: false, message: `仅「校验中」可通过，当前为「${cur}」` };
+  }
+  const periodBuStatus = {
+    ...store.periodBuStatus,
+    [periodId]: { ...store.periodBuStatus?.[periodId], [bu]: SF_STATUS.已确认 },
+  };
+  let next = { ...store, periodBuStatus };
+  next = sfAppendLog(next, { action: '校验通过', detail: `${periodId}｜${bu}` });
+  sfSaveStore(next);
+  return { ok: true };
+}
+
+/** 校验驳回 → 「已驳回」 */
+export function salesForecastVerifyReject(periodId, bu) {
+  if (!periodId || !bu || !BU_VALUES.includes(bu)) {
+    return { ok: false, message: '参数无效' };
+  }
+  const store = sfLoadStore();
+  const cur = sfGetBuStatus(store, periodId, bu);
+  if (cur !== SF_STATUS.校验中) {
+    return { ok: false, message: `仅「校验中」可驳回，当前为「${cur}」` };
+  }
+  const periodBuStatus = {
+    ...store.periodBuStatus,
+    [periodId]: { ...store.periodBuStatus?.[periodId], [bu]: SF_STATUS.已驳回 },
+  };
+  let next = { ...store, periodBuStatus };
+  next = sfAppendLog(next, { action: '校验驳回', detail: `${periodId}｜${bu}` });
+  sfSaveStore(next);
+  return { ok: true };
+}
+
+// ===== 安全库存逻辑设定（按 期数 + BU 维度持久化） =====
+
+/** 默认空规则 */
+function sfEmptySafetyStockRule() {
+  return {
+    hasSafetyStock: false,
+    byLevel: false,
+    daysByLevel: { A: null, B: null, C: null, D: null, E: null, F: null },
+    monthMode: SAFETY_STOCK_MONTH_MODES.WHOLE_YEAR,
+    singleMonths: [],
+    multiGroups: [],
+    updatedAt: null,
+  };
+}
+
+/** 当前期数 anchorYm 起始的 12 个月 yyyy-MM 数组（与产品口径一致：自然月 1~12 → 对应当前 Forecast 12 个月窗口） */
+export function getSafetyStockForecastMonths(periodId) {
+  const store = sfLoadStore();
+  const period = sfMergePeriods(store).find((p) => p.id === periodId);
+  if (!period) return [];
+  return getForecastMonthKeys(period.forecastYm, 12);
+}
+
+/** 读取（不存在则返回空模板） */
+export function getSalesForecastSafetyStockRule(periodId, bu) {
+  if (!periodId || !bu) return sfEmptySafetyStockRule();
+  const store = sfLoadStore();
+  const v = store.safetyStockRulesByPeriodBu?.[periodId]?.[bu];
+  if (!v) return sfEmptySafetyStockRule();
+  return { ...sfEmptySafetyStockRule(), ...v };
+}
+
+/** SKU 粘贴解析：换行/逗号/空白分隔 → 去重去空 */
+export function parsePastedSkus(text) {
+  if (!text) return [];
+  return Array.from(
+    new Set(
+      String(text)
+        .split(/[\s,，;；]+/)
+        .map((s) => s.trim())
+        .filter(Boolean),
+    ),
+  );
+}
+
+function sfValidateSafetyStockRule(rule) {
+  const errors = [];
+  if (!rule.hasSafetyStock) return { ok: true, errors };
+  if (rule.byLevel) {
+    const empty = SAFETY_STOCK_LEVELS.filter(
+      (lv) => !SAFETY_STOCK_DAY_OPTIONS.includes(rule.daysByLevel?.[lv]),
+    );
+    if (empty.length === SAFETY_STOCK_LEVELS.length) {
+      errors.push('请按层级至少配置一个安全库存天数');
+    }
+  }
+  switch (rule.monthMode) {
+    case SAFETY_STOCK_MONTH_MODES.WHOLE_YEAR:
+      break;
+    case SAFETY_STOCK_MONTH_MODES.SINGLE:
+      if (!Array.isArray(rule.singleMonths) || rule.singleMonths.length === 0) {
+        errors.push('请勾选至少一个特定月份');
+      }
+      break;
+    case SAFETY_STOCK_MONTH_MODES.MULTI:
+      if (!Array.isArray(rule.multiGroups) || rule.multiGroups.length === 0) {
+        errors.push('请新增至少一组「月份 + SKU」配置');
+      } else {
+        rule.multiGroups.forEach((g, idx) => {
+          if (!g.months?.length) errors.push(`第 ${idx + 1} 组：请勾选月份`);
+          if (!g.skus?.length) errors.push(`第 ${idx + 1} 组：请粘贴汇总 SKU`);
+        });
+      }
+      break;
+    default:
+      errors.push('未知的月份模式');
+  }
+  return { ok: errors.length === 0, errors };
+}
+
+/** 保存（仅当前期数 + 当前 BU），返回 { ok, errors } */
+export function saveSalesForecastSafetyStockRule(periodId, bu, rule) {
+  if (!periodId || !bu || !BU_VALUES.includes(bu)) {
+    return { ok: false, errors: ['参数无效'] };
+  }
+  const next = { ...sfEmptySafetyStockRule(), ...rule };
+  // 互斥保护：选「否」清空深层无意义字段不破坏已存配置由 UI 控制；此处仅按月份模式裁剪
+  if (next.monthMode !== SAFETY_STOCK_MONTH_MODES.SINGLE) next.singleMonths = [];
+  if (next.monthMode !== SAFETY_STOCK_MONTH_MODES.MULTI) next.multiGroups = [];
+  if (!next.byLevel) {
+    next.daysByLevel = { A: null, B: null, C: null, D: null, E: null, F: null };
+  }
+  if (!next.hasSafetyStock) {
+    // 「否」时不强制清空；仅置 enabled=false，方便切回再编辑
+  }
+  const validate = sfValidateSafetyStockRule(next);
+  if (!validate.ok) return validate;
+
+  next.updatedAt = new Date().toISOString();
+  const store = sfLoadStore();
+  const all = { ...(store.safetyStockRulesByPeriodBu || {}) };
+  all[periodId] = { ...(all[periodId] || {}), [bu]: next };
+  let save = { ...store, safetyStockRulesByPeriodBu: all };
+  save = sfAppendLog(save, {
+    action: '更新安全库存规则',
+    detail: `${periodId}｜${bu}｜${next.hasSafetyStock ? '启用' : '关闭'}`,
+  });
+  sfSaveStore(save);
+  return { ok: true, errors: [] };
 }
